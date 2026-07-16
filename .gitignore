@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.db
+*.sqlite3
+*.log
+
+# Virtual Environment
+venv/
+.venv/
+
+# Environment Variables
+.env
+
+# Uploads
+backend/uploads/
+
+# Node
+node_modules/
+dist/
+
+# macOS
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Pytest
+.pytest_cache/
+
+# Coverage
+.coverage
+htmlcov/

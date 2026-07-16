@@ -1,0 +1,42 @@
+from datetime import datetime
+from typing import List
+
+from pydantic import BaseModel
+
+
+class GenerateQuestionsRequest(BaseModel):
+    resume_id: int
+    role: str
+    difficulty: str
+
+
+class InterviewQuestionResponse(BaseModel):
+    id: int
+    question_text: str
+
+    answered: bool
+
+    score: int | None = None
+    feedback: str | None = None
+
+    strengths: List[str] = []
+    improvements: List[str] = []
+
+    class Config:
+        from_attributes = True
+
+
+class InterviewHistoryItem(BaseModel):
+    session_id: int
+    role: str
+    difficulty: str
+    created_at: datetime
+
+
+class InterviewDetailResponse(BaseModel):
+    session_id: int
+    role: str
+    difficulty: str
+    created_at: datetime
+
+    questions: List[InterviewQuestionResponse]
