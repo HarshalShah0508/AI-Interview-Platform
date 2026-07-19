@@ -60,10 +60,6 @@ function InterviewGeneratorForm() {
       return;
     }
 
-    if (!formData.resume_id) {
-      setError("Please select a resume.");
-      return;
-    }
 
     try {
       setLoading(true);
@@ -72,7 +68,9 @@ function InterviewGeneratorForm() {
         {
           role: formData.role.trim(),
           difficulty: formData.difficulty,
-          resume_id: Number(formData.resume_id),
+          resume_id:formData.resume_id
+          ? Number(formData.resume_id)
+          : null,
         },
         token
       );
@@ -105,20 +103,24 @@ function InterviewGeneratorForm() {
       <label className="form-field">
         <span>Resume</span>
 
-        <select
-          name="resume_id"
-          value={formData.resume_id}
-          onChange={handleChange}
+      <select
+        name="resume_id"
+        value={formData.resume_id}
+        onChange={handleChange}
+      >
+        <option value="">
+         No Resume
+        </option>
+
+        {resumes.map((resume) => (
+        <option
+          key={resume.id}
+          value={resume.id}
         >
-          {resumes.map((resume) => (
-            <option
-              key={resume.id}
-              value={resume.id}
-            >
-              {resume.original_filename}
-            </option>
-          ))}
-        </select>
+         {resume.original_filename}
+       </option>
+        ))}
+      </select>
       </label>
 
       <label className="form-field">

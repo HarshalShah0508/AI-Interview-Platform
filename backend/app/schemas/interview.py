@@ -1,11 +1,11 @@
 from datetime import datetime
 from typing import List
-
+from typing import Optional
 from pydantic import BaseModel
 
 
 class GenerateQuestionsRequest(BaseModel):
-    resume_id: int
+    resume_id: Optional[int] = None
     role: str
     difficulty: str
 
