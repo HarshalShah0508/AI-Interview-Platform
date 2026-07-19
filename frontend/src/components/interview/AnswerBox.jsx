@@ -1,6 +1,12 @@
 import { useState } from "react";
+
 import { submitAnswer } from "../../api/answerApi";
 import useAuth from "../../hooks/useAuth";
+
+import VoiceInput from "./VoiceInput";
+import NotesInput from "./NotesInput";
+import CodeEditor from "./CodeEditor";
+import CombinedPreview from "./CombinedPreview";
 
 function AnswerBox({
   questionId,
@@ -9,17 +15,27 @@ function AnswerBox({
 }) {
   const { token } = useAuth();
 
-  const [answer, setAnswer] = useState("");
+  const [voiceText, setVoiceText] = useState("");
+  const [typedText, setTypedText] = useState("");
+  const [code, setCode] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const hasContent =
+    voiceText.trim() ||
+    typedText.trim() ||
+    code.trim();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     if (disabled) return;
 
-    if (!answer.trim()) {
-      setError("Please enter an answer.");
+    if (!hasContent) {
+      setError(
+        "Please provide a voice explanation, notes or code."
+      );
       return;
     }
 
@@ -30,15 +46,18 @@ function AnswerBox({
       const response = await submitAnswer(
         {
           question_id: questionId,
-          answer: answer.trim(),
+          voice_text: voiceText.trim(),
+          typed_text: typedText.trim(),
+          code: code.trim(),
         },
         token
       );
 
       onAnswerSubmitted(response);
 
-      // Clear textbox after successful submission
-      setAnswer("");
+      setVoiceText("");
+      setTypedText("");
+      setCode("");
     } catch (err) {
       setError(
         err?.response?.data?.detail ||
@@ -50,29 +69,48 @@ function AnswerBox({
   };
 
   return (
-    <form className="content-card answer-box" onSubmit={handleSubmit}>
-      <label className="form-field">
-        <span>Your Answer</span>
+    <form
+      className="answer-box"
+      onSubmit={handleSubmit}
+    >
+      <VoiceInput
+        value={voiceText}
+        onChange={setVoiceText}
+        disabled={disabled}
+      />
 
-        <textarea
-          value={answer}
-          onChange={(e) => setAnswer(e.target.value)}
-          rows={8}
-          disabled={disabled}
-          placeholder={
-            disabled
-              ? "This question has already been answered."
-              : "Write your answer..."
-          }
-        />
-      </label>
+      <NotesInput
+        value={typedText}
+        onChange={setTypedText}
+        disabled={disabled}
+      />
 
-      {error && <p className="error-text">{error}</p>}
+      <CodeEditor
+        value={code}
+        onChange={setCode}
+        disabled={disabled}
+      />
+
+      <CombinedPreview
+        voiceText={voiceText}
+        typedText={typedText}
+        code={code}
+      />
+
+      {error && (
+        <p className="error-text">
+          {error}
+        </p>
+      )}
 
       <button
         className="button button--primary"
         type="submit"
-        disabled={loading || disabled}
+        disabled={
+          loading ||
+          disabled ||
+          !hasContent
+        }
       >
         {disabled
           ? "Already Submitted"

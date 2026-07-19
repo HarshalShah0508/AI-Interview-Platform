@@ -28,7 +28,11 @@ function LoginForm() {
       await login(formData);
       navigate("/dashboard");
     } catch (err) {
-      setError("Invalid email or password");
+      console.error(err);
+      console.error(err.response);
+      console.error(err.response?.data);
+
+      setError(err.message);
     }
   };
 

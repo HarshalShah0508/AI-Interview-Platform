@@ -48,6 +48,8 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db)
 ):
+    print("\n========== AUTH DEBUG ==========")
+    print("TOKEN:", token)
 
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -56,19 +58,22 @@ def get_current_user(
     )
 
     try:
-
         payload = jwt.decode(
             token,
             SECRET_KEY,
             algorithms=[ALGORITHM]
         )
 
-        email: Optional[str] = payload.get("sub")
+        print("PAYLOAD:", payload)
+
+        email = payload.get("sub")
+        print("EMAIL:", email)
 
         if email is None:
             raise credentials_exception
 
-    except JWTError:
+    except Exception as e:
+        print("JWT ERROR:", repr(e))
         raise credentials_exception
 
     user = (
@@ -76,6 +81,9 @@ def get_current_user(
         .filter(User.email == email)
         .first()
     )
+
+    print("USER:", user)
+    print("===============================\n")
 
     if user is None:
         raise credentials_exception

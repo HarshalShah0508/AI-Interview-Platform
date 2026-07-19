@@ -10,15 +10,30 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const login = async ({ email, password }) => {
-    const data = await loginApi({ email, password });
-    setToken(data.access_token);
-    setAuthToken(data.access_token);
+    try {
+      console.log("1. Calling /login");
 
-    const currentUser = await getMe(data.access_token);
-    setUser(currentUser);
+      const data = await loginApi({ email, password });
+      console.log("2. Login response:", data);
 
-    return currentUser;
-  };
+      setToken(data.access_token);
+      setAuthToken(data.access_token);
+
+      console.log("3. Calling /me");
+
+      const currentUser = await getMe(data.access_token);
+      console.log("4. Current user:", currentUser);
+
+      setUser(currentUser);
+
+      console.log("5. Login completed");
+
+      return currentUser;
+    } catch (error) {
+      console.error("LOGIN ERROR:", error);
+      throw error;
+    }
+};
 
   const signup = async ({ username, email, password }) => {
     await signupApi({ username, email, password });

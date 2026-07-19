@@ -65,19 +65,30 @@ def submit_answer(
 
     ai_service = AIService()
 
+    try:
+        combined_answer = ai_service.build_combined_answer(
+            voice_text=payload.voice_text,
+            typed_text=payload.typed_text,
+            code=payload.code
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+
     evaluation = ai_service.evaluate_answer(
         question_text=question.question_text,
-        user_answer=payload.answer
+        user_answer=combined_answer
     )
 
     answer = Answer(
         question_id=question.id,
 
-        # Hybrid Interview fields
-        voice_text=None,
-        typed_text=payload.answer,
-        code=None,
-        combined_answer=payload.answer,
+        voice_text=payload.voice_text,
+        typed_text=payload.typed_text,
+        code=payload.code,
+        combined_answer=combined_answer,
 
         score=evaluation["score"],
         feedback=evaluation["feedback"],
