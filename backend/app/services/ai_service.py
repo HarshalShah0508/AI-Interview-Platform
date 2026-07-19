@@ -66,6 +66,36 @@ Number each question.
         print(response)
 
         return response.text
+    def build_combined_answer(
+        self,
+        voice_text: str | None,
+        typed_text: str | None,
+        code: str | None
+    ) -> str:
+
+        sections = []
+
+        if voice_text and voice_text.strip():
+            sections.append(
+                f"Explanation:\n{voice_text.strip()}"
+            )
+
+        if typed_text and typed_text.strip():
+            sections.append(
+                f"Additional Notes:\n{typed_text.strip()}"
+            )
+
+        if code and code.strip():
+            sections.append(
+                f"Code:\n{code.strip()}"
+            )
+
+        if not sections:
+            raise ValueError(
+                "At least one of voice_text, typed_text or code must be provided."
+            )
+
+        return "\n\n".join(sections)
 
     def build_evaluation_prompt(
         self,
