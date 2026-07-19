@@ -19,13 +19,15 @@ class AIService:
 
     def generate_questions(
         self,
-        resume_text: str,
+        resume_text: str | None,
         role: str,
         difficulty: str
-    ):
+):
 
-        prompt = f"""
-You are an expert backend engineering interviewer.
+        if resume_text:
+
+            prompt = f"""
+You are an expert technical interviewer.
 
 Resume:
 {resume_text}
@@ -39,20 +41,48 @@ Difficulty:
 Generate exactly:
 
 - 3 Resume-based questions
-- 3 Technical Backend questions
+- 3 Technical questions specific to the role
 - 2 Famous LeetCode-style coding questions
 - 1 System Design question
 - 1 Behavioral question
 
-Use the resume heavily when generating questions.
-
-For coding questions:
-- Choose famous interview questions commonly asked at product companies.
-- Prefer LeetCode Medium questions if difficulty is Medium.
+Requirements:
+- Use the resume heavily while generating the resume-based questions.
+- Technical questions must match the role.
+- Coding questions should be commonly asked interview problems.
+- Prefer LeetCode Medium if difficulty is Medium.
 - Do not provide solutions.
 
-Difficulty must match:
+Return only the questions.
+Number each question.
+"""
+
+        else:
+
+            prompt = f"""
+You are an expert technical interviewer.
+
+Role:
+{role}
+
+Difficulty:
 {difficulty}
+
+The candidate has NOT provided a resume.
+
+Generate exactly:
+
+- 4 Technical questions specific to the role
+- 4 Famous LeetCode-style coding questions
+- 1 System Design question
+- 1 Behavioral question
+
+Requirements:
+- Do NOT generate resume-based questions.
+- Technical questions must progressively increase in difficulty.
+- Coding questions should be commonly asked interview problems.
+- Prefer LeetCode Medium if difficulty is Medium.
+- Do not provide solutions.
 
 Return only the questions.
 Number each question.

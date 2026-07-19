@@ -7,6 +7,8 @@ function VoiceInput({
 }) {
   const recognitionRef = useRef(null);
 
+  const shouldContinueRef = useRef(false);
+
   const [supported, setSupported] = useState(false);
   const [isListening, setIsListening] = useState(false);
 
@@ -29,22 +31,28 @@ function VoiceInput({
     recognition.lang = "en-US";
 
     recognition.onresult = (event) => {
-      let finalTranscript = "";
+      let transcript = "";
 
-      for (let i = 0; i < event.results.length; i++) {
+      for (
+        let i = event.resultIndex;
+        i < event.results.length;
+        i++
+      ) {
         if (event.results[i].isFinal) {
-          finalTranscript +=
+          transcript +=
             event.results[i][0].transcript + " ";
         }
       }
 
-      if (finalTranscript.trim()) {
-        onChange((previous) =>
-          previous
-            ? `${previous.trim()} ${finalTranscript.trim()}`
-            : finalTranscript.trim()
-        );
-      }
+      transcript = transcript.trim();
+
+      if (!transcript) return;
+
+      onChange((previous) =>
+        previous
+          ? `${previous.trim()} ${transcript}`
+          : transcript
+      );
     };
 
     recognition.onstart = () => {
@@ -53,28 +61,52 @@ function VoiceInput({
 
     recognition.onend = () => {
       setIsListening(false);
+
+      if (
+        shouldContinueRef.current &&
+        !disabled
+      ) {
+        recognition.start();
+      }
     };
 
-    recognition.onerror = () => {
+    recognition.onerror = (event) => {
+      console.log(event);
+
+      if (
+        event.error === "no-speech"
+      ) {
+        return;
+      }
+
       setIsListening(false);
     };
 
     recognitionRef.current = recognition;
 
     return () => {
-      recognitionRef.current?.stop();
+      shouldContinueRef.current = false;
+      recognition.stop();
     };
-  }, [onChange]);
+  }, [onChange, disabled]);
 
   const startListening = () => {
-    if (!recognitionRef.current || disabled) {
+    if (
+      !recognitionRef.current ||
+      disabled ||
+      isListening
+    ) {
       return;
     }
+
+    shouldContinueRef.current = true;
 
     recognitionRef.current.start();
   };
 
   const stopListening = () => {
+    shouldContinueRef.current = false;
+
     recognitionRef.current?.stop();
   };
 
@@ -134,9 +166,10 @@ function VoiceInput({
           style={{
             marginTop: "12px",
             color: "green",
+            fontWeight: "bold",
           }}
         >
-          Listening...
+          🎤 Recording...
         </p>
       )}
     </div>

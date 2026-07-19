@@ -33,23 +33,31 @@ def generate_questions(
     db: Session = Depends(get_db)
 ):
 
-    resume = (
-        db.query(Resume)
-        .filter(Resume.user_id == current_user.id)
-        .order_by(Resume.created_at.desc())
-        .first()
-    ) 
+    resume_text = None
 
-    if not resume:
-        raise HTTPException(
-            status_code=404,
-            detail="Resume not found"
+    if request.resume_id is not None:
+
+        resume = (
+            db.query(Resume)
+            .filter(
+                Resume.id == request.resume_id,
+                Resume.user_id == current_user.id
+            )
+            .first()
         )
+
+        if not resume:
+            raise HTTPException(
+                status_code=404,
+                detail="Selected resume not found."
+            )
+
+        resume_text = resume.extracted_text
 
     ai_service = AIService()
 
     questions = ai_service.generate_questions(
-        resume_text=resume.extracted_text,
+        resume_text=resume_text,
         role=request.role,
         difficulty=request.difficulty
     )
@@ -114,13 +122,16 @@ def get_interview_history(
     db: Session = Depends(get_db)
 ):
 
-    sessions = db.query(
-        InterviewSession
-    ).filter(
-        InterviewSession.user_id == current_user.id
-    ).order_by(
-        InterviewSession.created_at.desc()
-    ).all()
+    sessions = (
+        db.query(InterviewSession)
+        .filter(
+            InterviewSession.user_id == current_user.id
+        )
+        .order_by(
+            InterviewSession.created_at.desc()
+        )
+        .all()
+    )
 
     history = []
 
