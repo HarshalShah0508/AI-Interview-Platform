@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Environment Variables
+.env
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+
+# Python Cache
+.pytest_cache/
+.mypy_cache/
+
+# Uploads (optional - remove if you want uploaded resumes baked into the image)
+uploads/
+
+# Alembic Cache
+alembic/__pycache__/
+
+# Docker
+Dockerfile
+.dockerignore
