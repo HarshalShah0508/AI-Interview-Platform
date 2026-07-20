@@ -1,0 +1,60 @@
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: interview-postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_USER: interview_user_official
+      POSTGRES_PASSWORD: Harshal0508
+      POSTGRES_DB: interview_db
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U interview_user_official -d interview_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+
+    container_name: interview-backend
+
+    restart: unless-stopped
+
+    env_file:
+      - ./backend/.env
+
+    ports:
+      - "8000:8000"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+
+    container_name: interview-frontend
+
+    restart: unless-stopped
+
+    ports:
+      - "3000:80"
+
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

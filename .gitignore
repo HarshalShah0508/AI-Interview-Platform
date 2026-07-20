@@ -31,3 +31,5 @@ dist/
 # Coverage
 .coverage
 htmlcov/
+
+backend/.env
