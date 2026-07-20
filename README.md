@@ -191,33 +191,6 @@ http://localhost:8000/docs
 | Backend | 8000 |
 | PostgreSQL | 5432 |
 
----
-
-# 📸 Screenshots
-
-Add screenshots of the following pages:
-
-- Login Page
-- Dashboard
-- Resume Upload
-- Interview Generator
-- Interview Session
-- AI Feedback
-- Interview History
-
-Example:
-
-```
-screenshots/
-├── login.png
-├── dashboard.png
-├── upload_resume.png
-├── interview.png
-├── feedback.png
-└── history.png
-```
-
----
 
 # 🔒 Security
 
