@@ -4,6 +4,14 @@ import google.generativeai as genai
 
 from app.core.config import GEMINI_API_KEY
 
+from app.services.role_classifier import RoleClassifier
+
+from app.services.prompts.software_prompt import build_software_prompt
+from app.services.prompts.finance_prompt import build_finance_prompt
+from app.services.prompts.consulting_prompt import build_consulting_prompt
+from app.services.prompts.sales_prompt import build_sales_prompt
+from app.services.prompts.marketing_prompt import build_marketing_prompt
+
 
 class AIService:
 
@@ -17,76 +25,73 @@ class AIService:
             "gemini-2.5-flash"
         )
 
+        self.role_classifier = RoleClassifier()
+
     def generate_questions(
         self,
         resume_text: str | None,
         role: str,
-        difficulty: str
-):
+        difficulty: str,
+    ):
 
-        if resume_text:
+        category = self.role_classifier.classify_role(
+            role=role,
+            model=self.model,
+        )
 
-            prompt = f"""
-You are an expert technical interviewer.
+        if category == "software":
 
-Resume:
-{resume_text}
+            prompt = build_software_prompt(
+                role=role,
+                difficulty=difficulty,
+                resume_text=resume_text,
+            )
 
-Role:
-{role}
+        elif category == "finance":
 
-Difficulty:
-{difficulty}
+            prompt = build_finance_prompt(
+                role=role,
+                difficulty=difficulty,
+                resume_text=resume_text,
+            )
 
-Generate exactly:
+        elif category == "consulting":
 
-- 3 Resume-based questions
-- 3 Technical questions specific to the role
-- 2 Famous LeetCode-style coding questions
-- 1 System Design question
-- 1 Behavioral question
+            prompt = build_consulting_prompt(
+                role=role,
+                difficulty=difficulty,
+                resume_text=resume_text,
+            )
 
-Requirements:
-- Use the resume heavily while generating the resume-based questions.
-- Technical questions must match the role.
-- Coding questions should be commonly asked interview problems.
-- Prefer LeetCode Medium if difficulty is Medium.
-- Do not provide solutions.
+        elif category == "sales":
 
-Return only the questions.
-Number each question.
-"""
+            prompt = build_sales_prompt(
+                role=role,
+                difficulty=difficulty,
+                resume_text=resume_text,
+            )
+
+        elif category == "marketing":
+
+            prompt = build_marketing_prompt(
+                role=role,
+                difficulty=difficulty,
+                resume_text=resume_text,
+            )
 
         else:
 
-            prompt = f"""
-You are an expert technical interviewer.
+            prompt = build_software_prompt(
+                role=role,
+                difficulty=difficulty,
+                resume_text=resume_text,
+            )
 
-Role:
-{role}
+        print("\n========== SELECTED ROLE ==========")
+        print(role)
 
-Difficulty:
-{difficulty}
-
-The candidate has NOT provided a resume.
-
-Generate exactly:
-
-- 4 Technical questions specific to the role
-- 4 Famous LeetCode-style coding questions
-- 1 System Design question
-- 1 Behavioral question
-
-Requirements:
-- Do NOT generate resume-based questions.
-- Technical questions must progressively increase in difficulty.
-- Coding questions should be commonly asked interview problems.
-- Prefer LeetCode Medium if difficulty is Medium.
-- Do not provide solutions.
-
-Return only the questions.
-Number each question.
-"""
+        print("\n========== INTERVIEW CATEGORY ==========")
+        print(category)
 
         response = self.model.generate_content(
             prompt
