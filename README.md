@@ -188,7 +188,7 @@ backend/.env
 Example:
 
 ```env
-DATABASE_URL=postgresql://interview_user_official:YOUR_PASSWORD@postgres:5432/interview_db
+DATABASE_URL=postgresql://interview_user_official:Harshal0508@postgres:5432/interview_db
 
 SECRET_KEY=YOUR_GENERATED_SECRET_KEY
 
