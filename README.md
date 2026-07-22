@@ -108,7 +108,7 @@ Before running the project, ensure the following are installed:
 ## 1. Clone the Repository
 
 ```bash
-git clone https://github.com/<your-username>/AI-Interview-Platform.git
+git clone https://github.com/HarshalShah0508/AI-Interview-Platform.git
 cd AI-Interview-Platform
 ```
 
@@ -123,13 +123,13 @@ Example:
 ```env
 DATABASE_URL=postgresql://interview_user_official:<password>@postgres:5432/interview_db
 
-SECRET_KEY=your_secret_key
+SECRET_KEY=<your_secret_key>
 
 ALGORITHM=HS256
 
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-GEMINI_API_KEY=your_gemini_api_key
+GEMINI_API_KEY=<your_gemini_api_key>
 ```
 
 ---
