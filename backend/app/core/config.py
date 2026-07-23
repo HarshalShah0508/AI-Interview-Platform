@@ -30,16 +30,17 @@ RESUME_DIR.mkdir(
 # Gemini Configuration
 # -----------------------------
 
+raw_keys = os.getenv("GEMINI_API_KEYS")
+
+print("DEBUG GEMINI_API_KEYS:", repr(raw_keys))
+
 GEMINI_API_KEYS = [
     key.strip()
-    for key in os.getenv(
-        "GEMINI_API_KEYS",
-        ""
-    ).split(",")
+    for key in (raw_keys or "").split(",")
     if key.strip()
 ]
 
 if not GEMINI_API_KEYS:
     raise ValueError(
-        "At least one Gemini API key must be provided in GEMINI_API_KEYS."
+        f"At least one Gemini API key must be provided in GEMINI_API_KEYS. Received: {repr(raw_keys)}"
     )
