@@ -1,11 +1,7 @@
 import json
 
-import google.generativeai as genai
-
-from app.core.config import GEMINI_API_KEY
-
 from app.services.role_classifier import RoleClassifier
-
+from app.services.api_key_manager import APIKeyManager
 from app.services.prompts.software_prompt import build_software_prompt
 from app.services.prompts.finance_prompt import build_finance_prompt
 from app.services.prompts.consulting_prompt import build_consulting_prompt
@@ -17,13 +13,7 @@ class AIService:
 
     def __init__(self):
 
-        genai.configure(
-            api_key=GEMINI_API_KEY
-        )
-
-        self.model = genai.GenerativeModel(
-            "gemini-2.5-flash"
-        )
+        self.key_manager = APIKeyManager()
 
         self.role_classifier = RoleClassifier()
 
@@ -36,7 +26,7 @@ class AIService:
 
         category = self.role_classifier.classify_role(
             role=role,
-            model=self.model,
+            model=self.key_manager.get_model(),
         )
 
         if category == "software":
@@ -93,7 +83,7 @@ class AIService:
         print("\n========== INTERVIEW CATEGORY ==========")
         print(category)
 
-        response = self.model.generate_content(
+        response = self.key_manager.generate_content(
             prompt
         )
 
@@ -272,7 +262,7 @@ Candidate Answer:
             user_answer=user_answer
         )
 
-        response = self.model.generate_content(
+        response = self.key_manager.generate_content(
             prompt
         )
 

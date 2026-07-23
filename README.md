@@ -20,6 +20,7 @@ An **AI-powered multi-domain interview preparation platform** that simulates rea
 - 📜 Interview History
 - 🐳 Dockerized Full-Stack Deployment
 - 📖 Swagger API Documentation
+- 🔄 Automatic Gemini API key rotation with quota failover support
 
 ---
 
@@ -196,9 +197,24 @@ ALGORITHM=HS256
 
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-GEMINI_API_KEY=YOUR_GEMINI_API_KEY
-```
+# Single API key
+GEMINI_API_KEYS=your_gemini_api_key
 
+# OR multiple API keys
+GEMINI_API_KEYS=key1,key2,key3
+```
+## Gemini API Key Rotation
+
+The application supports one or more Gemini API keys.
+
+If a single API key is configured, the application uses that key for all AI requests.
+
+If multiple API keys are configured, the application automatically switches to the next available key whenever the current key reaches its daily quota (`429 RESOURCE_EXHAUSTED`).
+
+Example:
+
+```env
+GEMINI_API_KEYS=key1,key2,key3
 ---
 
 ## Step 5. Start the Application

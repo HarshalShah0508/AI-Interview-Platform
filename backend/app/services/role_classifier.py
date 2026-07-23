@@ -3,8 +3,8 @@ Role classification service.
 
 This module determines which interview category a selected role belongs to.
 
-Classification Strategy
------------------------
+Classification strategy:
+
 1. Exact role matching
 2. Keyword matching
 3. Gemini fallback
@@ -17,6 +17,8 @@ Returns exactly one category:
 - sales
 - marketing
 """
+
+from app.services.api_key_manager import APIKeyManager
 
 
 SOFTWARE_KEYWORDS = {
@@ -40,110 +42,84 @@ SOFTWARE_KEYWORDS = {
     "c++",
     "cpp",
     "javascript",
-    "typescript",
     "react",
-    "angular",
-    "vue",
     "node",
-    "nodejs",
-    "django",
-    "flask",
-    "fastapi",
-    "spring",
     "machine learning",
     "ml",
-    "artificial intelligence",
     "ai",
-    "deep learning",
-    "nlp",
-    "computer vision",
+    "artificial intelligence",
     "data engineer",
     "data scientist",
-    "software engineer",
 }
 
 FINANCE_KEYWORDS = {
     "finance",
     "financial",
     "investment",
-    "investment banking",
     "banking",
     "equity",
+    "portfolio",
+    "treasury",
+    "risk",
+    "valuation",
+    "quant",
+    "analyst",
+    "corporate finance",
     "private equity",
     "venture capital",
-    "portfolio",
     "asset management",
     "wealth management",
-    "treasury",
-    "valuation",
-    "risk",
-    "risk management",
-    "quant",
-    "quantitative",
-    "corporate finance",
-    "financial analyst",
-    "equity research",
-    "credit analyst",
 }
 
 CONSULTING_KEYWORDS = {
     "consultant",
     "consulting",
     "strategy",
-    "strategy consultant",
     "business consulting",
     "management consulting",
     "operations consulting",
     "operations",
-    "business analyst",
     "advisory",
-    "transformation",
+    "strategy consultant",
 }
 
 SALES_KEYWORDS = {
     "sales",
-    "sales executive",
-    "sales manager",
+    "business development",
     "account manager",
     "account executive",
-    "business development",
-    "business development executive",
     "relationship manager",
     "customer success",
+    "sales executive",
+    "sales manager",
     "inside sales",
     "enterprise sales",
 }
 
 MARKETING_KEYWORDS = {
     "marketing",
-    "digital marketing",
-    "performance marketing",
-    "growth marketing",
-    "product marketing",
     "brand",
     "branding",
     "seo",
     "sem",
+    "growth",
     "content",
     "content marketing",
+    "digital marketing",
+    "performance marketing",
+    "product marketing",
     "marketing analyst",
-    "marketing manager",
-    "growth",
 }
 
 
 class RoleClassifier:
     """
-    Determines the interview category for a given role.
+    Classifies interview roles into predefined interview categories.
     """
 
-    VALID_CATEGORIES = {
-        "software",
-        "finance",
-        "consulting",
-        "sales",
-        "marketing",
-    }
+    def __init__(self):
+
+        self.key_manager = APIKeyManager()
 
     @staticmethod
     def _normalize_role(role: str) -> str:
@@ -196,19 +172,13 @@ class RoleClassifier:
 
         return None
 
-    def _gemini_classification(
-        self,
-        role: str,
-        model,
-    ) -> str:
-        """
-        Uses Gemini only when keyword matching fails.
-        """
+    def _gemini_classification(self, role: str) -> str:
 
         prompt = f"""
-Classify the following interview role into EXACTLY ONE category.
+Classify the following interview role into exactly ONE category.
 
 Categories:
+
 Software
 Finance
 Consulting
@@ -220,31 +190,30 @@ Interview Role:
 
 Rules:
 - Return ONLY one category.
-- Do not explain your answer.
-- Do not use punctuation.
+- Do not explain.
+- Do not include punctuation.
 """
 
-        response = model.generate_content(prompt)
+        response = self.key_manager.generate_content(prompt)
 
         category = response.text.strip().lower()
 
-        if category not in self.VALID_CATEGORIES:
+        valid_categories = {
+            "software",
+            "finance",
+            "consulting",
+            "sales",
+            "marketing",
+        }
+
+        if category not in valid_categories:
             return "software"
 
         return category
 
-    def classify_role(
-        self,
-        role: str,
-        model,
-    ) -> str:
+    def classify_role(self, role: str) -> str:
         """
-        Determines the interview category.
-
-        Priority:
-        1. Exact role match
-        2. Keyword match
-        3. Gemini fallback
+        Classify a role into one of the supported interview categories.
         """
 
         category = self._exact_match(role)
@@ -257,7 +226,4 @@ Rules:
         if category:
             return category
 
-        return self._gemini_classification(
-            role=role,
-            model=model,
-        )
+        return self._gemini_classification(role)

@@ -1,28 +1,45 @@
-from pathlib import Path
-from dotenv import load_dotenv
 import os
+from pathlib import Path
 
-# Project Root
+from dotenv import load_dotenv
+
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
-# Load .env
 load_dotenv(BASE_DIR / ".env")
 
-# Project Paths
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+
+ACCESS_TOKEN_EXPIRE_MINUTES = int(
+    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 180)
+)
+
 UPLOAD_DIR = BASE_DIR / "uploads"
 
 RESUME_DIR = UPLOAD_DIR / "resumes"
-RESUME_DIR.mkdir(parents=True, exist_ok=True)
 
-# Database
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-# Security
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
-ACCESS_TOKEN_EXPIRE_MINUTES = int(
-    os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30)
+RESUME_DIR.mkdir(
+    parents=True,
+    exist_ok=True
 )
 
-# AI
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# -----------------------------
+# Gemini Configuration
+# -----------------------------
+
+GEMINI_API_KEYS = [
+    key.strip()
+    for key in os.getenv(
+        "GEMINI_API_KEYS",
+        ""
+    ).split(",")
+    if key.strip()
+]
+
+if not GEMINI_API_KEYS:
+    raise ValueError(
+        "At least one Gemini API key must be provided in GEMINI_API_KEYS."
+    )
