@@ -19,7 +19,7 @@ function Navbar() {
   return (
     <header className="navbar">
       <NavLink className="navbar__brand" to={isAuthenticated ? "/dashboard" : "/login"}>
-        InterviewAI
+        HotSeat
       </NavLink>
 
       <nav className="navbar__links" aria-label="Main navigation">

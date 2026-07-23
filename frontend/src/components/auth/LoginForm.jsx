@@ -69,7 +69,7 @@ function LoginForm() {
       </button>
 
       <p className="form-footer">
-        New to InterviewAI? <Link to="/signup">Create an account</Link>
+        New to Hot Seat? <Link to="/signup">Create an account</Link>
       </p>
     </form>
   );

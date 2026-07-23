@@ -52,7 +52,7 @@ An **AI-powered multi-domain interview preparation platform** that simulates rea
 # 📂 Project Structure
 
 ```text
-InterviewAI/
+Hot Seat/
 │
 ├── backend/
 │   ├── app/
