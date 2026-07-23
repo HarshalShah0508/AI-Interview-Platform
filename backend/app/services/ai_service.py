@@ -24,10 +24,7 @@ class AIService:
         difficulty: str,
     ):
 
-        category = self.role_classifier.classify_role(
-            role=role,
-            model=self.key_manager.get_model(),
-        )
+        category = self.role_classifier.classify_role(role)
 
         if category == "software":
 
