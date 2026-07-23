@@ -1,49 +1,51 @@
+
 # 🎯 AI Interview Platform
 
-An AI-powered interview preparation platform that simulates real technical interviews using Generative AI. Candidates can upload their resume, generate personalized interview questions, answer using text, voice, and code, and receive detailed AI-powered feedback with scores and improvement suggestions.
+An **AI-powered multi-domain interview preparation platform** that simulates realistic interviews using Generative AI. Candidates can upload their resume, generate personalized interview questions, answer using **voice, text, and code**, and receive detailed AI-powered feedback with scores and improvement suggestions.
 
 ---
 
-## 🚀 Features
+# 🚀 Features
 
-- 🔐 User Authentication (JWT)
+- 🔐 JWT Authentication
 - 📄 Resume Upload & PDF Parsing
-- 🤖 AI-Based Interview Question Generation
-- 💼 Role-Based Interviews
+- 🤖 AI-Powered Interview Generation
+- 💼 Multi-Domain Interviews (Software, Finance, Consulting, Sales, Marketing)
 - 📊 Difficulty Selection (Easy / Medium / Hard)
 - 🎤 Voice Answer Support
 - ⌨️ Text Answer Support
-- 💻 Code Editor for Coding Questions
-- 🧠 AI Answer Evaluation
-- 📈 Detailed Feedback & Scores
+- 💻 Built-in Code Editor
+- 🧠 AI-Based Answer Evaluation
+- 📈 Personalized Feedback & Scores
 - 📜 Interview History
-- 🐳 Dockerized Full-Stack Application
-- 📖 Interactive API Documentation (Swagger)
+- 🐳 Dockerized Full-Stack Deployment
+- 📖 Swagger API Documentation
 
 ---
 
-## 🛠️ Tech Stack
+# 🛠️ Tech Stack
 
-### Frontend
+## Frontend
 - React
 - Vite
 - React Router
 - CSS
 
-### Backend
+## Backend
 - FastAPI
 - SQLAlchemy
 - PostgreSQL
 - JWT Authentication
-- Passlib (Password Hashing)
+- Passlib + Bcrypt
 
-### AI
+## AI
 - Google Gemini API
 
-### DevOps
+## DevOps
 - Docker
 - Docker Compose
 - Nginx
+- Git
 
 ---
 
@@ -78,89 +80,167 @@ InterviewAI/
 # 🏗️ System Architecture
 
 ```text
-                     Browser
-                        │
-                        ▼
-             React Frontend (Nginx)
-                        │
-                        ▼
-                FastAPI Backend
-                        │
-           ┌────────────┴────────────┐
-           │                         │
-           ▼                         ▼
-      PostgreSQL Database       Gemini API
+Browser
+   │
+   ▼
+React Frontend (Nginx)
+   │
+   ▼
+FastAPI Backend
+   │
+   ├───────────────┐
+   ▼               ▼
+PostgreSQL     Gemini API
 ```
 
 ---
 
 # ⚙️ Prerequisites
 
-Before running the project, ensure the following are installed:
+## 1. Install Git
 
-- Docker Desktop
-- Git
+### Windows
+Download: https://git-scm.com/downloads
+
+### macOS
+
+```bash
+brew install git
+```
+
+### Ubuntu
+
+```bash
+sudo apt update
+sudo apt install git
+```
+
+Verify:
+
+```bash
+git --version
+```
+
+---
+
+## 2. Install Docker Desktop
+
+Download Docker Desktop:
+
+https://www.docker.com/products/docker-desktop/
+
+Verify installation:
+
+```bash
+docker --version
+docker compose version
+```
 
 ---
 
 # 🚀 Getting Started
 
-## 1. Clone the Repository
+## Step 1. Clone Repository
 
 ```bash
-git clone https://github.com/<your-username>/AI-Interview-Platform.git
+git clone https://github.com/HarshalShah0508/AI-Interview-Platform.git
 cd AI-Interview-Platform
 ```
 
 ---
 
-## 2. Create Environment File
+## Step 2. Get a Gemini API Key
 
-Inside the **backend** directory, create a `.env` file.
+1. Visit https://aistudio.google.com/
+2. Sign in with your Google account.
+3. Click **Get API Key**.
+4. Create a new API key.
+5. Copy the generated key.
+
+---
+
+## Step 3. Generate a Secret Key
+
+macOS / Linux
+
+```bash
+python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+```
+
+Windows
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(64))"
+```
+
+Copy the generated string.
+
+---
+
+## Step 4. Configure Environment Variables
+
+Create:
+
+```text
+backend/.env
+```
 
 Example:
 
 ```env
-DATABASE_URL=postgresql://interview_user_official:<password>@postgres:5432/interview_db
+DATABASE_URL=postgresql://interview_user_official:Harshal0508@postgres:5432/interview_db
 
-SECRET_KEY=your_secret_key
+SECRET_KEY=YOUR_GENERATED_SECRET_KEY
 
 ALGORITHM=HS256
 
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-GEMINI_API_KEY=your_gemini_api_key
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
 ```
 
 ---
 
-## 3. Run with Docker
+## Step 5. Start the Application
 
 ```bash
 docker compose up --build
 ```
 
-Docker automatically:
+Docker will automatically:
 
-- Builds the frontend
-- Builds the backend
-- Starts PostgreSQL
-- Creates the database
-- Connects all services
+- Build frontend
+- Build backend
+- Create PostgreSQL
+- Connect all services
+
+---
+
+## Step 6. Verify Containers
+
+```bash
+docker ps
+```
+
+Expected containers:
+
+- frontend
+- backend
+- postgres
 
 ---
 
 # 🌐 Application URLs
 
-### Frontend
+Frontend
 
-```
+```text
 http://localhost:3000
 ```
 
-### Backend API
+Backend Swagger
 
-```
+```text
 http://localhost:8000/docs
 ```
 
@@ -168,18 +248,16 @@ http://localhost:8000/docs
 
 # 📋 Application Workflow
 
-1. Register/Login
-2. Upload Resume
-3. Select Interview Role
-4. Choose Difficulty
-5. Generate AI Interview Questions
-6. Answer Using:
-   - Voice
-   - Text
-   - Code
-7. Submit Answers
-8. Receive AI Evaluation
-9. View Interview History
+1. Register an account
+2. Login
+3. Upload a PDF resume
+4. Select interview role
+5. Select difficulty
+6. Generate AI interview questions
+7. Answer using voice, text, or code
+8. Submit answers
+9. Review AI feedback
+10. View interview history
 
 ---
 
@@ -191,13 +269,63 @@ http://localhost:8000/docs
 | Backend | 8000 |
 | PostgreSQL | 5432 |
 
+---
 
 # 🔒 Security
 
 - JWT Authentication
-- Password Hashing using Passlib & Bcrypt
-- Protected API Endpoints
+- Password Hashing (Passlib + Bcrypt)
+- Protected REST APIs
 - Environment Variables for Secrets
+
+---
+
+# 📷 Screenshots
+
+Add screenshots here:
+
+- Login Page
+- Dashboard
+- Resume Upload
+- Interview Generation
+- Interview Session
+- AI Feedback
+- Interview History
+
+---
+
+# ❗ Troubleshooting
+
+## Docker daemon not running
+
+Start Docker Desktop and retry.
+
+---
+
+## Invalid Gemini API Key
+
+Verify `GEMINI_API_KEY` inside `backend/.env`.
+
+---
+
+## Port already in use
+
+Stop the conflicting service or modify the exposed port in `docker-compose.yml`.
+
+---
+
+## Containers fail to start
+
+```bash
+docker compose down
+docker compose up --build
+```
+
+---
+
+## Database connection error
+
+Ensure the password in `DATABASE_URL` matches the PostgreSQL credentials configured in `docker-compose.yml`.
 
 ---
 
@@ -206,12 +334,27 @@ http://localhost:8000/docs
 - Video Interview Support
 - AI Follow-up Questions
 - Real-Time Code Execution
-- Multi-Language Interviews
-- Admin Dashboard
 - Company Interview Templates
 - Leaderboards
-- Email Performance Reports
-- Cloud Deployment (AWS/GCP/Azure)
+- Email Reports
+- Cloud Deployment
+- Analytics Dashboard
+
+---
+
+# 🤝 Contributing
+
+```bash
+git checkout -b feature/my-feature
+
+git add .
+
+git commit -m "Add new feature"
+
+git push origin feature/my-feature
+```
+
+Create a Pull Request for review.
 
 ---
 
@@ -223,4 +366,6 @@ BITS Pilani Hyderabad Campus
 
 ---
 
-# ⭐ If you found this project useful, consider giving it a Star on GitHub!
+# ⭐ Support
+
+If you found this project useful, consider giving it a ⭐ on GitHub!
