@@ -296,20 +296,6 @@ http://localhost:8000/docs
 
 ---
 
-# 📷 Screenshots
-
-Add screenshots here:
-
-- Login Page
-- Dashboard
-- Resume Upload
-- Interview Generation
-- Interview Session
-- AI Feedback
-- Interview History
-
----
-
 # ❗ Troubleshooting
 
 ## Docker daemon not running
