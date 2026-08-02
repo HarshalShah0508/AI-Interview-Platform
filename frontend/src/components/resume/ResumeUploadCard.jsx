@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { getResumes, uploadResume } from "../../api/resumeApi";
+import { FaTrash } from "react-icons/fa";
+
+import {
+  getResumes,
+  uploadResume,
+  deleteResume,
+} from "../../api/resumeApi";
+
 import useAuth from "../../hooks/useAuth";
 
 function ResumeUploadCard() {
@@ -9,6 +16,8 @@ function ResumeUploadCard() {
   const [resumes, setResumes] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetchingResumes, setFetchingResumes] = useState(true);
+  const [deletingResumeId, setDeletingResumeId] = useState(null);
+
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
@@ -17,7 +26,7 @@ function ResumeUploadCard() {
       setFetchingResumes(true);
       const data = await getResumes(token);
       setResumes(data);
-    } catch (err) {
+    } catch {
       setError("Failed to load resumes");
     } finally {
       setFetchingResumes(false);
@@ -32,6 +41,7 @@ function ResumeUploadCard() {
 
   const handleFileChange = (event) => {
     const file = event.target.files[0];
+
     setSuccess("");
     setError("");
 
@@ -62,14 +72,50 @@ function ResumeUploadCard() {
 
       const response = await uploadResume(selectedFile, token);
 
-      setSuccess(`Resume uploaded successfully: ${response.filename}`);
+      setSuccess(
+        `Resume uploaded successfully: ${response.filename}`
+      );
+
       setSelectedFile(null);
 
       await loadResumes();
     } catch (err) {
-      setError(err?.response?.data?.detail || "Resume upload failed");
+      setError(
+        err?.response?.data?.detail ||
+          "Resume upload failed"
+      );
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (resume) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete "${resume.original_filename}"?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingResumeId(resume.id);
+
+      setSuccess("");
+      setError("");
+
+      await deleteResume(resume.id, token);
+
+      setSuccess("Resume deleted successfully.");
+
+      await loadResumes();
+    } catch (err) {
+      setError(
+        err?.response?.data?.detail ||
+          "Failed to delete resume."
+      );
+    } finally {
+      setDeletingResumeId(null);
     }
   };
 
@@ -77,18 +123,28 @@ function ResumeUploadCard() {
     <div className="content-card upload-card">
       <div>
         <h2>Upload your resume</h2>
-        <p>Upload a PDF resume so interview questions can be tailored to your profile.</p>
+
+        <p>
+          Upload a PDF resume so interview questions can
+          be tailored to your profile.
+        </p>
       </div>
 
       <div className="file-dropzone">
         <label className="form-field">
           <span>Select PDF resume</span>
-          <input type="file" accept=".pdf" onChange={handleFileChange} />
+
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={handleFileChange}
+          />
         </label>
 
         {selectedFile && (
           <div className="file-preview">
-            Selected file: <strong>{selectedFile.name}</strong>
+            Selected file:
+            <strong> {selectedFile.name}</strong>
           </div>
         )}
 
@@ -98,12 +154,19 @@ function ResumeUploadCard() {
           onClick={handleUpload}
           disabled={loading}
         >
-          {loading ? "Uploading..." : "Upload Resume"}
+          {loading
+            ? "Uploading..."
+            : "Upload Resume"}
         </button>
       </div>
 
-      {success && <p className="success-text">{success}</p>}
-      {error && <p className="error-text">{error}</p>}
+      {success && (
+        <p className="success-text">{success}</p>
+      )}
+
+      {error && (
+        <p className="error-text">{error}</p>
+      )}
 
       <div className="resume-list-section">
         <h3>Your uploaded resumes</h3>
@@ -115,9 +178,43 @@ function ResumeUploadCard() {
         ) : (
           <div className="resume-list">
             {resumes.map((resume) => (
-              <div className="resume-item" key={resume.id}>
-                <p><strong>{resume.original_filename}</strong></p>
-                <p>Uploaded on: {new Date(resume.created_at).toLocaleString()}</p>
+              <div
+                className="resume-item"
+                key={resume.id}
+              >
+                <div className="resume-item-header">
+                  <p>
+                    <strong>
+                      {resume.original_filename}
+                    </strong>
+                  </p>
+
+                  <p>
+                    Uploaded on:{" "}
+                    {new Date(
+                      resume.created_at
+                    ).toLocaleString()}
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  className="resume-delete-button"
+                  title="Delete Resume"
+                  disabled={
+                    deletingResumeId === resume.id
+                  }
+                  onClick={() =>
+                    handleDelete(resume)
+                  }
+                >
+                  {deletingResumeId ===
+                  resume.id ? (
+                    "..."
+                  ) : (
+                    <FaTrash />
+                  )}
+                </button>
               </div>
             ))}
           </div>

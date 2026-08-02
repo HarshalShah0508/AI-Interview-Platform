@@ -23,3 +23,13 @@ export const getResumes = async (token) => {
 
   return response.data;
 };
+
+export const deleteResume = async (resumeId, token) => {
+  const response = await apiClient.delete(`/resume/${resumeId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return response.data;
+};

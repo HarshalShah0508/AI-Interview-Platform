@@ -15,9 +15,10 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "https://hotseatai.vercel.app",
+        "http://localhost:3000",          # Docker frontend
+        "http://localhost:5173",          # Vite frontend
+        "http://127.0.0.1:5173",          # Vite frontend (127.0.0.1)
+        "https://hotseatai.vercel.app",   # Production frontend
     ],
     allow_credentials=True,
     allow_methods=["*"],
