@@ -15,6 +15,7 @@ from app.api.auth import get_current_user
 from app.models.resume import Resume
 from app.services.pdf_parser import extract_text_from_pdf
 from app.schemas.resume import ResumeResponse
+
 router = APIRouter(
     prefix="/resume",
     tags=["Resume"]
@@ -42,10 +43,11 @@ def upload_resume(
 
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
-    
+
     extracted_text = extract_text_from_pdf(
-    str(file_path)
-)
+        str(file_path)
+    )
+
     resume = Resume(
         user_id=current_user.id,
         filename=unique_filename,
@@ -57,13 +59,15 @@ def upload_resume(
     db.add(resume)
     db.commit()
     db.refresh(resume)
+
     return {
         "message": "Resume uploaded successfully",
         "resume_id": resume.id,
         "filename": resume.filename,
         "uploaded_by": current_user.email
     }
-    
+
+
 @router.get(
     "",
     response_model=list[ResumeResponse]
@@ -73,11 +77,63 @@ def get_resumes(
     current_user: User = Depends(get_current_user)
 ):
     resumes = (
-    db.query(Resume)
-    .filter(
-        Resume.user_id == current_user.id
+        db.query(Resume)
+        .filter(
+            Resume.user_id == current_user.id
+        )
+        .all()
     )
-    .all()
-)
 
     return resumes
+
+
+@router.delete("/{resume_id}")
+def delete_resume(
+    resume_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    resume = (
+        db.query(Resume)
+        .filter(
+            Resume.id == resume_id
+        )
+        .first()
+    )
+
+    if not resume:
+        raise HTTPException(
+            status_code=404,
+            detail="Resume not found"
+        )
+
+    if resume.user_id != current_user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="You are not authorized to delete this resume"
+        )
+
+    file_deleted = True
+
+    try:
+        file_path = Path(resume.filepath)
+
+        if file_path.exists():
+            file_path.unlink()
+        else:
+            file_deleted = False
+
+    except Exception:
+        file_deleted = False
+
+    db.delete(resume)
+    db.commit()
+
+    if file_deleted:
+        return {
+            "message": "Resume deleted successfully"
+        }
+
+    return {
+        "message": "Resume deleted from database. PDF file was already missing or could not be deleted."
+    }
