@@ -16,102 +16,231 @@ Returns exactly one category:
 - consulting
 - sales
 - marketing
+- digital_design
+- analog_design
+- embedded_systems
+- vlsi
+- product_management
 """
 
 from app.services.api_key_manager import APIKeyManager
 
 
 SOFTWARE_KEYWORDS = {
-    "software",
-    "developer",
-    "engineer",
-    "backend",
-    "frontend",
-    "front end",
-    "back end",
-    "full stack",
-    "fullstack",
-    "devops",
-    "cloud",
-    "android",
-    "ios",
-    "mobile",
-    "web",
-    "python",
-    "java",
-    "c++",
-    "cpp",
-    "javascript",
-    "react",
-    "node",
-    "machine learning",
-    "ml",
-    "ai",
-    "artificial intelligence",
+    "software engineer",
+    "software developer",
+    "backend engineer",
+    "backend developer",
+    "frontend engineer",
+    "frontend developer",
+    "front end engineer",
+    "back end engineer",
+    "full stack engineer",
+    "full stack developer",
+    "fullstack developer",
+    "web developer",
+    "application developer",
+    "python developer",
+    "java developer",
+    "c++ developer",
+    "cpp developer",
+    "android developer",
+    "ios developer",
+    "mobile developer",
+    "cloud engineer",
+    "devops engineer",
+    "site reliability engineer",
+    "sre",
+    "machine learning engineer",
+    "ml engineer",
+    "ai engineer",
+    "artificial intelligence engineer",
     "data engineer",
     "data scientist",
+    "sde",
+"software development engineer",
+"full stack",
+"frontend",
+"backend",
+"web engineer",
+"application engineer",
+"java engineer",
+"python engineer",
+"c++ engineer",
+"cpp engineer",
+"react developer",
+"node developer",
+"ios engineer",
+"android engineer",
 }
 
+
 FINANCE_KEYWORDS = {
-    "finance",
-    "financial",
-    "investment",
-    "banking",
-    "equity",
-    "portfolio",
+    "financial analyst",
+    "finance analyst",
+    "investment banking",
+    "investment banker",
+    "investment analyst",
+    "equity research",
+    "equity analyst",
+    "portfolio manager",
+    "portfolio analyst",
     "treasury",
-    "risk",
+    "risk analyst",
     "valuation",
-    "quant",
-    "analyst",
     "corporate finance",
     "private equity",
     "venture capital",
     "asset management",
     "wealth management",
+    "credit analyst",
 }
+
 
 CONSULTING_KEYWORDS = {
     "consultant",
-    "consulting",
-    "strategy",
+    "management consultant",
+    "strategy consultant",
+    "business consultant",
+    "operations consultant",
     "business consulting",
     "management consulting",
     "operations consulting",
-    "operations",
     "advisory",
-    "strategy consultant",
+    "business analyst",
 }
 
+
 SALES_KEYWORDS = {
-    "sales",
-    "business development",
-    "account manager",
-    "account executive",
-    "relationship manager",
-    "customer success",
     "sales executive",
     "sales manager",
+    "business development",
+    "business development representative",
+    "sales development representative",
+    "account executive",
+    "account manager",
+    "relationship manager",
+    "customer success",
     "inside sales",
     "enterprise sales",
 }
 
+
 MARKETING_KEYWORDS = {
     "marketing",
-    "brand",
+    "marketing analyst",
+    "digital marketing",
+    "performance marketing",
+    "growth marketing",
+    "product marketing",
+    "brand manager",
     "branding",
     "seo",
     "sem",
-    "growth",
-    "content",
     "content marketing",
-    "digital marketing",
-    "performance marketing",
-    "product marketing",
-    "marketing analyst",
 }
 
 
+DIGITAL_DESIGN_KEYWORDS = {
+    "rtl",
+    "rtl engineer",
+    "rtl design",
+    "digital design",
+    "digital design engineer",
+    "asic",
+    "asic engineer",
+    "asic design engineer",
+    "logic design",
+    "logic design engineer",
+    "verification engineer",
+    "design verification",
+    "dv engineer",
+    "fpga",
+    "fpga engineer",
+    "fpga design engineer",
+    "verilog",
+    "systemverilog",
+    "rtl developer",
+"verification",
+"design verification engineer",
+}
+
+
+ANALOG_DESIGN_KEYWORDS = {
+    "analog",
+    "analog design",
+    "analog engineer",
+    "analog design engineer",
+    "analog ic",
+    "analog ic design",
+    "analog ic engineer",
+    "mixed signal",
+    "mixed signal engineer",
+    "mixed signal design",
+    "circuit design",
+}
+
+
+EMBEDDED_SYSTEMS_KEYWORDS = {
+    "embedded",
+    "embedded engineer",
+    "embedded systems",
+    "embedded systems engineer",
+    "embedded software",
+    "embedded software engineer",
+    "firmware",
+    "firmware engineer",
+    "device driver",
+    "device driver engineer",
+    "microcontroller",
+    "microcontroller engineer",
+    "iot",
+    "automotive embedded",
+    "embedded linux",
+"embedded linux engineer",
+"linux kernel",
+"kernel developer",
+}
+
+
+VLSI_KEYWORDS = {
+    "vlsi",
+    "physical design",
+    "physical design engineer",
+    "backend vlsi",
+    "backend design",
+    "backend engineer",
+    "physical verification",
+    "timing engineer",
+    "sta",
+    "static timing",
+    "dft",
+    "scan",
+    "pd engineer",
+    "synthesis",
+"synthesis engineer",
+"physical implementation",
+"timing closure",
+"physical design",
+"backend physical design",
+}
+
+
+PRODUCT_MANAGEMENT_KEYWORDS = {
+    "product manager",
+    "associate product manager",
+    "assistant product manager",
+    "apm",
+    "technical product manager",
+    "group product manager",
+    "senior product manager",
+    "principal product manager",
+    "product owner",
+    "product analyst",
+    "product management",
+    "growth product manager",
+    "platform product manager",
+}
 class RoleClassifier:
     """
     Classifies interview roles into predefined interview categories.
@@ -129,8 +258,20 @@ class RoleClassifier:
 
         role = self._normalize_role(role)
 
-        if role in SOFTWARE_KEYWORDS:
-            return "software"
+        if role in DIGITAL_DESIGN_KEYWORDS:
+            return "digital_design"
+
+        if role in ANALOG_DESIGN_KEYWORDS:
+            return "analog_design"
+
+        if role in EMBEDDED_SYSTEMS_KEYWORDS:
+            return "embedded_systems"
+
+        if role in VLSI_KEYWORDS:
+            return "vlsi"
+
+        if role in PRODUCT_MANAGEMENT_KEYWORDS:
+            return "product_management"
 
         if role in FINANCE_KEYWORDS:
             return "finance"
@@ -144,15 +285,39 @@ class RoleClassifier:
         if role in MARKETING_KEYWORDS:
             return "marketing"
 
-        return None
+        if role in SOFTWARE_KEYWORDS:
+            return "software"
 
+        return None
     def _keyword_match(self, role: str) -> str | None:
 
         role = self._normalize_role(role)
 
-        for keyword in SOFTWARE_KEYWORDS:
+        # Electronics domains first (more specific)
+
+        for keyword in DIGITAL_DESIGN_KEYWORDS:
             if keyword in role:
-                return "software"
+                return "digital_design"
+
+        for keyword in ANALOG_DESIGN_KEYWORDS:
+            if keyword in role:
+                return "analog_design"
+
+        for keyword in EMBEDDED_SYSTEMS_KEYWORDS:
+            if keyword in role:
+                return "embedded_systems"
+
+        for keyword in VLSI_KEYWORDS:
+            if keyword in role:
+                return "vlsi"
+
+        # Product Management
+
+        for keyword in PRODUCT_MANAGEMENT_KEYWORDS:
+            if keyword in role:
+                return "product_management"
+
+        # Business domains
 
         for keyword in FINANCE_KEYWORDS:
             if keyword in role:
@@ -170,6 +335,12 @@ class RoleClassifier:
             if keyword in role:
                 return "marketing"
 
+        # Software last (contains broader terms)
+
+        for keyword in SOFTWARE_KEYWORDS:
+            if keyword in role:
+                return "software"
+
         return None
 
     def _gemini_classification(self, role: str) -> str:
@@ -184,12 +355,18 @@ Finance
 Consulting
 Sales
 Marketing
+Digital_Design
+Analog_Design
+Embedded_Systems
+VLSI
+Product_Management
 
 Interview Role:
 {role}
 
 Rules:
 - Return ONLY one category.
+- Use exactly one of the category names above.
 - Do not explain.
 - Do not include punctuation.
 """
@@ -204,6 +381,11 @@ Rules:
             "consulting",
             "sales",
             "marketing",
+            "digital_design",
+            "analog_design",
+            "embedded_systems",
+            "vlsi",
+            "product_management",
         }
 
         if category not in valid_categories:

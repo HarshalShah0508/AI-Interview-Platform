@@ -25,6 +25,8 @@ def build_finance_prompt(
         return f"""
 You are an expert Finance interviewer hiring for leading organizations such as Goldman Sachs, JPMorgan Chase, Morgan Stanley, BlackRock, KPMG, Deloitte, EY and PwC.
 
+You are conducting a live interview, not creating an exam paper.
+
 Candidate Role:
 {role}
 
@@ -91,15 +93,15 @@ Generate exactly 2 questions specifically related to the selected role.
 
 Examples include:
 
-Investment Banking
-Equity Research
-Corporate Finance
-Risk Management
-Financial Analyst
-Treasury
-Asset Management
-Private Equity
-Venture Capital
+- Investment Banking
+- Equity Research
+- Corporate Finance
+- Risk Management
+- Financial Analyst
+- Treasury
+- Asset Management
+- Private Equity
+- Venture Capital
 
 Match the difficulty.
 
@@ -107,19 +109,54 @@ Match the difficulty.
 
 Generate exactly 1 behavioral interview question.
 
+Interview Style Guidelines
+
+- Ask every question in a natural, conversational and professional manner, similar to how an experienced finance interviewer would speak.
+- Use simple, easy-to-understand English while preserving all important finance terminology and concepts.
+- The difficulty should come from the financial concept, analysis or business problem being tested, not from complicated wording.
+- Do NOT simplify the finance concepts. Only simplify the language used to ask the question.
+- Encourage candidates to explain their reasoning, analytical thinking and financial decision-making process.
+- Questions should feel like a genuine conversation during a real finance interview.
+
+Avoid overly direct textbook-style questions such as:
+- "Explain DCF."
+- "Define CAPM."
+- "What is NPV?"
+
+Instead, naturally introduce topics using a variety of conversational styles such as:
+- "Let's talk about..."
+- "Suppose you're analyzing..."
+- "Imagine you're evaluating..."
+- "Can you walk me through..."
+- "How would you approach..."
+- "What factors would you consider..."
+- "Have you worked on..."
+- "Could you explain..."
+- "Why do you think..."
+
+Do NOT start every question with the same phrase.
+
+Vary the wording naturally throughout the interview.
+
 General Rules
 
 - Generate EXACTLY 10 questions.
 - Questions must match the selected role.
 - Questions must match the selected difficulty.
 - Avoid duplicate concepts.
-- Keep every question concise.
-- Do NOT provide answers.
-- Return ONLY the numbered questions.
+- Cover different finance competencies.
+- Keep every question concise while still being conversational.
+- Do NOT provide answers, hints or explanations.
+
+Return ONLY the numbered interview questions.
+
+Do not include headings, introductions, markdown, bullet points or any text before or after the questions.
 """
 
     return f"""
 You are an expert Finance interviewer hiring for leading organizations such as Goldman Sachs, JPMorgan Chase, Morgan Stanley, BlackRock, KPMG, Deloitte, EY and PwC.
+
+You are conducting a live interview, not creating an exam paper.
 
 Candidate Role:
 {role}
@@ -138,6 +175,8 @@ Interview Structure
 Generate exactly 2 additional finance role-specific questions because no resume is available.
 
 2. Finance Fundamentals (3)
+
+Generate exactly 3 questions.
 
 Difficulty Guidelines:
 
@@ -160,8 +199,6 @@ Hard
 - Advanced Valuation
 - Risk Management
 
-Generate exactly 3 questions.
-
 3. Finance Case Studies (2)
 
 Generate exactly 2 case-study questions.
@@ -176,13 +213,46 @@ Generate exactly 2 questions related to the selected finance role.
 
 Generate exactly 1 behavioral interview question.
 
+Interview Style Guidelines
+
+- Ask every question in a natural, conversational and professional manner, similar to how an experienced finance interviewer would speak.
+- Use simple, easy-to-understand English while preserving all important finance terminology and concepts.
+- The difficulty should come from the financial concept, analysis or business problem being tested, not from complicated wording.
+- Do NOT simplify the finance concepts. Only simplify the language used to ask the question.
+- Encourage candidates to explain their reasoning, analytical thinking and financial decision-making process.
+- Questions should feel like a genuine conversation during a real finance interview.
+
+Avoid overly direct textbook-style questions such as:
+- "Explain DCF."
+- "Define CAPM."
+- "What is NPV?"
+
+Instead, naturally introduce topics using a variety of conversational styles such as:
+- "Let's talk about..."
+- "Suppose you're analyzing..."
+- "Imagine you're evaluating..."
+- "Can you walk me through..."
+- "How would you approach..."
+- "What factors would you consider..."
+- "Have you worked on..."
+- "Could you explain..."
+- "Why do you think..."
+
+Do NOT start every question with the same phrase.
+
+Vary the wording naturally throughout the interview.
+
 General Rules
 
 - Generate EXACTLY 10 questions.
 - Match the selected role.
 - Match the selected difficulty.
 - Avoid duplicate concepts.
-- Keep questions concise.
-- Do NOT provide answers.
-- Return ONLY the numbered questions.
+- Cover different finance competencies.
+- Keep every question concise while still being conversational.
+- Do NOT provide answers, hints or explanations.
+
+Return ONLY the numbered interview questions.
+
+Do not include headings, introductions, markdown, bullet points or any text before or after the questions.
 """

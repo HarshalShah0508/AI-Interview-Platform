@@ -13,7 +13,7 @@ def build_consulting_prompt(
 
     Args:
         role: Candidate's selected role.
-        difficulty: Easy /Medium / Hard.
+        difficulty: Easy / Medium / Hard.
         resume_text: Parsed resume text if available.
 
     Returns:
@@ -24,6 +24,8 @@ def build_consulting_prompt(
 
         return f"""
 You are an expert Management Consulting interviewer hiring for leading consulting firms such as McKinsey & Company, Boston Consulting Group (BCG), Bain & Company, Accenture Strategy, Deloitte Consulting, EY-Parthenon, Kearney and Oliver Wyman.
+
+You are conducting a live interview, not creating an exam paper.
 
 Candidate Role:
 {role}
@@ -102,21 +104,54 @@ Match the selected difficulty.
 
 Generate exactly 1 behavioral interview question.
 
+Interview Style Guidelines
+
+- Ask every question in a natural, conversational and professional manner, similar to how an experienced consulting interviewer would speak.
+- Use simple, easy-to-understand English while preserving all important consulting terminology, frameworks and business concepts.
+- The difficulty should come from the business problem and analytical thinking being tested, not from complicated wording.
+- Do NOT simplify the consulting concepts. Only simplify the language used to ask the question.
+- Encourage candidates to explain their reasoning, structured thinking, assumptions and decision-making process.
+- Questions should feel like a genuine consulting interview rather than an academic examination.
+
+Avoid overly direct textbook-style questions such as:
+- "Explain SWOT Analysis."
+- "Define Porter's Five Forces."
+- "What is Market Entry Strategy?"
+
+Instead, naturally introduce topics using a variety of conversational styles such as:
+- "Let's talk about..."
+- "Suppose a client approaches you..."
+- "Imagine you're advising..."
+- "Can you walk me through..."
+- "How would you approach..."
+- "What factors would you consider..."
+- "A client is facing..."
+- "Could you explain..."
+- "Why do you think..."
+
+Do NOT start every question with the same phrase.
+
+Vary the wording naturally throughout the interview.
+
 General Rules
 
 - Generate EXACTLY 10 questions.
 - Questions must match the selected role.
 - Questions must match the selected difficulty.
 - Avoid duplicate concepts.
-- Cover different business domains.
-- Keep every question concise.
+- Cover different consulting competencies.
+- Keep every question concise while still being conversational.
 - Do NOT provide answers, hints or explanations.
 
-Return ONLY the numbered questions.
+Return ONLY the numbered interview questions.
+
+Do not include headings, introductions, markdown, bullet points or any text before or after the questions.
 """
 
     return f"""
 You are an expert Management Consulting interviewer hiring for leading consulting firms such as McKinsey & Company, Boston Consulting Group (BCG), Bain & Company, Accenture Strategy, Deloitte Consulting, EY-Parthenon, Kearney and Oliver Wyman.
+
+You are conducting a live interview, not creating an exam paper.
 
 Candidate Role:
 {role}
@@ -171,13 +206,46 @@ Generate exactly 2 consulting role-specific analytical questions.
 
 Generate exactly 1 behavioral interview question.
 
+Interview Style Guidelines
+
+- Ask every question in a natural, conversational and professional manner, similar to how an experienced consulting interviewer would speak.
+- Use simple, easy-to-understand English while preserving all important consulting terminology, frameworks and business concepts.
+- The difficulty should come from the business problem and analytical thinking being tested, not from complicated wording.
+- Do NOT simplify the consulting concepts. Only simplify the language used to ask the question.
+- Encourage candidates to explain their reasoning, structured thinking, assumptions and decision-making process.
+- Questions should feel like a genuine consulting interview rather than an academic examination.
+
+Avoid overly direct textbook-style questions such as:
+- "Explain SWOT Analysis."
+- "Define Porter's Five Forces."
+- "What is Market Entry Strategy?"
+
+Instead, naturally introduce topics using a variety of conversational styles such as:
+- "Let's talk about..."
+- "Suppose a client approaches you..."
+- "Imagine you're advising..."
+- "Can you walk me through..."
+- "How would you approach..."
+- "What factors would you consider..."
+- "A client is facing..."
+- "Could you explain..."
+- "Why do you think..."
+
+Do NOT start every question with the same phrase.
+
+Vary the wording naturally throughout the interview.
+
 General Rules
 
 - Generate EXACTLY 10 questions.
 - Match the selected role.
 - Match the selected difficulty.
 - Avoid duplicate concepts.
-- Keep questions concise.
-- Do NOT provide answers.
-- Return ONLY the numbered questions.
+- Cover different consulting competencies.
+- Keep every question concise while still being conversational.
+- Do NOT provide answers, hints or explanations.
+
+Return ONLY the numbered interview questions.
+
+Do not include headings, introductions, markdown, bullet points or any text before or after the questions.
 """

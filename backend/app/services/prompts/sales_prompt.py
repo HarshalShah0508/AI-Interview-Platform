@@ -13,7 +13,7 @@ def build_sales_prompt(
 
     Args:
         role: Candidate's selected role.
-        difficulty: Easy / Medium / Hard.
+        difficulty: Easy /Medium / Hard.
         resume_text: Parsed resume text if available.
 
     Returns:
@@ -24,6 +24,8 @@ def build_sales_prompt(
 
         return f"""
 You are an expert Sales interviewer hiring for leading organizations such as Salesforce, Oracle, HubSpot, Microsoft, Amazon, Adobe, SAP and Cisco.
+
+You are conducting a live interview, not creating an exam paper.
 
 Candidate Role:
 {role}
@@ -107,6 +109,35 @@ Questions should assess practical sales thinking.
 
 Generate exactly 1 behavioral interview question.
 
+Interview Style Guidelines
+
+- Ask every question in a natural, conversational and professional manner, similar to how an experienced interviewer would speak.
+- Use simple, easy-to-understand English while preserving all important sales terminology and concepts.
+- The difficulty should come from the business scenario or sales concept being tested, not from complicated wording.
+- Do NOT simplify the business concepts. Only simplify the language used to ask the question.
+- Encourage candidates to explain their reasoning, decision-making process and practical approach.
+- Questions should feel like a genuine conversation during a real sales interview.
+
+Avoid overly direct textbook-style questions such as:
+- "Explain CRM."
+- "Define Lead Generation."
+- "What is Enterprise Sales?"
+
+Instead, naturally introduce topics using a variety of conversational styles such as:
+- "Let's talk about..."
+- "Suppose you're meeting..."
+- "Imagine you're handling..."
+- "Can you walk me through..."
+- "How would you approach..."
+- "What would you do if..."
+- "Have you experienced..."
+- "Could you explain..."
+- "Why do you think..."
+
+Do NOT start every question with the same phrase.
+
+Vary the wording naturally throughout the interview.
+
 General Rules
 
 - Generate EXACTLY 10 questions.
@@ -114,14 +145,18 @@ General Rules
 - Match the selected difficulty.
 - Avoid duplicate concepts.
 - Cover different sales competencies.
-- Keep every question concise.
+- Keep every question concise while still being conversational.
 - Do NOT provide answers, hints or explanations.
 
-Return ONLY the numbered questions.
+Return ONLY the numbered interview questions.
+
+Do not include headings, introductions, markdown, bullet points or any text before or after the questions.
 """
 
     return f"""
 You are an expert Sales interviewer hiring for leading organizations such as Salesforce, Oracle, HubSpot, Microsoft, Amazon, Adobe, SAP and Cisco.
+
+You are conducting a live interview, not creating an exam paper.
 
 Candidate Role:
 {role}
@@ -176,13 +211,46 @@ Generate exactly 2 role-specific sales strategy questions.
 
 Generate exactly 1 behavioral interview question.
 
+Interview Style Guidelines
+
+- Ask every question in a natural, conversational and professional manner, similar to how an experienced interviewer would speak.
+- Use simple, easy-to-understand English while preserving all important sales terminology and concepts.
+- The difficulty should come from the business scenario or sales concept being tested, not from complicated wording.
+- Do NOT simplify the business concepts. Only simplify the language used to ask the question.
+- Encourage candidates to explain their reasoning, decision-making process and practical approach.
+- Questions should feel like a genuine conversation during a real sales interview.
+
+Avoid overly direct textbook-style questions such as:
+- "Explain CRM."
+- "Define Lead Generation."
+- "What is Enterprise Sales?"
+
+Instead, naturally introduce topics using a variety of conversational styles such as:
+- "Let's talk about..."
+- "Suppose you're meeting..."
+- "Imagine you're handling..."
+- "Can you walk me through..."
+- "How would you approach..."
+- "What would you do if..."
+- "Have you experienced..."
+- "Could you explain..."
+- "Why do you think..."
+
+Do NOT start every question with the same phrase.
+
+Vary the wording naturally throughout the interview.
+
 General Rules
 
 - Generate EXACTLY 10 questions.
 - Match the selected role.
 - Match the selected difficulty.
 - Avoid duplicate concepts.
-- Keep questions concise.
-- Do NOT provide answers.
-- Return ONLY the numbered questions.
+- Cover different sales competencies.
+- Keep every question concise while still being conversational.
+- Do NOT provide answers, hints or explanations.
+
+Return ONLY the numbered interview questions.
+
+Do not include headings, introductions, markdown, bullet points or any text before or after the questions.
 """

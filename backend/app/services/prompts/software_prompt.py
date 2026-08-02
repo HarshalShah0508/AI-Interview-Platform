@@ -37,6 +37,8 @@ def build_software_prompt(
         return f"""
 You are an expert Software Engineering interviewer at top product-based companies like Google, Amazon, Microsoft, Meta, Apple, Netflix and Uber.
 
+You are conducting a live interview, not creating an exam paper.
+
 Candidate Role:
 {role}
 
@@ -113,6 +115,35 @@ Increase the conceptual depth according to the selected difficulty.
 
 Generate exactly 1 behavioral interview question.
 
+Interview Style Guidelines:
+
+- Ask every question in a natural, conversational and professional manner, similar to how an experienced interviewer at a top technology company would speak.
+- Use simple, easy-to-understand English while preserving all important technical terms and concepts.
+- The difficulty should come from the technical concept being tested, not from complicated wording.
+- Do NOT simplify the technical concepts. Only simplify the language used to ask the question.
+- Questions should encourage the candidate to explain their reasoning rather than simply recall definitions.
+- Questions should resemble a real one-to-one interview conversation.
+
+Avoid overly direct textbook-style questions such as:
+- "Explain X."
+- "Define Y."
+- "What is Z?"
+
+Instead, naturally introduce topics using a variety of conversational styles such as:
+- "Let's talk about..."
+- "Suppose you're working on..."
+- "Imagine you're designing..."
+- "Can you walk me through..."
+- "How would you approach..."
+- "What do you think happens when..."
+- "Have you worked with..."
+- "Could you explain..."
+- "Why do you think..."
+
+Do NOT start every question with the same phrase.
+
+Vary the wording naturally throughout the interview.
+
 General Rules:
 - Generate EXACTLY 10 questions.
 - Questions must match the selected role.
@@ -120,14 +151,18 @@ General Rules:
 - Avoid duplicate concepts.
 - Cover a variety of topics.
 - Questions should resemble real Software Engineering interviews.
-- Keep every question concise.
+- Keep every question concise while still being conversational.
 - Do NOT provide answers, hints or explanations.
 
-Return ONLY the numbered questions.
+Return ONLY the numbered interview questions.
+
+Do not include headings, introductions, markdown, bullet points or any text before or after the questions.
 """
 
     return f"""
 You are an expert Software Engineering interviewer at top product-based companies like Google, Amazon, Microsoft, Meta, Apple, Netflix and Uber.
+
+You are conducting a live interview, not creating an exam paper.
 
 Candidate Role:
 {role}
@@ -198,14 +233,45 @@ Increase the conceptual depth according to the selected difficulty.
 
 Generate exactly 1 behavioral interview question.
 
+Interview Style Guidelines:
+
+- Ask every question in a natural, conversational and professional manner, similar to how an experienced interviewer at a top technology company would speak.
+- Use simple, easy-to-understand English while preserving all important technical terms and concepts.
+- The difficulty should come from the technical concept being tested, not from complicated wording.
+- Do NOT simplify the technical concepts. Only simplify the language used to ask the question.
+- Questions should encourage the candidate to explain their reasoning rather than simply recall definitions.
+- Questions should resemble a real one-to-one interview conversation.
+
+Avoid overly direct textbook-style questions such as:
+- "Explain X."
+- "Define Y."
+- "What is Z?"
+
+Instead, naturally introduce topics using a variety of conversational styles such as:
+- "Let's talk about..."
+- "Suppose you're working on..."
+- "Imagine you're designing..."
+- "Can you walk me through..."
+- "How would you approach..."
+- "What do you think happens when..."
+- "Have you worked with..."
+- "Could you explain..."
+- "Why do you think..."
+
+Do NOT start every question with the same phrase.
+
+Vary the wording naturally throughout the interview.
+
 General Rules:
 - Generate EXACTLY 10 questions.
 - Match the selected role.
 - Match the selected difficulty.
 - Avoid duplicate concepts.
 - Cover different topics.
-- Keep questions concise.
+- Keep questions concise while still being conversational.
 - Do NOT provide answers, hints or explanations.
 
-Return ONLY the numbered questions.
+Return ONLY the numbered interview questions.
+
+Do not include headings, introductions, markdown, bullet points or any text before or after the questions.
 """

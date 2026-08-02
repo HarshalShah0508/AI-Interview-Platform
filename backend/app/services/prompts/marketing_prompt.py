@@ -25,6 +25,8 @@ def build_marketing_prompt(
         return f"""
 You are an expert Marketing interviewer hiring for leading organizations such as Google, Amazon, Meta, Adobe, Unilever, Procter & Gamble, HubSpot and Salesforce.
 
+You are conducting a live interview, not creating an exam paper.
+
 Candidate Role:
 {role}
 
@@ -118,6 +120,35 @@ Questions should evaluate practical marketing knowledge and decision-making.
 
 Generate exactly 1 behavioral interview question.
 
+Interview Style Guidelines
+
+- Ask every question in a natural, conversational and professional manner, similar to how an experienced marketing interviewer would speak.
+- Use simple, easy-to-understand English while preserving all important marketing terminology and concepts.
+- The difficulty should come from the marketing concept or business problem being tested, not from complicated wording.
+- Do NOT simplify the marketing concepts. Only simplify the language used to ask the question.
+- Encourage candidates to explain their reasoning, decision-making process and practical marketing approach.
+- Questions should feel like a genuine conversation during a real marketing interview.
+
+Avoid overly direct textbook-style questions such as:
+- "Explain SEO."
+- "Define Branding."
+- "What is Customer Journey?"
+
+Instead, naturally introduce topics using a variety of conversational styles such as:
+- "Let's talk about..."
+- "Suppose you're launching..."
+- "Imagine you're responsible for..."
+- "Can you walk me through..."
+- "How would you approach..."
+- "What would you do if..."
+- "Have you worked on..."
+- "Could you explain..."
+- "Why do you think..."
+
+Do NOT start every question with the same phrase.
+
+Vary the wording naturally throughout the interview.
+
 General Rules
 
 - Generate EXACTLY 10 questions.
@@ -125,14 +156,18 @@ General Rules
 - Questions must match the selected difficulty.
 - Avoid duplicate concepts.
 - Cover different marketing competencies.
-- Keep every question concise.
+- Keep every question concise while still being conversational.
 - Do NOT provide answers, hints or explanations.
 
-Return ONLY the numbered questions.
+Return ONLY the numbered interview questions.
+
+Do not include headings, introductions, markdown, bullet points or any text before or after the questions.
 """
 
     return f"""
 You are an expert Marketing interviewer hiring for leading organizations such as Google, Amazon, Meta, Adobe, Unilever, Procter & Gamble, HubSpot and Salesforce.
+
+You are conducting a live interview, not creating an exam paper.
 
 Candidate Role:
 {role}
@@ -193,13 +228,46 @@ Generate exactly 2 role-specific marketing analytics questions.
 
 Generate exactly 1 behavioral interview question.
 
+Interview Style Guidelines
+
+- Ask every question in a natural, conversational and professional manner, similar to how an experienced marketing interviewer would speak.
+- Use simple, easy-to-understand English while preserving all important marketing terminology and concepts.
+- The difficulty should come from the marketing concept or business problem being tested, not from complicated wording.
+- Do NOT simplify the marketing concepts. Only simplify the language used to ask the question.
+- Encourage candidates to explain their reasoning, decision-making process and practical marketing approach.
+- Questions should feel like a genuine conversation during a real marketing interview.
+
+Avoid overly direct textbook-style questions such as:
+- "Explain SEO."
+- "Define Branding."
+- "What is Customer Journey?"
+
+Instead, naturally introduce topics using a variety of conversational styles such as:
+- "Let's talk about..."
+- "Suppose you're launching..."
+- "Imagine you're responsible for..."
+- "Can you walk me through..."
+- "How would you approach..."
+- "What would you do if..."
+- "Have you worked on..."
+- "Could you explain..."
+- "Why do you think..."
+
+Do NOT start every question with the same phrase.
+
+Vary the wording naturally throughout the interview.
+
 General Rules
 
 - Generate EXACTLY 10 questions.
 - Match the selected role.
 - Match the selected difficulty.
 - Avoid duplicate concepts.
-- Keep questions concise.
-- Do NOT provide answers.
-- Return ONLY the numbered questions.
+- Cover different marketing competencies.
+- Keep every question concise while still being conversational.
+- Do NOT provide answers, hints or explanations.
+
+Return ONLY the numbered interview questions.
+
+Do not include headings, introductions, markdown, bullet points or any text before or after the questions.
 """
