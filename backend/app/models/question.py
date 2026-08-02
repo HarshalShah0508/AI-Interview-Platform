@@ -1,6 +1,7 @@
 from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import Text
+from sqlalchemy import Boolean
 from sqlalchemy import ForeignKey
 
 from sqlalchemy.orm import relationship
@@ -27,6 +28,24 @@ class Question(Base):
     question_text = Column(
         Text,
         nullable=False
+    )
+
+    is_follow_up = Column(
+        Boolean,
+        nullable=False,
+        default=False
+    )
+
+    parent_question_id = Column(
+        Integer,
+        ForeignKey("questions.id"),
+        nullable=True
+    )
+
+    follow_up_depth = Column(
+        Integer,
+        nullable=False,
+        default=0
     )
 
     session = relationship(

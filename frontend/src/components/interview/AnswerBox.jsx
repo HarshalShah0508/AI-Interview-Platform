@@ -53,18 +53,24 @@ function AnswerBox({
         token
       );
 
-      onAnswerSubmitted(response);
-
       setVoiceText("");
       setTypedText("");
       setCode("");
+      setError("");
+
+      onAnswerSubmitted(response);
+
     } catch (err) {
+
       setError(
         err?.response?.data?.detail ||
-          "Failed to submit answer."
+        "Failed to submit answer."
       );
+
     } finally {
+
       setLoading(false);
+
     }
   };
 

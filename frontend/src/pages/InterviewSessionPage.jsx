@@ -51,19 +51,24 @@ function InterviewSessionPage() {
         setFeedbackMap(feedbacks);
 
         const firstUnanswered = data.questions.findIndex(
-          (q) => !q.answered
+          (question) => !question.answered
         );
 
         if (firstUnanswered !== -1) {
           setCurrentQuestionIndex(firstUnanswered);
         }
+
       } catch (err) {
+
         setError(
           err?.response?.data?.detail ||
-            "Failed to load interview session."
+          "Failed to load interview session."
         );
+
       } finally {
+
         setLoading(false);
+
       }
     };
 
@@ -88,109 +93,169 @@ function InterviewSessionPage() {
     );
   }
 
-  const currentQuestion = session.questions[currentQuestionIndex];
-  const currentFeedback = feedbackMap[currentQuestion.id];
+  const currentQuestion =
+    session.questions[currentQuestionIndex];
 
-  const handleAnswerSubmitted = (response) => {
-    setFeedbackMap((prev) => ({
-      ...prev,
-      [currentQuestion.id]: response,
-    }));
+  const currentFeedback =
+    feedbackMap[currentQuestion.id];
 
-    setAnsweredQuestions((prev) => {
-      const updated = new Set(prev);
-      updated.add(currentQuestion.id);
-      return updated;
-    });
-  };
+  const totalMainQuestions =
+    session.questions.filter(
+      (question) => !question.is_follow_up
+    ).length;
 
-  const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex((prev) => prev - 1);
-    }
-  };
+  const currentMainQuestionNumber =
+    session.questions
+      .slice(0, currentQuestionIndex + 1)
+      .filter(
+        (question) => !question.is_follow_up
+      ).length;
+      const handleAnswerSubmitted = (response) => {
+  setFeedbackMap((prev) => ({
+    ...prev,
+    [currentQuestion.id]: {
+      score: response.score,
+      feedback: response.feedback,
+      strengths: response.strengths,
+      improvements: response.improvements,
+    },
+  }));
 
-  const handleNext = () => {
-    if (currentQuestionIndex < session.questions.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-    }
-  };
+  setAnsweredQuestions((prev) => {
+    const updated = new Set(prev);
+    updated.add(currentQuestion.id);
+    return updated;
+  });
 
-  const handleFinishInterview = () => {
-    const unanswered =
-      session.questions.length - answeredQuestions.size;
+  if (response.has_follow_up && response.follow_up) {
+    setSession((prevSession) => {
+      const updatedQuestions = [...prevSession.questions];
 
-    if (unanswered > 0) {
-      const confirmFinish = window.confirm(
-        `You still have ${unanswered} unanswered question(s).\n\nDo you want to finish the interview?`
+      updatedQuestions.splice(
+        currentQuestionIndex + 1,
+        0,
+        {
+          id: response.follow_up.question_id,
+          question_text:
+            response.follow_up.question_text,
+          follow_up_depth:
+            response.follow_up.follow_up_depth,
+          is_follow_up: true,
+          answered: false,
+        }
       );
 
-      if (!confirmFinish) return;
-    }
+      return {
+        ...prevSession,
+        questions: updatedQuestions,
+      };
+    });
+  }
 
-    navigate(`/results/${sessionId}`);
-  };
+  setCurrentQuestionIndex((prev) => prev + 1);
+};
 
-  return (
-    <section className="page-shell">
-      <div className="page-header">
-        <p className="eyebrow">Practice Session</p>
+const handlePrevious = () => {
+  if (currentQuestionIndex > 0) {
+    setCurrentQuestionIndex((prev) => prev - 1);
+  }
+};
 
-        <h1>
-          {session.role} • {session.difficulty}
-        </h1>
+const handleNext = () => {
+  if (currentQuestionIndex < session.questions.length - 1) {
+    setCurrentQuestionIndex((prev) => prev + 1);
+  }
+};
 
+const handleFinishInterview = () => {
+  const unanswered =
+    session.questions.length -
+    answeredQuestions.size;
+
+  if (unanswered > 0) {
+    const confirmFinish = window.confirm(
+      `You still have ${unanswered} unanswered question(s).\n\nDo you want to finish the interview?`
+    );
+
+    if (!confirmFinish) return;
+  }
+
+  navigate(`/results/${sessionId}`);
+};
+return (
+  <section className="page-shell">
+    <div className="page-header">
+      <p className="eyebrow">Practice Session</p>
+
+      <h1>
+        {session.role} • {session.difficulty}
+      </h1>
+
+      <div className="question-progress">
         <p>
-          Question {currentQuestionIndex + 1} of{" "}
-          {session.questions.length}
+          Question {currentMainQuestionNumber} of{" "}
+          {totalMainQuestions}
         </p>
-      </div>
 
-      <div className="interview-workspace">
-        <QuestionCard
-          questionNumber={currentQuestionIndex + 1}
-          questionText={currentQuestion.question_text}
-        />
+        {currentQuestion.is_follow_up && (
+          <div className="follow-up-banner">
+            <strong>🔍 Follow-up Question</strong>
 
-        <AnswerBox
-          key={currentQuestion.id}
-          questionId={currentQuestion.id}
-          disabled={answeredQuestions.has(currentQuestion.id)}
-          onAnswerSubmitted={handleAnswerSubmitted}
-        />
-
-        {currentFeedback && (
-          <FeedbackCard {...currentFeedback} />
+            <p>
+              The interviewer wants to explore this topic
+              in more depth based on your previous answer.
+            </p>
+          </div>
         )}
+      </div>
+    </div>
 
-        <div className="page-actions">
+    <div className="interview-workspace">
+      <QuestionCard
+        questionNumber={currentMainQuestionNumber}
+        questionText={currentQuestion.question_text}
+        isFollowUp={currentQuestion.is_follow_up}
+      />
+
+      <AnswerBox
+        key={currentQuestion.id}
+        questionId={currentQuestion.id}
+        disabled={answeredQuestions.has(currentQuestion.id)}
+        onAnswerSubmitted={handleAnswerSubmitted}
+      />
+
+      {currentFeedback && (
+        <FeedbackCard {...currentFeedback} />
+      )}
+
+      <div className="page-actions">
+        <button
+          className="button button--secondary"
+          onClick={handlePrevious}
+          disabled={currentQuestionIndex === 0}
+        >
+          Previous
+        </button>
+
+        {currentQuestionIndex < session.questions.length - 1 ? (
           <button
             className="button button--secondary"
-            onClick={handlePrevious}
-            disabled={currentQuestionIndex === 0}
+            onClick={handleNext}
           >
-            Previous
+            Next / Skip
           </button>
-
-          {currentQuestionIndex < session.questions.length - 1 ? (
-            <button
-              className="button button--secondary"
-              onClick={handleNext}
-            >
-              Next / Skip
-            </button>
-          ) : (
-            <button
-              className="button button--primary"
-              onClick={handleFinishInterview}
-            >
-              Finish Interview
-            </button>
-          )}
-        </div>
+        ) : (
+          <button
+            className="button button--primary"
+            onClick={handleFinishInterview}
+          >
+            Finish Interview
+          </button>
+        )}
       </div>
-    </section>
-  );
+    </div>
+  </section>
+);
 }
 
 export default InterviewSessionPage;

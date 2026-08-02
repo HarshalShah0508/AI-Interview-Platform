@@ -8,14 +8,20 @@ from app.models.answer import Answer
 from app.models.question import Question
 from app.models.interview_session import InterviewSession
 from app.models.user import User
+
 from app.schemas.answer import (
     AnswerCreate,
     AnswerResponse,
     AnswerDetail,
     SessionResultsResponse,
+    FollowUpQuestionResponse,
 )
+
 from app.services.ai_service import AIService
+
 from app.api.auth import get_current_user
+
+from app.core.config import FOLLOW_UP_SCORE_THRESHOLD
 
 
 router = APIRouter(
@@ -76,8 +82,8 @@ def submit_answer(
             status_code=400,
             detail=str(e)
         )
-
-    evaluation = ai_service.evaluate_answer(
+    
+        evaluation = ai_service.evaluate_answer(
         question_text=question.question_text,
         user_answer=combined_answer
     )
@@ -100,15 +106,72 @@ def submit_answer(
     db.commit()
     db.refresh(answer)
 
+    follow_up = None
+    follow_up_text = None
+
+    if (
+        answer.score >= FOLLOW_UP_SCORE_THRESHOLD
+        and question.follow_up_depth < 2
+    ):
+
+        try:
+
+            follow_up_text = (
+                ai_service.generate_follow_up_question(
+                    original_question=question.question_text,
+                    candidate_answer=combined_answer,
+                    evaluation=evaluation,
+                    follow_up_depth=question.follow_up_depth,
+                )
+                .strip()
+            )
+
+        except Exception as e:
+
+            print("\n===== FOLLOW-UP GENERATION FAILED =====")
+            print(e)
+
+        if follow_up_text:
+
+            follow_up = Question(
+                session_id=question.session_id,
+                question_text=follow_up_text.strip(),
+                is_follow_up=True,
+                parent_question_id=(
+                    question.parent_question_id
+                    if question.is_follow_up
+                    else question.id
+                ),
+                follow_up_depth=question.follow_up_depth + 1,
+            )
+
+            db.add(follow_up)
+            db.commit()
+            db.refresh(follow_up)
+
+            print("\n===== FOLLOW-UP CREATED =====")
+            print(f"Parent Question : {question.id}")
+            print(f"Depth           : {follow_up.follow_up_depth}")
+            print(f"Question        : {follow_up.question_text}")
+
     return AnswerResponse(
         answer_id=answer.id,
         score=answer.score,
         feedback=answer.feedback,
         strengths=answer.strengths,
         improvements=answer.improvements,
+        has_follow_up=follow_up is not None,
+        follow_up=(
+            FollowUpQuestionResponse(
+                question_id=follow_up.id,
+                question_text=follow_up.question_text,
+                follow_up_depth=follow_up.follow_up_depth,
+            )
+            if follow_up
+            else None
+        ),
     )
-
-
+    
 @router.get(
     "/{answer_id}",
     response_model=AnswerDetail

@@ -7,7 +7,10 @@ from app.services.prompts.finance_prompt import build_finance_prompt
 from app.services.prompts.consulting_prompt import build_consulting_prompt
 from app.services.prompts.sales_prompt import build_sales_prompt
 from app.services.prompts.marketing_prompt import build_marketing_prompt
-from app.services.prompts.evaluation_prompt import build_evaluation_prompt
+from app.services.prompts.evaluation_prompt import (
+    build_evaluation_prompt,
+    build_follow_up_prompt,
+)
 
 class AIService:
 
@@ -200,3 +203,39 @@ class AIService:
         return self.parse_evaluation_response(
             response.text
         )
+    
+    def generate_follow_up_question(
+        self,
+        original_question: str,
+        candidate_answer: str,
+        evaluation: dict,
+        follow_up_depth: int,
+    ) -> str:
+        """
+        Generates a single follow-up interview question.
+
+        Args:
+            original_question: Main interview question.
+            candidate_answer: Candidate's answer.
+            evaluation: Evaluation dictionary returned by evaluate_answer().
+            follow_up_depth: Current follow-up depth.
+
+        Returns:
+            Follow-up question.
+        """
+
+        prompt = build_follow_up_prompt(
+            original_question=original_question,
+            candidate_answer=candidate_answer,
+            evaluation=evaluation,
+            follow_up_depth=follow_up_depth,
+        )
+
+        response = self.key_manager.generate_content(
+            prompt
+        )
+
+        print("\n===== GEMINI FOLLOW-UP QUESTION =====\n")
+        print(response.text)
+
+        return response.text.strip()

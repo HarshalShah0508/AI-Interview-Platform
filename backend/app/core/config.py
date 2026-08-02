@@ -44,3 +44,5 @@ if not GEMINI_API_KEYS:
     raise ValueError(
         f"At least one Gemini API key must be provided in GEMINI_API_KEYS. Received: {repr(raw_keys)}"
     )
+
+FOLLOW_UP_SCORE_THRESHOLD = 5
