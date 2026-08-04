@@ -83,7 +83,7 @@ def submit_answer(
             detail=str(e)
         )
     
-        evaluation = ai_service.evaluate_answer(
+    evaluation = ai_service.evaluate_answer(
         question_text=question.question_text,
         user_answer=combined_answer
     )

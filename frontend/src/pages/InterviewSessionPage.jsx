@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 import { getInterviewSession } from "../api/interviewApi";
@@ -12,6 +12,7 @@ function InterviewSessionPage() {
   const { sessionId } = useParams();
   const navigate = useNavigate();
   const { token } = useAuth();
+  const answerBoxRef = useRef(null);
 
   const [session, setSession] = useState(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -21,6 +22,9 @@ function InterviewSessionPage() {
 
   const [answeredQuestions, setAnsweredQuestions] = useState(new Set());
   const [feedbackMap, setFeedbackMap] = useState({});
+  const [readyForNext, setReadyForNext] = useState(false);
+  const [nextIsFollowUp, setNextIsFollowUp] =
+  useState(false);
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -150,20 +154,33 @@ function InterviewSessionPage() {
         questions: updatedQuestions,
       };
     });
+    setNextIsFollowUp(true);
+  }else{
+    setNextIsFollowUp(false);
   }
 
-  setCurrentQuestionIndex((prev) => prev + 1);
+  setReadyForNext(true);
 };
 
 const handlePrevious = () => {
   if (currentQuestionIndex > 0) {
+
     setCurrentQuestionIndex((prev) => prev - 1);
+
+    setReadyForNext(false);
+    setNextIsFollowUp(false);
+
   }
 };
 
 const handleNext = () => {
   if (currentQuestionIndex < session.questions.length - 1) {
+
     setCurrentQuestionIndex((prev) => prev + 1);
+
+    setReadyForNext(false);
+    setNextIsFollowUp(false);
+
   }
 };
 
@@ -208,6 +225,61 @@ return (
           </div>
         )}
       </div>
+      <div className="page-actions page-actions--top">
+
+  <button
+    className="button button--secondary"
+    onClick={handlePrevious}
+    disabled={currentQuestionIndex === 0}
+  >
+    ← Previous
+  </button>
+
+  <button
+    className="button button--primary"
+    onClick={() => answerBoxRef.current?.submit()}
+    disabled={answeredQuestions.has(currentQuestion.id)}
+  >
+    Submit Answer
+  </button>
+
+  {currentQuestionIndex <
+session.questions.length - 1 ? (
+
+  readyForNext ? (
+
+    <button
+      className="button button--primary"
+      onClick={handleNext}
+    >
+      {nextIsFollowUp
+        ? "Continue to Follow-up →"
+        : "Next Question →"}
+    </button>
+
+  ) : (
+
+    <button
+      className="button button--secondary"
+      onClick={handleNext}
+    >
+      Next / Skip →
+    </button>
+
+  )
+
+) : (
+
+  <button
+    className="button button--primary"
+    onClick={handleFinishInterview}
+  >
+    Finish Interview
+  </button>
+
+)}
+
+</div>
     </div>
 
     <div className="interview-workspace">
@@ -218,6 +290,7 @@ return (
       />
 
       <AnswerBox
+        ref={answerBoxRef}
         key={currentQuestion.id}
         questionId={currentQuestion.id}
         disabled={answeredQuestions.has(currentQuestion.id)}
@@ -229,30 +302,53 @@ return (
       )}
 
       <div className="page-actions">
-        <button
-          className="button button--secondary"
-          onClick={handlePrevious}
-          disabled={currentQuestionIndex === 0}
-        >
-          Previous
-        </button>
 
-        {currentQuestionIndex < session.questions.length - 1 ? (
-          <button
-            className="button button--secondary"
-            onClick={handleNext}
-          >
-            Next / Skip
-          </button>
-        ) : (
-          <button
-            className="button button--primary"
-            onClick={handleFinishInterview}
-          >
-            Finish Interview
-          </button>
-        )}
-      </div>
+  <button
+    className="button button--secondary"
+    onClick={handlePrevious}
+    disabled={currentQuestionIndex === 0}
+  >
+    Previous
+  </button>
+
+  {currentQuestionIndex <
+  session.questions.length - 1 ? (
+
+    readyForNext ? (
+
+      <button
+        className="button button--primary"
+        onClick={handleNext}
+      >
+        {session.questions[currentQuestionIndex + 1]
+          ?.is_follow_up
+          ? "Continue to Follow-up →"
+          : "Next Question →"}
+      </button>
+
+    ) : (
+
+      <button
+        className="button button--secondary"
+        onClick={handleNext}
+      >
+        Next / Skip
+      </button>
+
+    )
+
+  ) : (
+
+    <button
+      className="button button--primary"
+      onClick={handleFinishInterview}
+    >
+      Finish Interview
+    </button>
+
+  )}
+
+</div>
     </div>
   </section>
 );
