@@ -13,12 +13,22 @@ class AnswerCreate(BaseModel):
     code: Optional[str] = None
 
 
+class FollowUpQuestionResponse(BaseModel):
+    question_id: int
+    question_text: str
+    follow_up_depth: int
+
+
 class AnswerResponse(BaseModel):
     answer_id: int
+
     score: int
     feedback: str
     strengths: List[str]
     improvements: List[str]
+
+    has_follow_up: bool
+    follow_up: Optional[FollowUpQuestionResponse] = None
 
 
 class AnswerDetail(BaseModel):

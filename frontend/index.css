@@ -483,7 +483,36 @@ p {
   flex-direction: column;
   gap: 24px;
 }
+.question-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
+.follow-up-banner {
+  padding: 14px 18px;
+  border: 1px solid #bfdbfe;
+  border-left: 5px solid #2563eb;
+  border-radius: 8px;
+
+  background: #eef4ff;
+}
+
+.follow-up-banner strong {
+  display: block;
+  margin-bottom: 6px;
+
+  color: #1d4ed8;
+  font-size: 15px;
+}
+
+.follow-up-banner p {
+  margin: 0;
+
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.5;
+}
 .page-actions {
   display: flex;
   gap: 12px;

@@ -1,4 +1,8 @@
-import { useState } from "react";
+import {
+  useState,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 
 import { submitAnswer } from "../../api/answerApi";
 import useAuth from "../../hooks/useAuth";
@@ -8,11 +12,14 @@ import NotesInput from "./NotesInput";
 import CodeEditor from "./CodeEditor";
 import CombinedPreview from "./CombinedPreview";
 
-function AnswerBox({
-  questionId,
-  onAnswerSubmitted,
-  disabled = false,
-}) {
+const AnswerBox = forwardRef(function AnswerBox(
+  {
+    questionId,
+    onAnswerSubmitted,
+    disabled = false,
+  },
+  ref
+) {
   const { token } = useAuth();
 
   const [voiceText, setVoiceText] = useState("");
@@ -28,7 +35,9 @@ function AnswerBox({
     code.trim();
 
   const handleSubmit = async (event) => {
-    event.preventDefault();
+    if (event) {
+      event.preventDefault();
+    }
 
     if (disabled) return;
 
@@ -53,20 +62,30 @@ function AnswerBox({
         token
       );
 
-      onAnswerSubmitted(response);
-
       setVoiceText("");
       setTypedText("");
       setCode("");
+      setError("");
+
+      onAnswerSubmitted(response);
+
     } catch (err) {
+
       setError(
         err?.response?.data?.detail ||
-          "Failed to submit answer."
+        "Failed to submit answer."
       );
+
     } finally {
+
       setLoading(false);
+
     }
   };
+
+  useImperativeHandle(ref, () => ({
+    submit: () => handleSubmit(),
+  }));
 
   return (
     <form
@@ -120,6 +139,6 @@ function AnswerBox({
       </button>
     </form>
   );
-}
+});
 
 export default AnswerBox;
