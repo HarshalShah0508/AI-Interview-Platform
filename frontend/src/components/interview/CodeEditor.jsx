@@ -1,3 +1,5 @@
+import Editor from "@monaco-editor/react";
+
 function CodeEditor({
   value,
   onChange,
@@ -5,30 +7,57 @@ function CodeEditor({
 }) {
   return (
     <div className="content-card">
-      <h3>💻 Code</h3>
+      <h3 style={{ color: "red", fontSize: "32px" }}>
+  🚀 MONACO TEST
+</h3>
 
-      <textarea
+      <Editor
+        height="450px"
+        defaultLanguage="cpp"
+        language="cpp"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        rows={14}
-        spellCheck={false}
-        placeholder={`Write your code here...
+        onChange={(newValue) => onChange(newValue || "")}
+        theme="vs"
+        options={{
+          readOnly: disabled,
 
-Example:
-
-void bfs(...) {
-
-}`}
-        style={{
-          width: "100%",
+          fontSize: 14,
           fontFamily:
             "SFMono-Regular, Consolas, Monaco, Menlo, monospace",
-          fontSize: "14px",
-          lineHeight: "1.5",
-          resize: "vertical",
-          whiteSpace: "pre",
+
+          minimap: {
+            enabled: false,
+          },
+
+          scrollBeyondLastLine: false,
+
+          automaticLayout: true,
+
+          wordWrap: "on",
+
+          lineNumbers: "on",
+
+          roundedSelection: true,
+
           tabSize: 4,
+
+          insertSpaces: true,
+
+          autoIndent: "advanced",
+
+          formatOnPaste: true,
+
+          formatOnType: true,
+
+          autoClosingBrackets: "always",
+
+          autoClosingQuotes: "always",
+
+          matchBrackets: "always",
+
+          glyphMargin: false,
+
+          folding: true,
         }}
       />
     </div>
