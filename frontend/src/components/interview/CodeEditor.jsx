@@ -3,6 +3,7 @@ import Editor from "@monaco-editor/react";
 function CodeEditor({
   value,
   onChange,
+  language,
   disabled = false,
 }) {
   return (
@@ -11,8 +12,7 @@ function CodeEditor({
 
       <Editor
         height="450px"
-        defaultLanguage="cpp"
-        language="cpp"
+        language={language.monacoLanguage}
         value={value}
         onChange={(newValue) => onChange(newValue || "")}
         theme="vs"
@@ -20,6 +20,7 @@ function CodeEditor({
           readOnly: disabled,
 
           fontSize: 14,
+
           fontFamily:
             "SFMono-Regular, Consolas, Monaco, Menlo, monospace",
 
@@ -27,9 +28,9 @@ function CodeEditor({
             enabled: false,
           },
 
-          scrollBeyondLastLine: false,
-
           automaticLayout: true,
+
+          scrollBeyondLastLine: false,
 
           wordWrap: "on",
 
@@ -52,8 +53,6 @@ function CodeEditor({
           autoClosingQuotes: "always",
 
           matchBrackets: "always",
-
-          glyphMargin: false,
 
           folding: true,
         }}
