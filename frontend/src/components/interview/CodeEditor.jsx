@@ -7,9 +7,7 @@ function CodeEditor({
 }) {
   return (
     <div className="content-card">
-      <h3 style={{ color: "red", fontSize: "32px" }}>
-  🚀 MONACO TEST
-</h3>
+      <h3>💻 Code</h3>
 
       <Editor
         height="450px"
