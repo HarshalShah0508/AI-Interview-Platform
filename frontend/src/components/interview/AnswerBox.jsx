@@ -12,6 +12,8 @@ import NotesInput from "./NotesInput";
 import CodeEditor from "./CodeEditor";
 import CombinedPreview from "./CombinedPreview";
 import LanguageSelector from "./LanguageSelector";
+import ConsoleOutput from "./ConsoleOutput";
+import CustomInput from "./CustomInput";
 
 import {
   PROGRAMMING_LANGUAGES,
@@ -32,7 +34,14 @@ const AnswerBox = forwardRef(function AnswerBox(
   const [typedText, setTypedText] = useState("");
   const [code, setCode] = useState("");
 
-  // NEW
+  const [customInput, setCustomInput] = useState("");
+
+  const [consoleOutput, setConsoleOutput] =
+    useState("");
+
+  const [executionStatus, setExecutionStatus] =
+    useState("idle");
+
   const [selectedLanguage, setSelectedLanguage] =
     useState(DEFAULT_LANGUAGE);
 
@@ -44,10 +53,20 @@ const AnswerBox = forwardRef(function AnswerBox(
     typedText.trim() ||
     code.trim();
 
+  const handleRunCode = () => {
+    setExecutionStatus("running");
+
+    setTimeout(() => {
+      setExecutionStatus("idle");
+
+      setConsoleOutput(
+        "Code execution will be implemented in the next phase."
+      );
+    }, 500);
+  };
+
   const handleSubmit = async (event) => {
-    if (event) {
-      event.preventDefault();
-    }
+    if (event) event.preventDefault();
 
     if (disabled) return;
 
@@ -75,9 +94,9 @@ const AnswerBox = forwardRef(function AnswerBox(
       setVoiceText("");
       setTypedText("");
       setCode("");
+      setCustomInput("");
+      setConsoleOutput("");
       setSelectedLanguage(DEFAULT_LANGUAGE);
-
-      setError("");
 
       onAnswerSubmitted(response);
 
@@ -100,13 +119,14 @@ const AnswerBox = forwardRef(function AnswerBox(
   }));
 
   const handleLanguageChange = (languageId) => {
-    const language = PROGRAMMING_LANGUAGES.find(
-      (lang) => lang.id === languageId
-    );
+    const language =
+      PROGRAMMING_LANGUAGES.find(
+        (lang) => lang.id === languageId
+      );
 
-    if (!language) return;
-
-    setSelectedLanguage(language);
+    if (language) {
+      setSelectedLanguage(language);
+    }
   };
 
   return (
@@ -139,6 +159,17 @@ const AnswerBox = forwardRef(function AnswerBox(
         disabled={disabled}
       />
 
+      <CustomInput
+        value={customInput}
+        onChange={setCustomInput}
+        disabled={disabled}
+      />
+
+      <ConsoleOutput
+        output={consoleOutput}
+        status={executionStatus}
+      />
+
       <CombinedPreview
         voiceText={voiceText}
         typedText={typedText}
@@ -151,21 +182,37 @@ const AnswerBox = forwardRef(function AnswerBox(
         </p>
       )}
 
-      <button
-        className="button button--primary"
-        type="submit"
-        disabled={
-          loading ||
-          disabled ||
-          !hasContent
-        }
+      <div
+        style={{
+          display: "flex",
+          gap: "12px",
+        }}
       >
-        {disabled
-          ? "Already Submitted"
-          : loading
-          ? "Submitting..."
-          : "Submit Answer"}
-      </button>
+        <button
+          type="button"
+          className="button"
+          onClick={handleRunCode}
+          disabled={disabled}
+        >
+          ▶ Run Code
+        </button>
+
+        <button
+          className="button button--primary"
+          type="submit"
+          disabled={
+            loading ||
+            disabled ||
+            !hasContent
+          }
+        >
+          {disabled
+            ? "Already Submitted"
+            : loading
+            ? "Submitting..."
+            : "Submit Answer"}
+        </button>
+      </div>
     </form>
   );
 });
