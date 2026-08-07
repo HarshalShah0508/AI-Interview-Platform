@@ -6,7 +6,7 @@ import {
 
 import { submitAnswer } from "../../api/answerApi";
 import useAuth from "../../hooks/useAuth";
-
+import { runCode } from "../../api/codeApi";
 import VoiceInput from "./VoiceInput";
 import NotesInput from "./NotesInput";
 import CodeEditor from "./CodeEditor";
@@ -53,17 +53,64 @@ const AnswerBox = forwardRef(function AnswerBox(
     typedText.trim() ||
     code.trim();
 
-  const handleRunCode = () => {
-    setExecutionStatus("running");
-
-    setTimeout(() => {
+  const handleRunCode = async () => {
+    if (executionStatus === "running") {
+      return;
+    }
+    setError("");
+    if (!code.trim()) {
       setExecutionStatus("idle");
+      setConsoleOutput("Please write some code first.");
+      return;
+  }
 
-      setConsoleOutput(
-        "Code execution will be implemented in the next phase."
-      );
-    }, 500);
-  };
+  try {
+    setExecutionStatus("running");
+    setConsoleOutput("");
+
+    const response = await runCode(
+      {
+        language: selectedLanguage.id,
+        code,
+        stdin: customInput,
+      },
+      token
+    );
+
+    setExecutionStatus(response.status);
+
+    let output = "";
+
+    if (response.stdout) {
+      output += response.stdout;
+    }
+
+    if (response.stderr) {
+      if (output) {
+        output += "\n\n";
+      }
+
+      output += response.stderr;
+    }
+
+    if (output.trim()==="") {
+      output = "Program executed successfully.";
+    }
+
+    setConsoleOutput(output);
+
+  } catch (error) {
+
+    setExecutionStatus("internal_error");
+
+    setConsoleOutput(
+      error?.response?.data?.detail ||
+      error.message ||
+      "Failed to execute code."
+    );
+
+  }
+};
 
   const handleSubmit = async (event) => {
     if (event) event.preventDefault();
@@ -96,6 +143,7 @@ const AnswerBox = forwardRef(function AnswerBox(
       setCode("");
       setCustomInput("");
       setConsoleOutput("");
+      setExecutionStatus("idle");
       setSelectedLanguage(DEFAULT_LANGUAGE);
 
       onAnswerSubmitted(response);
@@ -157,6 +205,8 @@ const AnswerBox = forwardRef(function AnswerBox(
         onChange={setCode}
         language={selectedLanguage}
         disabled={disabled}
+        onRunCode={handleRunCode}
+        isRunning={executionStatus === "running"}
       />
 
       <CustomInput
@@ -184,35 +234,27 @@ const AnswerBox = forwardRef(function AnswerBox(
 
       <div
         style={{
-          display: "flex",
-          gap: "12px",
-        }}
-      >
-        <button
-          type="button"
-          className="button"
-          onClick={handleRunCode}
-          disabled={disabled}
-        >
-          ▶ Run Code
-        </button>
-
-        <button
-          className="button button--primary"
-          type="submit"
-          disabled={
-            loading ||
-            disabled ||
-            !hasContent
-          }
-        >
-          {disabled
-            ? "Already Submitted"
-            : loading
-            ? "Submitting..."
-            : "Submit Answer"}
-        </button>
-      </div>
+        display: "flex",
+        justifyContent: "flex-end",
+        marginTop: "16px",
+      }}
+>
+      <button
+        className="button button--primary"
+        type="submit"
+        disabled={
+          loading ||
+          disabled ||
+          !hasContent
+        }
+  >
+        {disabled
+          ? "Already Submitted"
+          : loading
+          ? "Submitting..."
+          : "Submit Answer"}
+      </button>
+</div>
     </form>
   );
 });

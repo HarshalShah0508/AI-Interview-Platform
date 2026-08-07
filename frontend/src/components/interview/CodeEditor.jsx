@@ -5,10 +5,32 @@ function CodeEditor({
   onChange,
   language,
   disabled = false,
+  onRunCode = () => {},
+  isRunning = false,
 }) {
   return (
     <div className="content-card">
-      <h3>💻 Code</h3>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "12px",
+        }}
+      >
+        <h3 style={{ margin: 0 }}>
+          💻 Code
+        </h3>
+
+        <button
+          type="button"
+          className="button"
+          onClick={onRunCode}
+          disabled={disabled || isRunning}
+        >
+          {isRunning ? "Running..." : "▶ Run Code"}
+        </button>
+      </div>
 
       <Editor
         height="450px"
