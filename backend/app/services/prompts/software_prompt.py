@@ -73,16 +73,75 @@ Adjust the complexity according to the interview difficulty:
 - Hard → advanced concepts, trade-offs and real interview scenarios
 
 3. Coding / DSA (2)
-Generate exactly 2 coding questions.
+
+Generate exactly 2 coding interview questions.
 
 Requirements:
-- Famous interview problems.
-- Appropriate for the selected difficulty.
-- Easy → LeetCode Easy
-- Medium → LeetCode Medium
-- Hard → LeetCode Hard
-- Do NOT provide solutions.
-- Only provide the problem statements.
+
+- Use famous interview problems commonly asked in Software Engineering interviews.
+- Select problems appropriate for the chosen difficulty.
+    - Easy → Comparable to LeetCode Easy
+    - Medium → Comparable to LeetCode Medium
+    - Hard → Comparable to LeetCode Hard
+
+For EVERY coding question, return it using EXACTLY the following structure.
+
+Problem Statement
+
+<Clearly describe the problem that the candidate has to solve.>
+
+Input Format
+
+<Describe the expected input format.>
+
+Output Format
+
+<Describe the expected output format.>
+
+Constraints
+
+<List the constraints applicable to the problem.>
+
+Example 1
+
+Input
+
+<Sample Input>
+
+Output
+
+<Expected Output>
+
+Example 2
+
+Input
+
+<Sample Input>
+
+Output
+
+<Expected Output>
+
+Example 3
+
+Input
+
+<Sample Input>
+
+Output
+
+<Expected Output>
+
+Rules:
+
+- Generate exactly three examples.
+- Examples must be valid.
+- Include at least one edge-case example whenever appropriate.
+- Do NOT provide the solution.
+- Do NOT provide hints.
+- Do NOT explain the algorithm.
+- Do NOT include time complexity or space complexity.
+- Do NOT include any text before or after the required structure.
 
 4. System Design Concepts (2)
 Generate exactly 2 conceptual System Design questions.
@@ -154,9 +213,13 @@ General Rules:
 - Keep every question concise while still being conversational.
 - Do NOT provide answers, hints or explanations.
 
-Return ONLY the numbered interview questions.
+Return ONLY the 10 numbered interview questions.
 
-Do not include headings, introductions, markdown, bullet points or any text before or after the questions.
+For resume, CS fundamentals, system design and behavioral questions, return only the numbered question.
+
+For coding questions, keep the numbering and then immediately follow the required coding question structure exactly as specified above.
+
+Do not include introductions, conclusions, markdown, or any additional explanatory text outside the questions.
 """
 
     return f"""
@@ -196,14 +259,74 @@ Adjust the complexity according to the selected difficulty:
 
 3. Coding / DSA (2)
 
-Generate exactly 2 coding questions.
+Generate exactly 2 coding interview questions.
 
 Requirements:
-- Famous interview problems.
-- Easy → LeetCode Easy
-- Medium → LeetCode Medium
-- Hard → LeetCode Hard
-- Do NOT provide solutions.
+
+- Use famous interview problems commonly asked in Software Engineering interviews.
+- Select problems appropriate for the chosen difficulty.
+    - Easy → Comparable to LeetCode Easy
+    - Medium → Comparable to LeetCode Medium
+    - Hard → Comparable to LeetCode Hard
+
+For EVERY coding question, return it using EXACTLY the following structure.
+
+Problem Statement
+
+<Clearly describe the problem that the candidate has to solve.>
+
+Input Format
+
+<Describe the expected input format.>
+
+Output Format
+
+<Describe the expected output format.>
+
+Constraints
+
+<List the constraints applicable to the problem.>
+
+Example 1
+
+Input
+
+<Sample Input>
+
+Output
+
+<Expected Output>
+
+Example 2
+
+Input
+
+<Sample Input>
+
+Output
+
+<Expected Output>
+
+Example 3
+
+Input
+
+<Sample Input>
+
+Output
+
+<Expected Output>
+
+Rules:
+
+- Generate exactly three examples.
+- Examples must be valid.
+- Include at least one edge-case example whenever appropriate.
+- Do NOT provide the solution.
+- Do NOT provide hints.
+- Do NOT explain the algorithm.
+- Do NOT include time complexity or space complexity.
+- Do NOT include any text before or after the required structure.
 
 4. System Design Concepts (2)
 
@@ -271,7 +394,11 @@ General Rules:
 - Keep questions concise while still being conversational.
 - Do NOT provide answers, hints or explanations.
 
-Return ONLY the numbered interview questions.
+Return ONLY the 10 numbered interview questions.
 
-Do not include headings, introductions, markdown, bullet points or any text before or after the questions.
+For role specific questions,CS fundamentals, system design and behavioral questions, return only the numbered question.
+
+For coding questions, keep the numbering and then immediately follow the required coding question structure exactly as specified above.
+
+Do not include introductions, conclusions, markdown, or any additional explanatory text outside the questions.
 """
