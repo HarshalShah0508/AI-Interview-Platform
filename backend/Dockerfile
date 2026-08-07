@@ -8,11 +8,17 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install system packages required by some Python libraries
+# Install system packages required for the backend
+# and supported programming language runtimes.
 RUN apt-get update && apt-get install -y \
+    build-essential \
     gcc \
+    g++ \
     libpq-dev \
     curl \
+    nodejs \
+    npm \
+    default-jdk \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies first (better Docker cache)

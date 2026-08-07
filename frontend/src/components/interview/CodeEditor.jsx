@@ -1,34 +1,82 @@
+import Editor from "@monaco-editor/react";
+
 function CodeEditor({
   value,
   onChange,
+  language,
   disabled = false,
+  onRunCode = () => {},
+  isRunning = false,
 }) {
   return (
     <div className="content-card">
-      <h3>💻 Code</h3>
-
-      <textarea
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        rows={14}
-        spellCheck={false}
-        placeholder={`Write your code here...
-
-Example:
-
-void bfs(...) {
-
-}`}
+      <div
         style={{
-          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "12px",
+        }}
+      >
+        <h3 style={{ margin: 0 }}>
+          💻 Code
+        </h3>
+
+        <button
+          type="button"
+          className="button"
+          onClick={onRunCode}
+          disabled={disabled || isRunning}
+        >
+          {isRunning ? "Running..." : "▶ Run Code"}
+        </button>
+      </div>
+
+      <Editor
+        height="450px"
+        language={language.monacoLanguage}
+        value={value}
+        onChange={(newValue) => onChange(newValue || "")}
+        theme="vs"
+        options={{
+          readOnly: disabled,
+
+          fontSize: 14,
+
           fontFamily:
             "SFMono-Regular, Consolas, Monaco, Menlo, monospace",
-          fontSize: "14px",
-          lineHeight: "1.5",
-          resize: "vertical",
-          whiteSpace: "pre",
+
+          minimap: {
+            enabled: false,
+          },
+
+          automaticLayout: true,
+
+          scrollBeyondLastLine: false,
+
+          wordWrap: "on",
+
+          lineNumbers: "on",
+
+          roundedSelection: true,
+
           tabSize: 4,
+
+          insertSpaces: true,
+
+          autoIndent: "advanced",
+
+          formatOnPaste: true,
+
+          formatOnType: true,
+
+          autoClosingBrackets: "always",
+
+          autoClosingQuotes: "always",
+
+          matchBrackets: "always",
+
+          folding: true,
         }}
       />
     </div>

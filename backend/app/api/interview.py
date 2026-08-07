@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
-
+import re
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
@@ -62,25 +62,16 @@ def generate_questions(
         difficulty=request.difficulty
     )
 
-    question_list = []
+    question_list = re.findall(
+        r'^\d+\..*?(?=^\d+\.|\Z)',
+        questions,
+        flags=re.MULTILINE | re.DOTALL,
+    )
 
-    for line in questions.split("\n"):
-
-        line = line.strip()
-
-        if (
-            line.startswith("1.")
-            or line.startswith("2.")
-            or line.startswith("3.")
-            or line.startswith("4.")
-            or line.startswith("5.")
-            or line.startswith("6.")
-            or line.startswith("7.")
-            or line.startswith("8.")
-            or line.startswith("9.")
-            or line.startswith("10.")
-        ):
-            question_list.append(line)
+    question_list = [
+        question.strip()
+        for question in question_list
+    ]
 
     print("QUESTIONS FOUND:")
     print(len(question_list))
