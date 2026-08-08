@@ -1,10 +1,6 @@
 # 🚀 Hot Seat – AI-Powered Interview Preparation Platform
 
 <p align="center">
-  <img src="screenshots/logo.png" alt="Hot Seat Logo" width="180"/>
-</p>
-
-<p align="center">
 An AI-powered interview preparation platform that simulates real technical interviews using Generative AI. Candidates can upload their resume, generate personalized interview questions, solve coding problems, answer using voice, text, and code, and receive detailed AI-powered feedback with personalized improvement suggestions.
 </p>
 
@@ -23,15 +19,13 @@ An AI-powered interview preparation platform that simulates real technical inter
 
 ---
 
-# 🌐 Live Demo
-
 ### 🔗 Application
 
-> https://YOUR-VERCEL-URL.vercel.app
+> https://hotseatai.vercel.app
 
 ### 📘 Backend API Documentation
 
-> https://YOUR-RENDER-URL.onrender.com/docs
+> https://interview-backend-5u2z.onrender.com/docs
 
 ---
 
@@ -118,8 +112,6 @@ Features include:
 - Runtime Output
 - Compilation Errors
 - Sample Test Cases
-- Hidden Test Cases
-- Code Submission
 - AI Code Evaluation
 
 Supported Languages
@@ -256,52 +248,6 @@ User Registration / Google Login
 ```
 
 ---
-
-# 🖼 Screenshots
-
-> Replace the placeholder images below with actual screenshots from the application.
-
-## Authentication
-
-| Login | Signup |
-|-------|--------|
-| ![](screenshots/login.png) | ![](screenshots/signup.png) |
-
----
-
-## Dashboard
-
-![](screenshots/dashboard.png)
-
----
-
-## Resume Upload
-
-![](screenshots/upload_resume.png)
-
----
-
-## Interview Generation
-
-![](screenshots/interview_generation.png)
-
----
-
-## Coding Environment
-
-![](screenshots/coding_environment.png)
-
----
-
-## AI Feedback
-
-![](screenshots/feedback.png)
-
----
-
-## Interview History
-
-![](screenshots/history.png)
 
 ---
 
