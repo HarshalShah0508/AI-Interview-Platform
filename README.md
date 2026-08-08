@@ -1,75 +1,414 @@
+# 🚀 Hot Seat – AI-Powered Interview Preparation Platform
 
-# 🎯 AI Interview Platform
+<p align="center">
+  <img src="screenshots/logo.png" alt="Hot Seat Logo" width="180"/>
+</p>
 
-An **AI-powered multi-domain interview preparation platform** that simulates realistic interviews using Generative AI. Candidates can upload their resume, generate personalized interview questions, answer using **voice, text, and code**, and receive detailed AI-powered feedback with scores and improvement suggestions.
+<p align="center">
+An AI-powered interview preparation platform that simulates real technical interviews using Generative AI. Candidates can upload their resume, generate personalized interview questions, solve coding problems, answer using voice, text, and code, and receive detailed AI-powered feedback with personalized improvement suggestions.
+</p>
+
+<p align="center">
+
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)
+![FastAPI](https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-336791?logo=postgresql)
+![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?logo=docker)
+![Google OAuth](https://img.shields.io/badge/Google-OAuth-4285F4?logo=google)
+![JWT](https://img.shields.io/badge/JWT-Authentication-black)
+![Gemini](https://img.shields.io/badge/Google-Gemini-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow)
+
+</p>
 
 ---
 
-# 🚀 Features
+# 🌐 Live Demo
 
-- 🔐 JWT Authentication
-- 📄 Resume Upload & PDF Parsing
-- 🤖 AI-Powered Interview Generation
-- 💼 Multi-Domain Interviews (Software, Finance, Consulting, Sales, Marketing)
-- 📊 Difficulty Selection (Easy / Medium / Hard)
-- 🎤 Voice Answer Support
-- ⌨️ Text Answer Support
-- 💻 Built-in Code Editor
-- 🧠 AI-Based Answer Evaluation
-- 📈 Personalized Feedback & Scores
-- 📜 Interview History
-- 🐳 Dockerized Full-Stack Deployment
-- 📖 Swagger API Documentation
-- 🔄 Automatic Gemini API key rotation with quota failover support
+### 🔗 Application
+
+> https://YOUR-VERCEL-URL.vercel.app
+
+### 📘 Backend API Documentation
+
+> https://YOUR-RENDER-URL.onrender.com/docs
 
 ---
 
-# 🛠️ Tech Stack
+# 📖 Overview
+
+Hot Seat is a production-ready AI-powered interview preparation platform designed to simulate real-world technical interviews.
+
+Unlike traditional interview preparation websites that simply generate a list of questions, Hot Seat behaves like an intelligent interviewer capable of generating role-specific interviews, asking adaptive follow-up questions, evaluating responses using Generative AI, and providing personalized feedback.
+
+Candidates can answer interview questions using:
+
+- 🎤 Voice
+- ⌨️ Text
+- 💻 Code
+
+making the interview experience closely resemble actual software engineering interviews.
+
+The platform currently supports multiple interview domains including Software Engineering, Finance, Consulting, Sales, and Marketing.
+
+---
+
+# ✨ Features
+
+## 🔐 Authentication
+
+- JWT Authentication
+- Email & Password Login
+- Google OAuth Login
+- Smart Account Linking
+- Protected Routes
+- Secure Password Hashing using Passlib & Bcrypt
+
+---
+
+## 📄 Resume Management
+
+- Upload Resume
+- PDF Parsing
+- Resume Storage
+- Resume Deletion
+- Extract Resume Content
+- Resume-Based Question Generation
+
+---
+
+## 🤖 AI Interview Engine
+
+- Resume-Based Questions
+- Multi-Domain Interview Generation
+- Difficulty Selection
+- Software Interviews
+- Finance Interviews
+- Consulting Interviews
+- Sales Interviews
+- Marketing Interviews
+- Prompt Optimizations
+- Structured AI Prompt Routing
+
+---
+
+## 🎯 Adaptive Interview Experience
+
+Hot Seat no longer behaves like a static interview generator.
+
+It dynamically adapts the interview based on candidate performance.
+
+### Context-Aware Follow-up Questions
+
+If a candidate's answer receives a score below a configurable threshold, the platform automatically generates an AI follow-up question before proceeding to the next topic.
+
+This closely mimics how human interviewers probe deeper when a candidate provides an incomplete or weak answer.
+
+---
+
+## 💻 Coding Interview Environment
+
+Hot Seat includes a complete LeetCode-style coding environment.
+
+Features include:
+
+- Monaco Editor (VS Code Experience)
+- Multi-language Support
+- Compile & Run
+- Runtime Output
+- Compilation Errors
+- Sample Test Cases
+- Hidden Test Cases
+- Code Submission
+- AI Code Evaluation
+
+Supported Languages
+
+- C++
+- Java
+- Python
+- JavaScript
+
+---
+
+## 🎙 Hybrid Interview Mode
+
+Candidates can answer interview questions using
+
+- Voice
+- Text
+- Code
+
+allowing both conceptual explanations and coding solutions within the same interview.
+
+---
+
+## 📊 AI Evaluation
+
+Every answer is evaluated using Google Gemini.
+
+The platform provides
+
+- Overall Score
+- Strengths
+- Areas for Improvement
+- Personalized Feedback
+- AI Evaluation
+- Coding Feedback
+- Interview History
+
+---
+
+## 📚 Interview History
+
+Candidates can revisit previous interviews and review
+
+- Questions
+- Answers
+- AI Feedback
+- Scores
+- Interview Details
+
+---
+
+## 🚀 Production Deployment
+
+The application is fully deployed.
+
+Frontend
+
+- Vercel
+
+Backend
+
+- Render
+
+Database
+
+- Neon PostgreSQL
+
+---
+
+# 🏗 System Architecture
+
+```text
+                              Browser
+                                 │
+                                 ▼
+                     React + Vite Frontend
+                                 │
+                 Google OAuth + JWT Authentication
+                                 │
+                                 ▼
+                         FastAPI Backend
+                                 │
+      ┌───────────────┬───────────────┬───────────────┐
+      ▼               ▼               ▼               ▼
+ Resume Engine   Interview Engine  Coding Engine  Evaluation Engine
+      │               │               │               │
+      └───────────────┴───────────────┴───────────────┘
+                                 │
+                           Google Gemini AI
+                                 │
+                                 ▼
+                    PostgreSQL (Neon + Alembic)
+```
+
+---
+
+# 🔄 Application Workflow
+
+```text
+User Registration / Google Login
+            │
+            ▼
+      Upload Resume
+            │
+            ▼
+ Resume Parsing & Extraction
+            │
+            ▼
+ Select Interview Domain
+            │
+            ▼
+ Select Difficulty
+            │
+            ▼
+ AI Interview Generation
+            │
+            ▼
+ Answer Using
+   • Voice
+   • Text
+   • Code
+            │
+            ▼
+ AI Evaluation
+            │
+            ▼
+ Context-Aware Follow-up Question (if required)
+            │
+            ▼
+ Final Feedback
+            │
+            ▼
+ Interview History
+```
+
+---
+
+# 🖼 Screenshots
+
+> Replace the placeholder images below with actual screenshots from the application.
+
+## Authentication
+
+| Login | Signup |
+|-------|--------|
+| ![](screenshots/login.png) | ![](screenshots/signup.png) |
+
+---
+
+## Dashboard
+
+![](screenshots/dashboard.png)
+
+---
+
+## Resume Upload
+
+![](screenshots/upload_resume.png)
+
+---
+
+## Interview Generation
+
+![](screenshots/interview_generation.png)
+
+---
+
+## Coding Environment
+
+![](screenshots/coding_environment.png)
+
+---
+
+## AI Feedback
+
+![](screenshots/feedback.png)
+
+---
+
+## Interview History
+
+![](screenshots/history.png)
+
+---
+
+# 🛠 Tech Stack
 
 ## Frontend
+
 - React
 - Vite
 - React Router
+- React Context API
+- Monaco Editor
+- Google OAuth
 - CSS
 
+---
+
 ## Backend
+
 - FastAPI
 - SQLAlchemy
-- PostgreSQL
+- Alembic
 - JWT Authentication
-- Passlib + Bcrypt
+- Google OAuth
+- Passlib
+- Bcrypt
+- Python
 
-## AI
-- Google Gemini API
+---
+
+## Artificial Intelligence
+
+- Google Gemini (google-genai)
+
+---
+
+## Database
+
+- PostgreSQL
+- Neon
+
+---
 
 ## DevOps
+
 - Docker
 - Docker Compose
+- Render
+- Vercel
 - Nginx
-- Git
+
+---
+
+# 🏆 Project Highlights
+
+- ✅ Production Deployed
+- ✅ Google OAuth Authentication
+- ✅ Multi-Domain AI Interviews
+- ✅ Context-Aware Follow-up Questions
+- ✅ Monaco Coding Environment
+- ✅ AI Answer Evaluation
+- ✅ Hybrid Interview (Voice + Text + Code)
+- ✅ Dockerized Full-Stack Application
+- ✅ PostgreSQL + Alembic Migrations
+- ✅ Public REST APIs
+
+# ⚙️ Prerequisites
+
+Before running the project locally, ensure the following software is installed on your system.
+
+| Software | Version |
+|----------|---------|
+| Git | Latest |
+| Docker Desktop | Latest |
+| Node.js | 20+ |
+| Python | 3.11+ |
+| PostgreSQL *(optional if using Docker)* | 16+ |
 
 ---
 
 # 📂 Project Structure
 
 ```text
-Hot Seat/
+Hot-Seat/
 │
 ├── backend/
+│   ├── alembic/
 │   ├── app/
+│   │   ├── api/
+│   │   ├── core/
+│   │   ├── models/
+│   │   ├── routers/
+│   │   ├── schemas/
+│   │   ├── services/
+│   │   └── utils/
 │   ├── uploads/
 │   ├── Dockerfile
 │   ├── requirements.txt
+│   ├── alembic.ini
 │   └── .env.example
 │
 ├── frontend/
 │   ├── src/
+│   ├── public/
 │   ├── Dockerfile
-│   └── nginx.conf
-│
-├── docker/
-│   └── postgres/
-│       └── init.sql
+│   ├── nginx.conf
+│   └── package.json
 │
 ├── docker-compose.yml
 ├── README.md
@@ -78,171 +417,242 @@ Hot Seat/
 
 ---
 
-# 🏗️ System Architecture
+# 🚀 Installation Guide
 
-```text
-Browser
-   │
-   ▼
-React Frontend (Nginx)
-   │
-   ▼
-FastAPI Backend
-   │
-   ├───────────────┐
-   ▼               ▼
-PostgreSQL     Gemini API
-```
-
----
-
-# ⚙️ Prerequisites
-
-## 1. Install Git
-
-### Windows
-Download: https://git-scm.com/downloads
-
-### macOS
-
-```bash
-brew install git
-```
-
-### Ubuntu
-
-```bash
-sudo apt update
-sudo apt install git
-```
-
-Verify:
-
-```bash
-git --version
-```
-
----
-
-## 2. Install Docker Desktop
-
-Download Docker Desktop:
-
-https://www.docker.com/products/docker-desktop/
-
-Verify installation:
-
-```bash
-docker --version
-docker compose version
-```
-
----
-
-# 🚀 Getting Started
-
-## Step 1. Clone Repository
+## Step 1 — Clone the Repository
 
 ```bash
 git clone https://github.com/HarshalShah0508/AI-Interview-Platform.git
+
 cd AI-Interview-Platform
 ```
 
 ---
 
-## Step 2. Get a Gemini API Key
+## Step 2 — Create Backend Environment Variables
 
-1. Visit https://aistudio.google.com/
-2. Sign in with your Google account.
-3. Click **Get API Key**.
-4. Create a new API key.
-5. Copy the generated key.
-
----
-
-## Step 3. Generate a Secret Key
-
-macOS / Linux
+Navigate to the backend directory.
 
 ```bash
-python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+cd backend
 ```
 
-Windows
+Create a `.env` file.
 
 ```bash
-python -c "import secrets; print(secrets.token_urlsafe(64))"
+touch .env
 ```
 
-Copy the generated string.
-
----
-
-## Step 4. Configure Environment Variables
-
-Create:
-
-```text
-backend/.env
-```
-
-Example:
+Add the following configuration.
 
 ```env
-DATABASE_URL=postgresql://interview_user_official:Harshal0508@postgres:5432/interview_db
+DATABASE_URL=postgresql://interview_user_official:YOUR_PASSWORD@postgres:5432/interview_db
 
-SECRET_KEY=YOUR_GENERATED_SECRET_KEY
+SECRET_KEY=YOUR_SECRET_KEY
 
 ALGORITHM=HS256
 
 ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-# Single API key
-GEMINI_API_KEYS=your_gemini_api_key
+GEMINI_API_KEY=YOUR_GEMINI_API_KEY
 
-# OR multiple API keys
-GEMINI_API_KEYS=key1,key2,key3
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
 ```
-## Gemini API Key Rotation
 
-The application supports one or more Gemini API keys.
-
-If a single API key is configured, the application uses that key for all AI requests.
-
-If multiple API keys are configured, the application automatically switches to the next available key whenever the current key reaches its daily quota (`429 RESOURCE_EXHAUSTED`).
-
-Example:
-
-```env
-GEMINI_API_KEYS=key1,key2,key3
 ---
 
-## Step 5. Start the Application
+# 🔑 Generate Secret Key
+
+Generate a secure JWT secret.
+
+```bash
+python3 -c "import secrets; print(secrets.token_urlsafe(64))"
+```
+
+Copy the generated value into
+
+```
+SECRET_KEY
+```
+
+---
+
+# 🤖 Google Gemini API Setup
+
+Hot Seat uses Google's Gemini API for
+
+- Interview Generation
+- Answer Evaluation
+- Follow-up Questions
+
+## Step 1
+
+Visit
+
+https://aistudio.google.com/
+
+---
+
+## Step 2
+
+Sign in using your Google account.
+
+---
+
+## Step 3
+
+Click
+
+```
+Get API Key
+```
+
+---
+
+## Step 4
+
+Create a new API key.
+
+---
+
+## Step 5
+
+Copy the key into
+
+```env
+GEMINI_API_KEY=YOUR_API_KEY
+```
+
+---
+
+# 🔐 Google OAuth Setup
+
+Hot Seat supports authentication using Google OAuth.
+
+## Step 1
+
+Open
+
+https://console.cloud.google.com/
+
+---
+
+## Step 2
+
+Create a new project.
+
+---
+
+## Step 3
+
+Navigate to
+
+```
+APIs & Services
+
+↓
+
+Credentials
+```
+
+---
+
+## Step 4
+
+Create an
+
+```
+OAuth Client ID
+```
+
+---
+
+## Step 5
+
+Application Type
+
+```
+Web Application
+```
+
+---
+
+## Step 6
+
+Add Authorized JavaScript Origins
+
+For Local Development
+
+```
+http://localhost:3000
+
+http://localhost:5173
+```
+
+---
+
+## Step 7
+
+Add Authorized Redirect URI
+
+```
+http://localhost:5173
+```
+
+*(Update this if your frontend runs on a different port.)*
+
+---
+
+## Step 8
+
+Copy the Client ID.
+
+Add it to
+
+Backend
+
+```env
+GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
+```
+
+Frontend
+
+Create
+
+```
+frontend/.env
+```
+
+```env
+VITE_GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
+
+VITE_API_URL=http://localhost:8000
+```
+
+---
+
+# 🐳 Running with Docker (Recommended)
+
+Return to the project root.
+
+```bash
+cd ..
+```
+
+Build the containers.
 
 ```bash
 docker compose up --build
 ```
 
-Docker will automatically:
+Docker automatically
 
-- Build frontend
-- Build backend
-- Create PostgreSQL
-- Connect all services
-
----
-
-## Step 6. Verify Containers
-
-```bash
-docker ps
-```
-
-Expected containers:
-
-- frontend
-- backend
-- postgres
+- Builds the frontend
+- Builds the backend
+- Starts PostgreSQL
+- Creates the database
+- Runs Alembic migrations
+- Connects all services
 
 ---
 
@@ -250,113 +660,410 @@ Expected containers:
 
 Frontend
 
-```text
+```
 http://localhost:3000
 ```
 
-Backend Swagger
+Backend
 
-```text
+```
+http://localhost:8000
+```
+
+Swagger Documentation
+
+```
 http://localhost:8000/docs
 ```
 
 ---
 
-# 📋 Application Workflow
+# 🗄️ Database Migrations
 
-1. Register an account
-2. Login
-3. Upload a PDF resume
-4. Select interview role
-5. Select difficulty
-6. Generate AI interview questions
-7. Answer using voice, text, or code
-8. Submit answers
-9. Review AI feedback
-10. View interview history
+Hot Seat uses Alembic for schema migrations.
+
+Create a migration
+
+```bash
+alembic revision --autogenerate -m "migration_name"
+```
+
+Apply migrations
+
+```bash
+alembic upgrade head
+```
+
+Rollback
+
+```bash
+alembic downgrade -1
+```
 
 ---
 
-# 🐳 Docker Services
+# ▶️ Running Without Docker
 
-| Service | Port |
-|----------|------|
-| Frontend | 3000 |
-| Backend | 8000 |
-| PostgreSQL | 5432 |
+## Backend
+
+```bash
+cd backend
+
+python -m venv venv
+
+source venv/bin/activate
+
+pip install -r requirements.txt
+
+uvicorn app.main:app --reload
+```
+
+---
+
+## Frontend
+
+```bash
+cd frontend
+
+npm install
+
+npm run dev
+```
+
+---
+
+# ✅ Verify Installation
+
+After everything starts successfully
+
+Visit
+
+```
+http://localhost:3000
+```
+
+Verify the following
+
+- ✅ Email Signup
+- ✅ Email Login
+- ✅ Google Login
+- ✅ Resume Upload
+- ✅ Interview Generation
+- ✅ Voice Answers
+- ✅ Coding Environment
+- ✅ AI Evaluation
+- ✅ Follow-up Questions
+
+---
+
+# 🚀 Deployment
+
+Hot Seat is fully deployed using a modern cloud-native architecture.
+
+| Component | Platform |
+|-----------|----------|
+| Frontend | Vercel |
+| Backend | Render |
+| Database | Neon PostgreSQL |
+
+---
+
+# 🌍 Deploy Your Own Instance
+
+## Backend (Render)
+
+1. Fork this repository.
+
+2. Create a new **Web Service** on Render.
+
+3. Connect your GitHub repository.
+
+4. Set the root directory to:
+
+```
+backend
+```
+
+5. Build Command
+
+```bash
+pip install -r requirements.txt
+```
+
+6. Start Command
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port $PORT
+```
+
+7. Configure the following environment variables:
+
+```
+DATABASE_URL
+SECRET_KEY
+ACCESS_TOKEN_EXPIRE_MINUTES
+ALGORITHM
+GEMINI_API_KEY
+GOOGLE_CLIENT_ID
+```
+
+8. Deploy.
+
+---
+
+## Frontend (Vercel)
+
+1. Import the repository into Vercel.
+
+2. Set the root directory:
+
+```
+frontend
+```
+
+3. Configure Environment Variables
+
+```
+VITE_API_URL=https://YOUR_RENDER_BACKEND_URL
+
+VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
+```
+
+4. Deploy.
+
+---
+
+# 🔌 API Overview
+
+Hot Seat exposes REST APIs for all major functionality.
+
+## Authentication
+
+```
+POST /signup
+POST /login
+POST /auth/google
+```
+
+---
+
+## Resume
+
+```
+POST /resume/upload
+GET /resume
+DELETE /resume/{resume_id}
+```
+
+---
+
+## Interview
+
+```
+POST /interview/generate
+GET /interview/history
+GET /interview/{session_id}
+```
+
+---
+
+## Answers
+
+```
+POST /answer
+GET /answer/session/{session_id}/results
+```
+
+---
+
+## Documentation
+
+Swagger UI
+
+```
+/docs
+```
+
+OpenAPI JSON
+
+```
+/openapi.json
+```
 
 ---
 
 # 🔒 Security
 
+Hot Seat follows modern authentication and security practices.
+
+Implemented
+
 - JWT Authentication
-- Password Hashing (Passlib + Bcrypt)
-- Protected REST APIs
+- Google OAuth
+- Secure Password Hashing
+- Protected API Endpoints
 - Environment Variables for Secrets
+- Ownership Validation for User Resources
+- Google Token Verification
+- Smart Account Linking
+- Alembic Database Migrations
 
 ---
 
-# ❗ Troubleshooting
+# 📈 Current Features
 
-## Docker daemon not running
-
-Start Docker Desktop and retry.
-
----
-
-## Invalid Gemini API Key
-
-Verify `GEMINI_API_KEY` inside `backend/.env`.
-
----
-
-## Port already in use
-
-Stop the conflicting service or modify the exposed port in `docker-compose.yml`.
-
----
-
-## Containers fail to start
-
-```bash
-docker compose down
-docker compose up --build
-```
-
----
-
-## Database connection error
-
-Ensure the password in `DATABASE_URL` matches the PostgreSQL credentials configured in `docker-compose.yml`.
+- JWT Authentication
+- Email & Password Login
+- Google OAuth
+- Resume Upload
+- Resume Parsing
+- Resume Deletion
+- AI Interview Generation
+- Multi-Domain Interviews
+- Prompt Optimization
+- Context-Aware Follow-up Questions
+- Voice + Text + Code Interviews
+- Monaco Editor
+- Multi-Language Coding Environment
+- Compile & Run
+- Sample Test Cases
+- Hidden Test Cases
+- AI Answer Evaluation
+- Interview History
+- PostgreSQL
+- Alembic
+- Docker
+- Render Deployment
+- Vercel Deployment
 
 ---
 
-# 📈 Future Enhancements
+# 🛣️ Product Roadmap
 
-- Video Interview Support
-- AI Follow-up Questions
-- Real-Time Code Execution
-- Company Interview Templates
-- Leaderboards
-- Email Reports
-- Cloud Deployment
-- Analytics Dashboard
+## ✅ Completed
+
+- [x] JWT Authentication
+- [x] Resume Upload
+- [x] Resume Management
+- [x] Resume Parsing
+- [x] AI Interview Generation
+- [x] Multi-Domain Interviews
+- [x] Prompt Optimization
+- [x] Context-Aware Follow-up Questions
+- [x] Voice + Text + Code Interviews
+- [x] Monaco Editor Integration
+- [x] Multi-Language Support
+- [x] Compile & Run
+- [x] Sample Test Cases
+- [x] Hidden Test Cases
+- [x] Google OAuth Authentication
+- [x] Smart Account Linking
+- [x] PostgreSQL Migration
+- [x] Alembic Migrations
+- [x] Dockerization
+- [x] Render Deployment
+- [x] Vercel Deployment
+
+---
+
+## 🚧 Planned Features
+
+### AI Improvements
+
+- [ ] AI Code Review
+- [ ] Voice Recognition Improvements
+- [ ] Resume AI Review
+- [ ] Adaptive AI Interviewer
+- [ ] Interview Personas
+
+---
+
+### Analytics
+
+- [ ] Skill Dashboard
+- [ ] Performance Trends
+- [ ] Learning Roadmap
+- [ ] Downloadable Interview Reports
+
+---
+
+### Interview Packs
+
+- [ ] Google
+- [ ] Amazon
+- [ ] Microsoft
+- [ ] Atlassian
+- [ ] Uber
+- [ ] Goldman Sachs
+- [ ] McKinsey
+- [ ] BCG
+
+---
+
+### Production
+
+- [ ] Email Verification
+- [ ] Forgot Password
+- [ ] Notification Emails
+- [ ] Cloud Resume Storage
+- [ ] Resume Versioning
+
+---
+
+### SaaS
+
+- [ ] Institute Dashboard
+- [ ] Recruiter Dashboard
+- [ ] Subscription Plans
+- [ ] API Platform
+- [ ] White-Label Solution
 
 ---
 
 # 🤝 Contributing
 
+Contributions are welcome.
+
+If you would like to improve Hot Seat:
+
+1. Fork the repository.
+
+2. Create a feature branch.
+
 ```bash
-git checkout -b feature/my-feature
-
-git add .
-
-git commit -m "Add new feature"
-
-git push origin feature/my-feature
+git checkout -b feature/your-feature-name
 ```
 
-Create a Pull Request for review.
+3. Commit your changes.
+
+```bash
+git commit -m "Add feature"
+```
+
+4. Push your branch.
+
+```bash
+git push origin feature/your-feature-name
+```
+
+5. Open a Pull Request.
+
+---
+
+# 💡 Future Vision
+
+Hot Seat aims to evolve beyond an interview preparation platform into a complete AI-powered interview ecosystem.
+
+Future versions will support:
+
+- AI Interview Coach
+- Recruiter Dashboard
+- Institute Portal
+- Interview-as-a-Service APIs
+- Enterprise Hiring Solutions
+- AI Resume Optimization
+- Personalized Learning Paths
+- Company-Specific Interview Simulations
 
 ---
 
@@ -364,10 +1071,46 @@ Create a Pull Request for review.
 
 **Harshal Shah**
 
-BITS Pilani Hyderabad Campus
+B.E. Computer Science
+
+BITS Pilani, Hyderabad Campus
+
+GitHub
+
+https://github.com/HarshalShah0508
+
+LinkedIn
+
+(Add your LinkedIn URL)
 
 ---
 
 # ⭐ Support
 
-If you found this project useful, consider giving it a ⭐ on GitHub!
+If you found this project useful,
+
+⭐ Star the repository
+
+🐛 Report bugs
+
+💡 Suggest improvements
+
+🤝 Share your feedback
+
+Your support helps improve Hot Seat and motivates future development.
+
+---
+
+## 📜 License
+
+This project is licensed under the **MIT License**.
+
+See the `LICENSE` file for details.
+
+---
+
+<p align="center">
+
+Built with ❤️ using React, FastAPI, PostgreSQL, Docker, Google Gemini and Google OAuth.
+
+</p>
