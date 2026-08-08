@@ -1,5 +1,10 @@
 import { createContext, useEffect, useState } from "react";
-import { getMe, login as loginApi, signup as signupApi } from "../api/authApi";
+import {
+  getMe,
+  login as loginApi,
+  signup as signupApi,
+  googleLogin as googleLoginApi,
+} from "../api/authApi";
 import { getToken, removeToken, setToken } from "../utils/token";
 
 const AuthContext = createContext(null);
@@ -33,6 +38,23 @@ export function AuthProvider({ children }) {
       console.error("LOGIN ERROR:", error);
       throw error;
     }
+};
+  const googleLogin = async (idToken) => {
+    try {
+      const data = await googleLoginApi(idToken);
+
+      setToken(data.access_token);
+      setAuthToken(data.access_token);
+
+      const currentUser = await getMe(data.access_token);
+
+      setUser(currentUser);
+
+      return currentUser;
+  } catch (error) {
+    console.error("GOOGLE LOGIN ERROR:", error);
+    throw error;
+  }
 };
 
   const signup = async ({ username, email, password }) => {
@@ -79,6 +101,7 @@ export function AuthProvider({ children }) {
         loading,
         isAuthenticated: !!user,
         login,
+        googleLogin,
         signup,
         logout,
       }}

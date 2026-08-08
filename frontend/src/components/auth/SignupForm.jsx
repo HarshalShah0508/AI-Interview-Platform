@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
-
+import GoogleLoginButton from "./GoogleLoginButton";
 function SignupForm() {
   const navigate = useNavigate();
   const { signup } = useAuth();
@@ -76,6 +76,13 @@ function SignupForm() {
       <button className="button button--primary" type="submit">
         Signup
       </button>
+      <div className="auth-divider">
+        <hr />
+        <span>OR</span>
+        <hr />
+      </div>
+
+      <GoogleLoginButton />
 
       <p className="form-footer">
         Already have an account? <Link to="/login">Login</Link>

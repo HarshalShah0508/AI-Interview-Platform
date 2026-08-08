@@ -1,14 +1,15 @@
 import threading
 
-import google.generativeai as genai
-from google.api_core.exceptions import ResourceExhausted
+from google import genai
+from google.genai.errors import ClientError
 
-from app.core.config import GEMINI_API_KEYS
+from app.core.config import (
+    GEMINI_API_KEYS,
+    GEMINI_MODEL,
+)
 
 
 class APIKeyManager:
-
-    MODEL_NAME = "gemini-2.5-flash"
 
     def __init__(self):
 
@@ -25,17 +26,13 @@ class APIKeyManager:
 
         self.lock = threading.Lock()
 
-    def _get_model(self):
+    def _get_client(self):
 
         with self.lock:
             api_key = self.api_keys[self.current_index]
 
-        genai.configure(
-            api_key=api_key
-        )
-
-        return genai.GenerativeModel(
-            self.MODEL_NAME
+        return genai.Client(
+            api_key=api_key,
         )
 
     def _move_to_next_key(self):
@@ -64,29 +61,36 @@ class APIKeyManager:
 
     def generate_content(
         self,
-        prompt: str
+        prompt: str,
     ):
 
         while True:
 
-            model = self._get_model()
+            client = self._get_client()
 
             try:
 
-                return model.generate_content(
-                    prompt
+                return client.models.generate_content(
+                    model=GEMINI_MODEL,
+                    contents=prompt,
                 )
 
-            except ResourceExhausted as e:
+            except ClientError as error:
 
-                print(
-                    f"\nGemini API Key #{self.current_index + 1} quota exhausted."
-                )
+                if getattr(error, "status_code", None) == 429:
 
-                print(e)
+                    print(
+                        f"\nGemini API Key #{self.current_index + 1} quota exhausted."
+                    )
 
-                self._move_to_next_key()
+                    print(error)
 
-    def get_model(self):
+                    self._move_to_next_key()
 
-        return self._get_model()
+                    continue
+
+                raise
+
+    def get_client(self):
+
+        return self._get_client()

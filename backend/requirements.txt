@@ -1,3 +1,4 @@
+alembic==1.19.0
 annotated-doc==0.0.4
 annotated-types==0.7.0
 anyio==4.13.0
@@ -16,7 +17,7 @@ google-api-core==2.31.0
 google-api-python-client==2.197.0
 google-auth==2.55.0
 google-auth-httplib2==0.4.0
-google-generativeai==0.8.6
+google-genai==1.35.0
 googleapis-common-protos==1.75.0
 grpcio==1.81.1
 grpcio-status==1.71.2
@@ -24,6 +25,8 @@ h11==0.16.0
 httplib2==0.31.2
 idna==3.18
 jose==1.0.0
+Mako==1.4.1
+MarkupSafe==3.0.3
 passlib==1.7.4
 proto-plus==1.28.0
 protobuf==5.29.6
