@@ -16,6 +16,14 @@ ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(
     os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 180)
 )
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+
+if not GOOGLE_CLIENT_ID:
+    raise ValueError(
+        "GOOGLE_CLIENT_ID must be set in the environment."
+    )
+
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
 UPLOAD_DIR = BASE_DIR / "uploads"
 
@@ -29,6 +37,11 @@ RESUME_DIR.mkdir(
 # -----------------------------
 # Gemini Configuration
 # -----------------------------
+
+GEMINI_MODEL = os.getenv(
+    "GEMINI_MODEL",
+    "gemini-2.5-flash",
+)
 
 raw_keys = os.getenv("GEMINI_API_KEYS")
 

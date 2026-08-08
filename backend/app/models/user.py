@@ -29,7 +29,19 @@ class User(Base):
 
     hashed_password = Column(
         String,
-        nullable=False
+        nullable=True
+    )
+
+    google_id = Column(
+        String,
+        unique=True,
+        nullable=True
+    )
+
+    auth_provider = Column(
+        String(20),
+        nullable=False,
+        default="local"
     )
 
     resumes = relationship(

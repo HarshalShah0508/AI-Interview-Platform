@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../../hooks/useAuth";
-
+import GoogleLoginButton from "./GoogleLoginButton";
 function LoginForm() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -67,6 +67,13 @@ function LoginForm() {
       <button className="button button--primary" type="submit">
         Login
       </button>
+      <div className="auth-divider">
+        <hr />
+        <span>OR</span>
+        <hr />
+      </div>
+
+      <GoogleLoginButton />
 
       <p className="form-footer">
         New to Hot Seat? <Link to="/signup">Create an account</Link>

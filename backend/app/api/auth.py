@@ -1,11 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-
+from fastapi import status
 from sqlalchemy.orm import Session
 
 from app.database.database import get_db
 from app.models.user import User
-from app.schemas.user import UserCreate, UserResponse
+
+from app.schemas.user import (
+    UserCreate,
+    UserResponse,
+    GoogleLoginRequest
+)
 
 from app.utils.security import (
     hash_password,
@@ -17,10 +22,17 @@ from app.utils.jwt_handler import (
     get_current_user
 )
 
+from app.services.oauth_service import (
+    authenticate_google_user
+)
+
 router = APIRouter()
 
 
-@router.post("/signup")
+@router.post(
+    "/signup",
+    status_code=status.HTTP_201_CREATED
+    )
 def signup(
     user: UserCreate,
     db: Session = Depends(get_db)
@@ -43,7 +55,8 @@ def signup(
         email=user.email,
         hashed_password=hash_password(
             user.password
-        )
+        ),
+        auth_provider="local"
     )
 
     db.add(new_user)
@@ -74,6 +87,12 @@ def login(
             detail="Invalid credentials"
         )
 
+    if user.hashed_password is None:
+        raise HTTPException(
+            status_code=401,
+            detail="This account was created using Google Sign-In. Please continue with Google."
+        )
+
     if not verify_password(
         form_data.password,
         user.hashed_password
@@ -93,6 +112,17 @@ def login(
         "access_token": access_token,
         "token_type": "bearer"
     }
+
+
+@router.post("/auth/google")
+def google_auth(
+    request: GoogleLoginRequest,
+    db: Session = Depends(get_db)
+):
+    return authenticate_google_user(
+        request.id_token,
+        db
+    )
 
 
 @router.get(

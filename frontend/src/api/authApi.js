@@ -19,6 +19,14 @@ export const login = async ({ email, password }) => {
   return response.data;
 };
 
+export const googleLogin = async (idToken) => {
+  const response = await apiClient.post("/auth/google", {
+    id_token: idToken,
+  });
+
+  return response.data;
+};
+
 export const getMe = async (token) => {
   const response = await apiClient.get("/me", {
     headers: {

@@ -20,3 +20,6 @@ class UserResponse(BaseModel):
     model_config = {
         "from_attributes": True
     }
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str
