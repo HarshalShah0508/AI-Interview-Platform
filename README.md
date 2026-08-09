@@ -1242,18 +1242,8 @@ If you found this project useful:
 
 Your support helps improve Hot Seat and motivates future development.
 
----
-
-## 📜 License
-
-This project is licensed under the **MIT License**.
-
-See the `LICENSE` file for details.
-
----
-
 <p align="center">
 
-Built with ❤️ using React, FastAPI, PostgreSQL, Docker, Google Gemini, Google OAuth and Brevo.
+Built using React, FastAPI, PostgreSQL, Docker, Google Gemini, Google OAuth and Brevo.
 
 </p>
