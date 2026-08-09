@@ -1224,7 +1224,7 @@ https://github.com/HarshalShah0508
 
 LinkedIn
 
-(Add your LinkedIn URL)
+www.linkedin.com/in/harshal-anand-shah
 
 ---
 
