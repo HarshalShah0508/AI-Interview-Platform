@@ -43,7 +43,13 @@ Candidates can answer interview questions using:
 
 making the interview experience closely resemble actual software engineering interviews.
 
-The platform currently supports multiple interview domains including Software Engineering, Finance, Consulting, Sales, and Marketing.
+The platform currently supports multiple interview domains including:
+
+- Software Engineering
+- Finance
+- Consulting
+- Sales
+- Marketing
 
 ---
 
@@ -51,12 +57,22 @@ The platform currently supports multiple interview domains including Software En
 
 ## 🔐 Authentication
 
+Hot Seat provides a complete authentication system supporting both traditional and OAuth-based authentication.
+
 - JWT Authentication
 - Email & Password Login
 - Google OAuth Login
 - Smart Account Linking
+- Email Verification
+- Resend Verification Email
 - Protected Routes
 - Secure Password Hashing using Passlib & Bcrypt
+- Verification Token Expiry
+- Single-Use Email Verification Tokens
+
+Local accounts must verify their email address before they can log in.
+
+Google OAuth accounts are authenticated directly through Google and do not require the local email verification flow.
 
 ---
 
@@ -76,12 +92,12 @@ The platform currently supports multiple interview domains including Software En
 - Resume-Based Questions
 - Multi-Domain Interview Generation
 - Difficulty Selection
-- Software Interviews
+- Software Engineering Interviews
 - Finance Interviews
 - Consulting Interviews
 - Sales Interviews
 - Marketing Interviews
-- Prompt Optimizations
+- Prompt Optimization
 - Structured AI Prompt Routing
 
 ---
@@ -102,36 +118,50 @@ This closely mimics how human interviewers probe deeper when a candidate provide
 
 ## 💻 Coding Interview Environment
 
-Hot Seat includes a complete LeetCode-style coding environment.
+Hot Seat includes a complete LeetCode-style coding environment powered by the Monaco Editor.
 
-Features include:
+### Features
 
-- Monaco Editor (VS Code Experience)
+- Monaco Editor with VS Code-like experience
 - Multi-language Support
 - Compile & Run
 - Runtime Output
 - Compilation Errors
 - Sample Test Cases
+- Hidden Test Cases
 - AI Code Evaluation
+- Language-specific execution environments
 
-Supported Languages
+### Supported Languages
 
+- C
 - C++
 - Java
 - Python
 - JavaScript
+- Verilog
+
+The coding environment supports both conventional programming languages and hardware description language workflows, allowing candidates to practice a wider range of technical interview problems.
 
 ---
 
 ## 🎙 Hybrid Interview Mode
 
-Candidates can answer interview questions using
+Candidates can answer interview questions using:
 
-- Voice
-- Text
-- Code
+- 🎤 Voice
+- ⌨️ Text
+- 💻 Code
 
-allowing both conceptual explanations and coding solutions within the same interview.
+These inputs can be combined into a single interview response.
+
+For example, a candidate can:
+
+1. Explain their approach using voice.
+2. Add additional notes using text.
+3. Implement the solution inside the coding environment.
+
+The combined response is then evaluated by the AI interview engine.
 
 ---
 
@@ -139,7 +169,7 @@ allowing both conceptual explanations and coding solutions within the same inter
 
 Every answer is evaluated using Google Gemini.
 
-The platform provides
+The platform provides:
 
 - Overall Score
 - Strengths
@@ -148,12 +178,13 @@ The platform provides
 - AI Evaluation
 - Coding Feedback
 - Interview History
+- Context-Aware Follow-up Questions
 
 ---
 
 ## 📚 Interview History
 
-Candidates can revisit previous interviews and review
+Candidates can revisit previous interviews and review:
 
 - Questions
 - Answers
@@ -163,21 +194,15 @@ Candidates can revisit previous interviews and review
 
 ---
 
-## 🚀 Production Deployment
+# 🚀 Production Deployment
 
-The application is fully deployed.
+The application is fully deployed using a modern cloud architecture.
 
-Frontend
-
-- Vercel
-
-Backend
-
-- Render
-
-Database
-
-- Neon PostgreSQL
+| Component | Platform |
+|-----------|----------|
+| Frontend | Vercel |
+| Backend | Render |
+| Database | Neon PostgreSQL |
 
 ---
 
@@ -189,7 +214,7 @@ Database
                                  ▼
                      React + Vite Frontend
                                  │
-                 Google OAuth + JWT Authentication
+                Google OAuth + JWT + Email Verification
                                  │
                                  ▼
                          FastAPI Backend
@@ -200,10 +225,11 @@ Database
       │               │               │               │
       └───────────────┴───────────────┴───────────────┘
                                  │
-                           Google Gemini AI
-                                 │
-                                 ▼
-                    PostgreSQL (Neon + Alembic)
+                    ┌────────────┴────────────┐
+                    ▼                         ▼
+             Google Gemini AI          PostgreSQL
+                                           │
+                                      Neon + Alembic
 ```
 
 ---
@@ -212,6 +238,10 @@ Database
 
 ```text
 User Registration / Google Login
+            │
+            ▼
+     Email Verification
+      (Local Accounts)
             │
             ▼
       Upload Resume
@@ -238,7 +268,8 @@ User Registration / Google Login
  AI Evaluation
             │
             ▼
- Context-Aware Follow-up Question (if required)
+ Context-Aware Follow-up Question
+       (if required)
             │
             ▼
  Final Feedback
@@ -246,8 +277,6 @@ User Registration / Google Login
             ▼
  Interview History
 ```
-
----
 
 ---
 
@@ -280,7 +309,24 @@ User Registration / Google Login
 
 ## Artificial Intelligence
 
-- Google Gemini (google-genai)
+- Google Gemini
+- `google-genai`
+
+Used for:
+
+- Interview Generation
+- Answer Evaluation
+- Coding Evaluation
+- Adaptive Follow-up Questions
+
+---
+
+## Email
+
+- Brevo
+- Transactional Email API
+- Email Verification
+- Verification Email Resending
 
 ---
 
@@ -288,6 +334,7 @@ User Registration / Google Login
 
 - PostgreSQL
 - Neon
+- Alembic
 
 ---
 
@@ -305,14 +352,19 @@ User Registration / Google Login
 
 - ✅ Production Deployed
 - ✅ Google OAuth Authentication
+- ✅ Email Verification
+- ✅ Resend Verification Emails
 - ✅ Multi-Domain AI Interviews
 - ✅ Context-Aware Follow-up Questions
 - ✅ Monaco Coding Environment
+- ✅ C / C++ / Java / Python / JavaScript / Verilog Support
 - ✅ AI Answer Evaluation
 - ✅ Hybrid Interview (Voice + Text + Code)
 - ✅ Dockerized Full-Stack Application
 - ✅ PostgreSQL + Alembic Migrations
 - ✅ Public REST APIs
+
+---
 
 # ⚙️ Prerequisites
 
@@ -389,7 +441,7 @@ Create a `.env` file.
 touch .env
 ```
 
-Add the following configuration.
+Add the required configuration.
 
 ```env
 DATABASE_URL=postgresql://interview_user_official:YOUR_PASSWORD@postgres:5432/interview_db
@@ -403,7 +455,13 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 GEMINI_API_KEY=YOUR_GEMINI_API_KEY
 
 GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
+
+FRONTEND_URL=http://localhost:3000
+
+BREVO_API_KEY=YOUR_BREVO_API_KEY
 ```
+
+> Never commit your `.env` file or expose API keys publicly.
 
 ---
 
@@ -415,55 +473,48 @@ Generate a secure JWT secret.
 python3 -c "import secrets; print(secrets.token_urlsafe(64))"
 ```
 
-Copy the generated value into
+Copy the generated value into:
 
-```
-SECRET_KEY
+```env
+SECRET_KEY=YOUR_SECRET_KEY
 ```
 
 ---
 
 # 🤖 Google Gemini API Setup
 
-Hot Seat uses Google's Gemini API for
+Hot Seat uses Google's Gemini API for:
 
 - Interview Generation
 - Answer Evaluation
+- Coding Evaluation
 - Follow-up Questions
 
 ## Step 1
 
-Visit
+Visit:
 
 https://aistudio.google.com/
-
----
 
 ## Step 2
 
 Sign in using your Google account.
 
----
-
 ## Step 3
 
-Click
+Click:
 
-```
+```text
 Get API Key
 ```
-
----
 
 ## Step 4
 
 Create a new API key.
 
----
-
 ## Step 5
 
-Copy the key into
+Copy the key into:
 
 ```env
 GEMINI_API_KEY=YOUR_API_KEY
@@ -477,103 +528,157 @@ Hot Seat supports authentication using Google OAuth.
 
 ## Step 1
 
-Open
+Open:
 
 https://console.cloud.google.com/
-
----
 
 ## Step 2
 
 Create a new project.
 
----
-
 ## Step 3
 
-Navigate to
+Navigate to:
 
-```
+```text
 APIs & Services
-
-↓
-
+        ↓
 Credentials
 ```
 
----
-
 ## Step 4
 
-Create an
+Create an:
 
-```
+```text
 OAuth Client ID
 ```
 
----
-
 ## Step 5
 
-Application Type
+Select:
 
-```
+```text
 Web Application
 ```
 
----
-
 ## Step 6
 
-Add Authorized JavaScript Origins
+Add Authorized JavaScript Origins.
 
-For Local Development
+For local development:
 
-```
+```text
 http://localhost:3000
-
 http://localhost:5173
 ```
-
----
 
 ## Step 7
 
-Add Authorized Redirect URI
+Add the appropriate authorized origin/redirect configuration for the frontend.
 
-```
-http://localhost:5173
-```
-
-*(Update this if your frontend runs on a different port.)*
-
----
+> Update these values if your frontend runs on a different port.
 
 ## Step 8
 
 Copy the Client ID.
 
-Add it to
-
-Backend
+Add it to the backend:
 
 ```env
 GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 ```
 
-Frontend
+And create:
 
-Create
-
-```
+```text
 frontend/.env
 ```
+
+with:
 
 ```env
 VITE_GOOGLE_CLIENT_ID=YOUR_CLIENT_ID
 
 VITE_API_URL=http://localhost:8000
 ```
+
+---
+
+# 📧 Email Verification Setup
+
+Hot Seat uses Brevo for transactional verification emails.
+
+## Step 1
+
+Create a Brevo account.
+
+## Step 2
+
+Generate a Brevo API key.
+
+## Step 3
+
+Add the key to the backend environment:
+
+```env
+BREVO_API_KEY=YOUR_BREVO_API_KEY
+```
+
+## Step 4
+
+Configure the frontend URL:
+
+For local development:
+
+```env
+FRONTEND_URL=http://localhost:3000
+```
+
+For production:
+
+```env
+FRONTEND_URL=https://hotseatai.vercel.app
+```
+
+The verification email contains a secure verification link generated by the backend.
+
+### Verification Flow
+
+```text
+Signup
+   │
+   ▼
+Create Account
+   │
+   ▼
+Generate Secure Token
+   │
+   ▼
+Store Token Hash
+   │
+   ▼
+Send Verification Email
+   │
+   ▼
+User Clicks Link
+   │
+   ▼
+Verify Token
+   │
+   ▼
+Mark Email as Verified
+   │
+   ▼
+User Can Login
+```
+
+Verification tokens:
+
+- Expire after 24 hours.
+- Are stored as SHA-256 hashes.
+- Are single-use.
+- Are replaced when a new verification email is requested.
 
 ---
 
@@ -585,40 +690,39 @@ Return to the project root.
 cd ..
 ```
 
-Build the containers.
+Build and start the containers:
 
 ```bash
 docker compose up --build
 ```
 
-Docker automatically
+Docker starts:
 
-- Builds the frontend
-- Builds the backend
-- Starts PostgreSQL
-- Creates the database
-- Runs Alembic migrations
-- Connects all services
+- Frontend
+- Backend
+- PostgreSQL
+
+and connects the services together.
 
 ---
 
 # 🌐 Application URLs
 
-Frontend
+Frontend:
 
-```
+```text
 http://localhost:3000
 ```
 
-Backend
+Backend:
 
-```
+```text
 http://localhost:8000
 ```
 
-Swagger Documentation
+Swagger Documentation:
 
-```
+```text
 http://localhost:8000/docs
 ```
 
@@ -628,19 +732,19 @@ http://localhost:8000/docs
 
 Hot Seat uses Alembic for schema migrations.
 
-Create a migration
+Create a migration:
 
 ```bash
 alembic revision --autogenerate -m "migration_name"
 ```
 
-Apply migrations
+Apply migrations:
 
 ```bash
 alembic upgrade head
 ```
 
-Rollback
+Rollback:
 
 ```bash
 alembic downgrade -1
@@ -680,37 +784,47 @@ npm run dev
 
 # ✅ Verify Installation
 
-After everything starts successfully
+After everything starts successfully, visit:
 
-Visit
-
-```
+```text
 http://localhost:3000
 ```
 
-Verify the following
+Verify the following:
 
 - ✅ Email Signup
+- ✅ Email Verification
+- ✅ Resend Verification Email
 - ✅ Email Login
 - ✅ Google Login
 - ✅ Resume Upload
+- ✅ Resume Parsing
 - ✅ Interview Generation
 - ✅ Voice Answers
+- ✅ Text Answers
 - ✅ Coding Environment
+- ✅ C Code Execution
+- ✅ C++ Code Execution
+- ✅ Java Code Execution
+- ✅ Python Code Execution
+- ✅ JavaScript Code Execution
+- ✅ Verilog Code Execution
 - ✅ AI Evaluation
 - ✅ Follow-up Questions
+- ✅ Interview History
 
 ---
 
 # 🚀 Deployment
 
-Hot Seat is fully deployed using a modern cloud-native architecture.
+Hot Seat is deployed using:
 
 | Component | Platform |
 |-----------|----------|
 | Frontend | Vercel |
 | Backend | Render |
 | Database | Neon PostgreSQL |
+| Email | Brevo |
 
 ---
 
@@ -726,17 +840,17 @@ Hot Seat is fully deployed using a modern cloud-native architecture.
 
 4. Set the root directory to:
 
-```
+```text
 backend
 ```
 
-5. Build Command
+5. Build Command:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-6. Start Command
+6. Start Command:
 
 ```bash
 uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -744,13 +858,15 @@ uvicorn app.main:app --host 0.0.0.0 --port $PORT
 
 7. Configure the following environment variables:
 
-```
+```text
 DATABASE_URL
 SECRET_KEY
 ACCESS_TOKEN_EXPIRE_MINUTES
 ALGORITHM
 GEMINI_API_KEY
 GOOGLE_CLIENT_ID
+FRONTEND_URL
+BREVO_API_KEY
 ```
 
 8. Deploy.
@@ -763,13 +879,13 @@ GOOGLE_CLIENT_ID
 
 2. Set the root directory:
 
-```
+```text
 frontend
 ```
 
-3. Configure Environment Variables
+3. Configure Environment Variables:
 
-```
+```env
 VITE_API_URL=https://YOUR_RENDER_BACKEND_URL
 
 VITE_GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
@@ -785,17 +901,20 @@ Hot Seat exposes REST APIs for all major functionality.
 
 ## Authentication
 
-```
+```text
 POST /signup
 POST /login
 POST /auth/google
+GET  /auth/verify-email
+POST /auth/resend-verification
+GET  /me
 ```
 
 ---
 
 ## Resume
 
-```
+```text
 POST /resume/upload
 GET /resume
 DELETE /resume/{resume_id}
@@ -805,7 +924,7 @@ DELETE /resume/{resume_id}
 
 ## Interview
 
-```
+```text
 POST /interview/generate
 GET /interview/history
 GET /interview/{session_id}
@@ -815,24 +934,49 @@ GET /interview/{session_id}
 
 ## Answers
 
-```
+```text
 POST /answer
 GET /answer/session/{session_id}/results
 ```
 
 ---
 
+## Coding
+
+The coding environment provides APIs for:
+
+```text
+Code Execution
+Compilation
+Runtime Output
+Compilation Errors
+Test Case Evaluation
+```
+
+Supported languages include:
+
+```text
+C
+C++
+Java
+Python
+JavaScript
+Verilog
+```
+
+---
+
 ## Documentation
 
-Swagger UI
+Swagger UI:
 
-```
+```text
 /docs
 ```
 
-OpenAPI JSON
+OpenAPI JSON:
 
-```
+```text
 /openapi.json
 ```
 
@@ -842,10 +986,13 @@ OpenAPI JSON
 
 Hot Seat follows modern authentication and security practices.
 
-Implemented
+Implemented:
 
 - JWT Authentication
 - Google OAuth
+- Email Verification
+- Verification Token Expiry
+- Single-Use Verification Tokens
 - Secure Password Hashing
 - Protected API Endpoints
 - Environment Variables for Secrets
@@ -853,32 +1000,69 @@ Implemented
 - Google Token Verification
 - Smart Account Linking
 - Alembic Database Migrations
+- Email Enumeration Protection for Verification Resends
 
 ---
 
 # 📈 Current Features
 
+### Authentication
+
 - JWT Authentication
 - Email & Password Login
 - Google OAuth
+- Smart Account Linking
+- Email Verification
+- Resend Verification Email
+- Protected Routes
+
+### Resume
+
 - Resume Upload
 - Resume Parsing
 - Resume Deletion
+- Resume-Based Question Generation
+
+### AI Interviews
+
 - AI Interview Generation
 - Multi-Domain Interviews
+- Difficulty Selection
 - Prompt Optimization
 - Context-Aware Follow-up Questions
-- Voice + Text + Code Interviews
+- AI Answer Evaluation
+
+### Coding
+
 - Monaco Editor
-- Multi-Language Coding Environment
+- C
+- C++
+- Java
+- Python
+- JavaScript
+- Verilog
 - Compile & Run
 - Sample Test Cases
 - Hidden Test Cases
-- AI Answer Evaluation
+- Runtime Output
+- Compilation Errors
+- AI Code Evaluation
+
+### Interview Experience
+
+- Voice Answers
+- Text Answers
+- Code Answers
+- Hybrid Voice + Text + Code Interviews
 - Interview History
+
+### Infrastructure
+
 - PostgreSQL
+- Neon
 - Alembic
 - Docker
+- Docker Compose
 - Render Deployment
 - Vercel Deployment
 
@@ -889,6 +1073,11 @@ Implemented
 ## ✅ Completed
 
 - [x] JWT Authentication
+- [x] Email & Password Authentication
+- [x] Google OAuth Authentication
+- [x] Smart Account Linking
+- [x] Email Verification
+- [x] Resend Verification Emails
 - [x] Resume Upload
 - [x] Resume Management
 - [x] Resume Parsing
@@ -898,12 +1087,18 @@ Implemented
 - [x] Context-Aware Follow-up Questions
 - [x] Voice + Text + Code Interviews
 - [x] Monaco Editor Integration
+- [x] C Support
+- [x] C++ Support
+- [x] Java Support
+- [x] Python Support
+- [x] JavaScript Support
+- [x] Verilog Support
 - [x] Multi-Language Support
 - [x] Compile & Run
 - [x] Sample Test Cases
 - [x] Hidden Test Cases
-- [x] Google OAuth Authentication
-- [x] Smart Account Linking
+- [x] AI Answer Evaluation
+- [x] Interview History
 - [x] PostgreSQL Migration
 - [x] Alembic Migrations
 - [x] Dockerization
@@ -948,11 +1143,12 @@ Implemented
 
 ### Production
 
-- [ ] Email Verification
 - [ ] Forgot Password
 - [ ] Notification Emails
 - [ ] Cloud Resume Storage
 - [ ] Resume Versioning
+- [ ] Rate Limiting
+- [ ] Advanced Monitoring
 
 ---
 
@@ -972,7 +1168,7 @@ Contributions are welcome.
 
 If you would like to improve Hot Seat:
 
-1. Fork the repository.
+1. Fork this repository.
 
 2. Create a feature branch.
 
@@ -1010,6 +1206,7 @@ Future versions will support:
 - AI Resume Optimization
 - Personalized Learning Paths
 - Company-Specific Interview Simulations
+- Hardware / Verilog Interview Preparation
 
 ---
 
@@ -1033,7 +1230,7 @@ LinkedIn
 
 # ⭐ Support
 
-If you found this project useful,
+If you found this project useful:
 
 ⭐ Star the repository
 
@@ -1057,6 +1254,6 @@ See the `LICENSE` file for details.
 
 <p align="center">
 
-Built with ❤️ using React, FastAPI, PostgreSQL, Docker, Google Gemini and Google OAuth.
+Built with ❤️ using React, FastAPI, PostgreSQL, Docker, Google Gemini, Google OAuth and Brevo.
 
 </p>
