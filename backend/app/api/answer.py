@@ -248,23 +248,27 @@ def get_session_results(
         )
 
     total_score = 0
+
     strong_topics = []
     weak_topics = []
 
     for question in answered_questions:
+
         answer = question.answer
 
         total_score += answer.score
 
-        topic = question.question_text
+    # Collect concept-level strengths returned by Gemini
+        if answer.strengths:
+            strong_topics.extend(answer.strengths)
 
-        if len(topic) > 80:
-            topic = topic[:80] + "..."
+    # Collect concept-level improvements returned by Gemini
+        if answer.improvements:
+            weak_topics.extend(answer.improvements)
 
-        if answer.score >= 8:
-            strong_topics.append(topic)
-        elif answer.score <= 5:
-            weak_topics.append(topic)
+# Remove duplicates while preserving order
+    strong_topics = list(dict.fromkeys(strong_topics))
+    weak_topics = list(dict.fromkeys(weak_topics))
 
     average_score = total_score / len(answered_questions)
 

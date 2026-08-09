@@ -51,6 +51,31 @@ if __name__ == "__main__":
 
 main();`,
   },
+  {
+  id: "c",
+  name: "C",
+  monacoLanguage: "c",
+  extension: ".c",
+  starterCode: `#include <stdio.h>
+
+int main() {
+
+    return 0;
+}`,
+},
+{
+  id: "verilog",
+  name: "Verilog",
+  monacoLanguage: "verilog",
+  extension: ".v",
+  starterCode: `module main;
+
+initial begin
+
+end
+
+endmodule`,
+},
 ];
 
 export const DEFAULT_LANGUAGE = PROGRAMMING_LANGUAGES[0];

@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     curl \
     nodejs \
+    iverilog \
     npm \
     default-jdk \
     && rm -rf /var/lib/apt/lists/*

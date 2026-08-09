@@ -38,22 +38,47 @@ Evaluate the answer on these 3 dimensions:
    - Is the explanation technically sound?
    - Are important technical terms used properly?
 
-2. Completeness
-   - Does the answer fully address the question?
-   - Are important points missing?
-   - Is the explanation sufficiently developed for an interview setting?
+2. Completeness should be judged based on whether the candidate covered the key concepts required by the question, NOT by the length of the answer.
 
-3. Communication Clarity
-   - Is the answer clear and understandable?
-   - Is it logically structured?
-   - Does it communicate the idea well in a professional interview context?
+A concise answer that correctly addresses all important concepts should receive a high score.
+
+Do NOT penalize an answer simply because it is brief.
+
+Do NOT recommend "add more detail", "explain more", or "elaborate further" unless the answer actually omitted important technical concepts.
+
+3.Communication Clarity
+
+- Is the technical explanation logically organized?
+- Are the ideas presented in a coherent order?
+- Is the reasoning easy to follow?
+
+Do NOT score based on fluency, speaking style, verbosity, or answer length.
+   
+Never include feedback about the candidate's speaking style, answer length, or presentation unless the interview question explicitly evaluates communication skills.
+
+Focus only on the technical accuracy, completeness of the required concepts, and relevance to the question.
 
 Scoring Rules:
+
 - Return a single overall score from 1 to 10.
-- 1 to 3 = largely incorrect, extremely incomplete, or very unclear
-- 4 to 6 = partially correct but missing important points or lacking clarity
-- 7 to 8 = mostly correct, reasonably complete, and fairly clear, with some room for improvement
-- 9 to 10 = highly correct, complete, clear, and interview-ready
+
+- 1–3:
+  Major conceptual misunderstandings, incorrect technical explanations, or failure to answer the question.
+
+- 4–6:
+  Demonstrates partial understanding but misses one or more important technical concepts or contains notable inaccuracies.
+
+- 7–8:
+  Technically correct and covers most of the important concepts.
+  Minor omissions or inaccuracies may exist, but they do not significantly affect the overall correctness.
+  A concise answer that correctly covers the required concepts should still receive a score in this range.
+
+- 9–10:
+  Technically accurate, complete, logically structured, and demonstrates interview-ready understanding.
+  The answer should correctly explain all major concepts, mention important trade-offs or practical considerations where appropriate, and contain no significant technical mistakes.
+
+Do NOT increase or decrease the score based on answer length.
+Score only based on technical correctness, relevance, completeness of the required concepts, and logical reasoning.
 
 Return ONLY valid JSON.
 Do not include markdown.
@@ -76,11 +101,95 @@ The JSON must follow exactly this structure:
 }}
 
 Rules for the JSON fields:
-- "score" must be an integer from 1 to 10
-- "feedback" must be a concise but useful overall evaluation summary
-- "strengths" must be a JSON array of 2 to 4 short bullet-style strings
-- "improvements" must be a JSON array of 2 to 4 short bullet-style strings
-- All values must be based only on the question and answer provided below
+
+- "score" must be an integer from 1 to 10.
+
+- "feedback" should be a personalized coaching summary written in 2–4 sentences.
+  Explain what the candidate understood well and what prevented them from achieving a higher score.
+  Do not criticize the communication style unless it prevented understanding of the technical content.
+  Focus the feedback on technical concepts rather than presentation style.
+  Mention only concepts that appeared in the question or were expected in the answer.
+  Whenever possible, explicitly mention the concepts listed in the "strengths" and "improvements" fields so that the summary aligns with the detailed feedback.
+  Do NOT simply say "good answer" or "needs improvement".
+  Make the feedback sound like advice from an experienced interviewer.
+
+- "strengths" must contain ONLY specific concepts, technologies, principles or technical topics that the candidate demonstrated correctly.
+  Examples:
+  - "JWT Authentication"
+  - "Binary Search"
+  - "Database Normalization"
+  - "TCP Three-Way Handshake"
+
+  Do NOT write generic statements such as:
+  - "Good explanation"
+  - "Clear communication"
+  - "Well structured answer"
+
+-"improvements" must contain ONLY the specific concepts, principles, technologies, algorithms or design ideas that the candidate should study further.
+
+Every improvement should answer the question:
+
+"What exact technical topic should the candidate revise?"
+
+If a concept is only partially understood, return the specific sub-topic rather than the broader subject.
+
+For example:
+
+Instead of:
+- Database Normalization
+
+Prefer:
+- Boyce-Codd Normal Form (BCNF)
+- Functional Dependencies
+- Candidate Keys
+
+Instead of:
+- Operating Systems
+
+Prefer:
+- Deadlock Detection
+- Deadlock Prevention
+- Banker's Algorithm
+
+Instead of:
+- Networking
+
+Prefer:
+- TCP Congestion Control
+- Sliding Window Protocol
+- DNS Resolution
+
+Avoid generic feedback such as:
+
+- Explain better
+- Give more details
+- Improve clarity
+- Use more examples
+- Better communication
+- Detailed use case explanation
+
+Instead return precise technical concepts.
+
+Examples:
+
+Question: Explain polymorphism.
+
+Good improvements:
+- Runtime Polymorphism
+- Strategy Pattern
+- Method Overriding
+- Interface-based Design
+
+Bad improvements:
+- Explain in more detail
+- Give more examples
+- Better explanation
+
+- Return between 2 and 5 strengths.
+- Return between 2 and 5 improvements.
+- Avoid duplicate concepts.
+- Every concept should be concise (typically 2–5 words).
+- All values must be based only on the interview question and candidate answer provided below.
 
 Interview Question:
 {question_text}

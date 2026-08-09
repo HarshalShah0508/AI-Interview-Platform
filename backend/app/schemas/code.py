@@ -8,6 +8,8 @@ SupportedLanguage = Literal[
     "python",
     "java",
     "javascript",
+    "c",
+    "verilog",
 ]
 
 
