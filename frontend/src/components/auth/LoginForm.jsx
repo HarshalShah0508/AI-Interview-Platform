@@ -4,7 +4,12 @@ import useAuth from "../../hooks/useAuth";
 import GoogleLoginButton from "./GoogleLoginButton";
 function LoginForm() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const {
+    login,
+    resendVerificationEmail,
+} = useAuth();
+  const [showResend, setShowResend] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -23,18 +28,53 @@ function LoginForm() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    setSuccessMessage("");
+    setShowResend(false);
 
     try {
       await login(formData);
       navigate("/dashboard");
     } catch (err) {
-      console.error(err);
-      console.error(err.response);
-      console.error(err.response?.data);
 
-      setError(err.message);
-    }
+      const message =
+        err.response?.data?.detail ||
+        "Login failed.";
+
+      setError(message);
+
+      if (
+        err.response?.status === 403 &&
+        message ===
+          "Please verify your email before logging in."
+      ) {
+          setShowResend(true);
+      } else {
+          setShowResend(false);
+  }
+}
   };
+  const handleResendVerification = async () => {
+
+  try {
+
+    const response =
+      await resendVerificationEmail(
+        formData.email
+      );
+
+    setSuccessMessage(
+      response.message
+    );
+
+  } catch {
+
+    setError(
+      "Unable to resend verification email."
+    );
+    setSuccessMessage("");
+  }
+
+};
 
   return (
     <form className="auth-card" onSubmit={handleSubmit}>
@@ -63,6 +103,21 @@ function LoginForm() {
       </label>
 
       {error && <p className="error-text">{error}</p>}
+      {showResend && (
+  <button
+    type="button"
+    className="button button--secondary"
+    onClick={handleResendVerification}
+  >
+    Resend Verification Email
+  </button>
+)}
+
+{successMessage && (
+  <p className="success-text">
+    {successMessage}
+  </p>
+)}
 
       <button className="button button--primary" type="submit">
         Login

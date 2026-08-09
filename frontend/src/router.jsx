@@ -10,6 +10,7 @@ import GenerateInterviewPage from "./pages/GenerateInterviewPage";
 import InterviewSessionPage from "./pages/InterviewSessionPage";
 import HistoryPage from "./pages/HistoryPage";
 import SessionResultsPage from "./pages/SessionResultsPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 
 const router = createBrowserRouter([
   {
@@ -19,6 +20,12 @@ const router = createBrowserRouter([
       { index: true, element: <LoginPage /> },
       { path: "login", element: <LoginPage /> },
       { path: "signup", element: <SignupPage /> },
+
+      // Public route
+      {
+        path: "verify-email",
+        element: <VerifyEmailPage />,
+      },
 
       {
         path: "dashboard",

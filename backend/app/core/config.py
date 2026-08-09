@@ -59,3 +59,19 @@ if not GEMINI_API_KEYS:
     )
 
 FOLLOW_UP_SCORE_THRESHOLD = 5
+
+BREVO_API_KEY = os.getenv("BREVO_API_KEY")
+
+SENDER_NAME = os.getenv(
+    "SENDER_NAME",
+    "Hot Seat"
+)
+
+SENDER_EMAIL = os.getenv(
+    "SENDER_EMAIL"
+)
+
+FRONTEND_URL = os.getenv(
+    "FRONTEND_URL",
+    "http://localhost:3000"
+)

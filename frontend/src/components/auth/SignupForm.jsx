@@ -23,15 +23,26 @@ function SignupForm() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
     setError("");
 
     try {
       await signup(formData);
-      navigate("/dashboard");
-    } catch (err) {
-      setError("Signup failed. Try a different email.");
-    }
-  };
+
+      alert(
+        "Account created successfully! Please check your email and verify your account before logging in."
+    );
+
+      navigate("/login");
+
+  } catch (err) {
+
+      setError(
+        err.response?.data?.detail ||
+        "Signup failed."
+    );
+  }
+};
 
   return (
     <form className="auth-card" onSubmit={handleSubmit}>

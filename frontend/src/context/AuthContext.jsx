@@ -4,9 +4,9 @@ import {
   login as loginApi,
   signup as signupApi,
   googleLogin as googleLoginApi,
+  resendVerificationEmail as resendVerificationEmailApi,
 } from "../api/authApi";
 import { getToken, removeToken, setToken } from "../utils/token";
-
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -39,6 +39,9 @@ export function AuthProvider({ children }) {
       throw error;
     }
 };
+  const resendVerificationEmail = async (email) => {
+    return await resendVerificationEmailApi(email);
+};
   const googleLogin = async (idToken) => {
     try {
       const data = await googleLoginApi(idToken);
@@ -58,9 +61,12 @@ export function AuthProvider({ children }) {
 };
 
   const signup = async ({ username, email, password }) => {
-    await signupApi({ username, email, password });
-    return login({ email, password });
-  };
+  return await signupApi({
+    username,
+    email,
+    password,
+  });
+};
 
   const logout = () => {
     removeToken();
@@ -103,6 +109,7 @@ export function AuthProvider({ children }) {
         login,
         googleLogin,
         signup,
+        resendVerificationEmail,
         logout,
       }}
     >

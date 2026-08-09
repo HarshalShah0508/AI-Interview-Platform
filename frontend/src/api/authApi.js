@@ -36,3 +36,12 @@ export const getMe = async (token) => {
 
   return response.data;
 };
+
+export const resendVerificationEmail = async (email) => {
+  const response = await apiClient.post(
+    "/auth/resend-verification",
+    { email }
+  );
+
+  return response.data;
+};

@@ -23,3 +23,6 @@ class UserResponse(BaseModel):
 
 class GoogleLoginRequest(BaseModel):
     id_token: str
+    
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
