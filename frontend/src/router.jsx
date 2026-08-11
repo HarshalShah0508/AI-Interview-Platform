@@ -6,6 +6,7 @@ import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
 import ResumePage from "./pages/ResumePage";
+import ResumeAnalysisPage from "./pages/ResumeAnalysisPage";
 import GenerateInterviewPage from "./pages/GenerateInterviewPage";
 import InterviewSessionPage from "./pages/InterviewSessionPage";
 import HistoryPage from "./pages/HistoryPage";
@@ -17,9 +18,20 @@ const router = createBrowserRouter([
     path: "/",
     element: <App />,
     children: [
-      { index: true, element: <LoginPage /> },
-      { path: "login", element: <LoginPage /> },
-      { path: "signup", element: <SignupPage /> },
+      {
+        index: true,
+        element: <LoginPage />,
+      },
+
+      {
+        path: "login",
+        element: <LoginPage />,
+      },
+
+      {
+        path: "signup",
+        element: <SignupPage />,
+      },
 
       // Public route
       {
@@ -35,6 +47,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       {
         path: "resume",
         element: (
@@ -43,6 +56,16 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
+      {
+        path: "resume-analysis/:analysisId",
+        element: (
+          <ProtectedRoute>
+            <ResumeAnalysisPage />
+          </ProtectedRoute>
+        ),
+      },
+
       {
         path: "generate-interview",
         element: (
@@ -51,6 +74,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       {
         path: "interview/:sessionId",
         element: (
@@ -59,6 +83,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       {
         path: "history",
         element: (
@@ -67,6 +92,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       {
         path: "results/:sessionId",
         element: (
