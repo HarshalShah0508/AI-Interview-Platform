@@ -1,7 +1,7 @@
 import json
 
 from app.services.role_classifier import RoleClassifier
-from app.services.api_key_manager import APIKeyManager
+from app.services.api_key_manager import api_key_manager
 from app.services.prompts.software_prompt import build_software_prompt
 from app.services.prompts.finance_prompt import build_finance_prompt
 from app.services.prompts.consulting_prompt import build_consulting_prompt
@@ -16,7 +16,7 @@ class AIService:
 
     def __init__(self):
 
-        self.key_manager = APIKeyManager()
+        self.key_manager = api_key_manager
 
         self.role_classifier = RoleClassifier()
 

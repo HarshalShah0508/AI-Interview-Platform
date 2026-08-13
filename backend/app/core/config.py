@@ -45,8 +45,6 @@ GEMINI_MODEL = os.getenv(
 
 raw_keys = os.getenv("GEMINI_API_KEYS")
 
-print("DEBUG GEMINI_API_KEYS:", repr(raw_keys))
-
 GEMINI_API_KEYS = [
     key.strip()
     for key in (raw_keys or "").split(",")

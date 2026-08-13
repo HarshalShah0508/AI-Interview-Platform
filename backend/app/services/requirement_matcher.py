@@ -1,0 +1,1505 @@
+import re
+from difflib import SequenceMatcher
+
+from app.schemas.resume_analysis import (
+    JDProfile,
+    JDRequirement,
+    RequirementMatch,
+    MatchingReport,
+    MatchingSummary,
+    ResumeProfile,
+    ResumeEvidence,
+)
+from app.services.semantic_verifier import (
+    SemanticVerifier,
+)
+
+class RequirementMatcher:
+    """
+    Deterministic Resume ↔ JD matching engine.
+
+    The matcher deliberately does NOT let an LLM
+    arbitrarily decide the score.
+
+    Matching is based on:
+
+    1. Exact matches
+    2. Controlled aliases
+    3. Evidence context
+    4. Conservative fuzzy matching
+    5. Requirement importance
+    6. Evidence confidence
+    """
+    def __init__(self):
+        self.semantic_verifier = SemanticVerifier()
+    # --------------------------------------------------------
+    # Controlled aliases
+    # --------------------------------------------------------
+
+    COMMON_ALIASES = {
+        "postgres": {
+            "postgresql",
+        },
+
+        "postgresql": {
+            "postgres",
+        },
+
+        "restful api": {
+            "rest api",
+            "rest apis",
+            "restful apis",
+        },
+
+        "rest api": {
+            "restful api",
+            "rest apis",
+            "restful apis",
+        },
+
+        "javascript": {
+            "js",
+            "ecmascript",
+        },
+
+        "typescript": {
+            "ts",
+        },
+
+        "cplusplus": {
+            "c++",
+            "cpp",
+        },
+
+        "c++": {
+            "cplusplus",
+            "cpp",
+        },
+
+        "kubernetes": {
+            "k8s",
+        },
+
+        "ci/cd": {
+            "cicd",
+            "continuous integration",
+            "continuous deployment",
+            "continuous integration and deployment",
+        },
+
+        "machine learning": {
+            "ml",
+        },
+
+        "artificial intelligence": {
+            "ai",
+        },
+
+        "application programming interface": {
+            "api",
+            "apis",
+        },
+    }
+
+    # --------------------------------------------------------
+    # Important: these must NEVER be treated as aliases.
+    # --------------------------------------------------------
+
+    INCOMPATIBLE_TECHNOLOGIES = {
+        frozenset(("aws", "azure")),
+        frozenset(("aws", "gcp")),
+        frozenset(("azure", "gcp")),
+        frozenset(("docker", "kubernetes")),
+        frozenset(("react", "angular")),
+        frozenset(("react", "vue")),
+        frozenset(("python", "java")),
+        frozenset(("postgresql", "mysql")),
+        frozenset(("postgres", "mysql")),
+    }
+
+    IMPORTANCE_MULTIPLIERS = {
+        "required": 1.00,
+        "preferred": 0.70,
+        "nice_to_have": 0.50,
+        "unclear": 0.50,
+    }
+
+    # --------------------------------------------------------
+    # Controlled concept -> evidence-keyword mapping.
+    #
+    # This lets the matcher recognize INDIRECT evidence for
+    # abstract/soft JD concepts (e.g. "collaborative coding")
+    # without resorting to open-ended semantic guessing. Every
+    # entry is a fixed, human-curated list of literal phrases —
+    # a match still requires one of these phrases to appear
+    # verbatim in the resume evidence.
+    #
+    # "triggers" identify when a requirement/component name
+    # refers to this concept. "evidence_terms" are the resume
+    # phrases that would count as supporting (indirect) proof.
+    # --------------------------------------------------------
+
+    CONCEPT_EVIDENCE_HINTS = [
+        {
+            "triggers": {
+                "collaborative coding",
+                "collaborative development",
+                "collaboration",
+                "team development",
+                "pair programming",
+                "working with a team",
+                "cross-functional",
+                "cross functional",
+            },
+            "evidence_terms": {
+                "git", "github", "gitlab", "bitbucket",
+                "pull request", "pull requests", "pr review",
+                "code review", "pair programming",
+                "team of", "collaborated", "collaboration",
+                "cross-functional", "cross functional",
+                "worked with a team", "agile", "scrum",
+                "open source",
+            },
+        },
+        {
+            "triggers": {
+                "code review",
+            },
+            "evidence_terms": {
+                "code review", "pull request", "pull requests",
+                "pr review", "peer review", "reviewed code",
+                "reviewed pull requests",
+            },
+        },
+        {
+            "triggers": {
+                "production safety",
+                "production readiness",
+                "production support",
+            },
+            "evidence_terms": {
+                "production", "deploy", "deployment",
+                "incident", "rollback", "monitoring",
+                "on-call", "oncall", "hotfix", "post-mortem",
+                "postmortem",
+            },
+        },
+        {
+            "triggers": {
+                "learn unfamiliar systems",
+                "ability to learn",
+                "learning unfamiliar systems",
+                "ramp up",
+                "ramp-up",
+                "quickly learn",
+                "adapt to new",
+                "adaptability",
+            },
+            "evidence_terms": {
+                "ramped up", "onboarded", "quickly learned",
+                "new codebase", "unfamiliar", "self-taught",
+                "learned independently", "picked up",
+                "adapted to", "fast learner",
+            },
+        },
+        {
+            "triggers": {
+                "large code base",
+                "large codebase",
+                "code base navigation",
+                "codebase navigation",
+                "legacy code",
+                "legacy codebase",
+            },
+            "evidence_terms": {
+                "large codebase", "large code base",
+                "legacy code", "legacy codebase",
+                "existing codebase", "navigated",
+                "codebase", "monorepo",
+            },
+        },
+        {
+            "triggers": {
+                "frontend technologies",
+                "frontend",
+                "front-end",
+                "front end",
+                "ui development",
+                "client-side",
+                "client side",
+            },
+            "evidence_terms": {
+                "react", "angular", "vue", "svelte",
+                "html", "css", "javascript", "typescript",
+                "frontend", "front-end", "front end",
+                "ui", "user interface", "dom",
+            },
+        },
+        {
+            "triggers": {
+                "web services",
+                "web service",
+                "backend services",
+                "backend service",
+                "rest api",
+                "restful",
+                "http service",
+                "api development",
+            },
+            "evidence_terms": {
+                "rest api", "restful", "http service",
+                "web service", "web services",
+                "api endpoint", "backend service",
+                "microservice", "graphql", "flask",
+                "fastapi", "django", "express", "spring boot",
+                "node.js", "nodejs", "http server",
+            },
+        },
+    ]
+
+    # Conservative score assigned per evidence tier. These feed
+    # both the aggregate match_strength AND the confidence
+    # ceilings below — neither is allowed to exceed what the
+    # tier itself justifies, regardless of what raw confidence
+    # value the resume-extraction step assigned to a single
+    # piece of evidence.
+    TIER_SCORES = {
+        "direct": 1.00,
+        "indirect": 0.70,
+        "partial": 0.55,
+        "ambiguous": 0.30,
+        "unsupported": 0.0,
+    }
+
+    TIER_CONFIDENCE_CEILING = {
+        "direct": 0.95,
+        "indirect": 0.75,
+        "partial": 0.55,
+        "ambiguous": 0.40,
+        "unsupported": 0.0,
+    }
+
+    COMPOUND_SPLIT_PATTERN = re.compile(
+        r"\s*(?:,|&|/|\band\b)\s*",
+        re.IGNORECASE,
+    )
+
+    # --------------------------------------------------------
+    # Public API
+    # --------------------------------------------------------
+
+    def match(
+    self,
+    jd_profile: JDProfile,
+    resume_profile: ResumeProfile,
+) -> MatchingReport:
+
+        # ----------------------------------------------------
+        # Pass 1 — fully deterministic matching for every
+        # requirement. No Gemini calls happen here.
+        # ----------------------------------------------------
+
+        preliminary_results = [
+            self._match_requirement(
+                requirement,
+                resume_profile,
+            )
+            for requirement in jd_profile.requirements
+        ]
+
+        # ----------------------------------------------------
+        # Pass 2 — semantic verification is ONLY used for
+        # requirements the deterministic matcher could not
+        # confidently classify, and ALL of them are verified
+        # in a single batched Gemini call (not one call per
+        # requirement) to stay within the Gemini call budget.
+        # ----------------------------------------------------
+
+        ambiguous_requirements = [
+            requirement
+            for requirement, result in zip(
+                jd_profile.requirements,
+                preliminary_results,
+            )
+            if result.match_type == "ambiguous"
+        ]
+
+        verifications = {}
+
+        if ambiguous_requirements:
+
+            verifications = (
+                self.semantic_verifier.verify_batch(
+                    requirements=ambiguous_requirements,
+                    resume_profile=resume_profile,
+                )
+            )
+
+        results: list[RequirementMatch] = []
+
+        for requirement, preliminary_result in zip(
+            jd_profile.requirements,
+            preliminary_results,
+        ):
+
+            if preliminary_result.match_type == "ambiguous":
+
+                verification = verifications.get(
+                    requirement.name.strip().lower()
+                )
+
+                result = self._merge_verification(
+                    requirement,
+                    preliminary_result,
+                    verification,
+                )
+
+            else:
+
+                result = preliminary_result
+
+            results.append(result)
+
+        overall_score = self._calculate_overall_score(
+            results
+        )
+
+        summary = self._build_summary(
+            results
+        )
+
+        return MatchingReport(
+            overall_score=round(
+                overall_score,
+                2,
+            ),
+            summary=summary,
+            matches=results,
+        )
+
+    # --------------------------------------------------------
+    # Requirement matching
+    # --------------------------------------------------------
+
+    def _match_requirement(
+        self,
+        requirement: JDRequirement,
+        resume_profile: ResumeProfile,
+    ) -> RequirementMatch:
+        """
+        Component-aware matching.
+
+        A requirement is decomposed into one or more atomic
+        components (either provided by the JD-structuring step,
+        or derived deterministically by splitting compound
+        names on "and"/"&"/"/"/","). Each component is searched
+        independently across three controlled tiers — direct
+        (exact/alias phrase), indirect (controlled concept ->
+        evidence-keyword mapping), and fuzzy (conservative
+        token overlap) — and the per-component results are
+        aggregated conservatively: a compound requirement is
+        never promoted to "strong" unless EVERY component has
+        direct/indirect evidence.
+        """
+
+        components = self._resolve_components(
+            requirement
+        )
+
+        component_results = [
+            self._match_component(
+                component,
+                requirement,
+                resume_profile,
+            )
+            for component in components
+        ]
+
+        return self._aggregate_component_results(
+            requirement,
+            components,
+            component_results,
+        )
+
+    # --------------------------------------------------------
+    # Component resolution
+    # --------------------------------------------------------
+
+    def _resolve_components(
+        self,
+        requirement: JDRequirement,
+    ) -> list[str]:
+
+        if requirement.components:
+
+            resolved = [
+                self._normalize(component)
+                for component in requirement.components
+                if component.strip()
+            ]
+
+            if resolved:
+                return resolved
+
+        parts = [
+            part.strip()
+            for part in self.COMPOUND_SPLIT_PATTERN.split(
+                requirement.name
+            )
+            if part.strip()
+        ]
+
+        if len(parts) >= 2:
+
+            return [
+                self._normalize(part)
+                for part in parts
+            ]
+
+        return [
+            self._normalize(requirement.name)
+        ]
+
+    # --------------------------------------------------------
+    # Per-component evidence tier search
+    # --------------------------------------------------------
+
+    def _match_component(
+        self,
+        component_name: str,
+        requirement: JDRequirement,
+        resume_profile: ResumeProfile,
+    ) -> dict:
+        """
+        Returns {"tier", "score", "items", "terms"} for a
+        single atomic component.
+
+        Both the direct/alias/fuzzy search AND the controlled
+        concept-hint search are evaluated, and the STRONGER of
+        the two signals wins — a weak fuzzy hit (e.g. "web
+        services" fuzzy-overlapping on the single word "web")
+        must not block a much better controlled-concept hit
+        (e.g. "REST API" appearing verbatim) from being used.
+        """
+
+        component_aliases = set(
+            self.COMMON_ALIASES.get(
+                component_name,
+                set(),
+            )
+        )
+
+        if len(
+            self._resolve_components(requirement)
+        ) == 1:
+
+            component_aliases.update(
+                self._normalize(alias)
+                for alias in requirement.aliases
+            )
+
+        direct_terms = {
+            component_name,
+            *component_aliases,
+        }
+
+        direct_results = self._find_evidence(
+            direct_terms,
+            resume_profile,
+        )
+
+        candidates = []
+
+        if direct_results:
+
+            best = max(
+                direct_results,
+                key=lambda item: item["strength"],
+            )
+
+            if best["strength"] >= 1.0:
+                tier = "direct"
+            elif best["strength"] >= 0.70:
+                tier = "partial"
+            else:
+                tier = "ambiguous"
+
+            candidates.append(
+                {
+                    "tier": tier,
+                    "score": self.TIER_SCORES[tier],
+                    "items": direct_results,
+                    "terms": direct_terms,
+                }
+            )
+
+        # ------------------------------------------------
+        # Controlled concept -> evidence-keyword mapping.
+        # Only EXACT phrase hits against the controlled
+        # evidence vocabulary count here; fuzzy matching
+        # against a proxy term would be too noisy to trust
+        # for an indirect signal.
+        # ------------------------------------------------
+
+        concept_terms = self._concept_hint_terms(
+            component_name
+        )
+
+        if concept_terms:
+
+            concept_results = [
+                item
+                for item in self._find_evidence(
+                    concept_terms,
+                    resume_profile,
+                )
+                if item["strength"] >= 1.0
+            ]
+
+            if concept_results:
+
+                candidates.append(
+                    {
+                        "tier": "indirect",
+                        "score": self.TIER_SCORES["indirect"],
+                        "items": concept_results,
+                        "terms": concept_terms,
+                    }
+                )
+
+        if not candidates:
+
+            return {
+                "tier": "unsupported",
+                "score": self.TIER_SCORES["unsupported"],
+                "items": [],
+                "terms": direct_terms,
+            }
+
+        return max(
+            candidates,
+            key=lambda candidate: candidate["score"],
+        )
+
+    def _concept_hint_terms(
+        self,
+        normalized_component: str,
+    ) -> set[str]:
+
+        matched_terms: set[str] = set()
+
+        for entry in self.CONCEPT_EVIDENCE_HINTS:
+
+            if any(
+                trigger in normalized_component
+                or normalized_component in trigger
+                for trigger in entry["triggers"]
+            ):
+
+                matched_terms.update(
+                    entry["evidence_terms"]
+                )
+
+        return matched_terms
+
+    # --------------------------------------------------------
+    # Aggregation across components
+    # --------------------------------------------------------
+
+    def _aggregate_component_results(
+        self,
+        requirement: JDRequirement,
+        components: list[str],
+        component_results: list[dict],
+    ) -> RequirementMatch:
+
+        tiers = [
+            result["tier"]
+            for result in component_results
+        ]
+
+        strong_tiers = {"direct", "indirect"}
+
+        evidenced_tiers = {"direct", "indirect", "partial"}
+
+        # ------------------------------------------------
+        # No evidence anywhere, for any component, in any
+        # tier — this is now a much stronger "missing"
+        # signal than before, since the search itself
+        # covers direct, alias, fuzzy AND controlled
+        # concept evidence.
+        # ------------------------------------------------
+
+        if all(
+            tier == "unsupported"
+            for tier in tiers
+        ):
+
+            return self._build_match(
+                requirement=requirement,
+                match_type="missing",
+                evidence_type="unsupported",
+                strength=0.0,
+                confidence=0.0,
+                components=components,
+                component_results=component_results,
+                reason=(
+                    self._missing_reason(
+                        requirement
+                    )
+                ),
+            )
+
+        # ------------------------------------------------
+        # Every component has at least "partial" evidence
+        # (no component is unsupported, and none is stuck
+        # at the weak/fuzzy "ambiguous" tier) — a clean,
+        # deterministic signal that needs no Gemini call.
+        # ------------------------------------------------
+
+        if all(
+            tier in evidenced_tiers
+            for tier in tiers
+        ):
+
+            strength = sum(
+                result["score"]
+                for result in component_results
+            ) / len(component_results)
+
+            confidence = self._aggregate_confidence(
+                component_results
+            )
+
+            if all(
+                tier in strong_tiers
+                for tier in tiers
+            ):
+
+                match_type = "strong"
+
+                evidence_type = (
+                    "direct"
+                    if all(
+                        tier == "direct"
+                        for tier in tiers
+                    )
+                    else "indirect"
+                )
+
+            else:
+
+                match_type = "partial"
+                evidence_type = "partial"
+
+            return self._build_match(
+                requirement=requirement,
+                match_type=match_type,
+                evidence_type=evidence_type,
+                strength=strength,
+                confidence=confidence,
+                components=components,
+                component_results=component_results,
+                reason=self._matched_reason(
+                    requirement,
+                    components,
+                    component_results,
+                    match_type,
+                ),
+            )
+
+        # ------------------------------------------------
+        # Mixed signal: some components are fully
+        # unsupported while others have real evidence, and
+        # none of the evidenced components are only weak
+        # fuzzy hits. This is deterministically explainable
+        # (we know exactly which half is missing) so it
+        # does not need Gemini either.
+        # ------------------------------------------------
+
+        if not any(
+            tier == "ambiguous"
+            for tier in tiers
+        ):
+
+            strength = sum(
+                result["score"]
+                for result in component_results
+            ) / len(component_results)
+
+            confidence = self._aggregate_confidence(
+                component_results
+            )
+
+            return self._build_match(
+                requirement=requirement,
+                match_type="partial",
+                evidence_type="partial",
+                strength=strength,
+                confidence=confidence,
+                components=components,
+                component_results=component_results,
+                reason=self._matched_reason(
+                    requirement,
+                    components,
+                    component_results,
+                    "partial",
+                ),
+            )
+
+        # ------------------------------------------------
+        # At least one component's best evidence is only a
+        # weak/fuzzy match. The deterministic layer found
+        # something but cannot confidently classify it —
+        # this is exactly the case the batched semantic
+        # verifier exists for.
+        # ------------------------------------------------
+
+        strength = sum(
+            result["score"]
+            for result in component_results
+        ) / len(component_results)
+
+        return self._build_match(
+            requirement=requirement,
+            match_type="ambiguous",
+            evidence_type="ambiguous",
+            strength=strength,
+            confidence=0.0,
+            components=components,
+            component_results=component_results,
+            reason=(
+                "The resume contains potentially related "
+                f"evidence for {requirement.name}, but it "
+                "is not sufficiently explicit."
+            ),
+        )
+
+    def _aggregate_confidence(
+        self,
+        component_results: list[dict],
+    ) -> float:
+
+        supported = [
+            result
+            for result in component_results
+            if result["tier"] != "unsupported"
+        ]
+
+        if not supported:
+            return 0.0
+
+        per_component_confidence = []
+
+        for result in supported:
+
+            raw_confidence = max(
+                (
+                    item["confidence"]
+                    for item in result["items"]
+                ),
+                default=0.0,
+            )
+
+            ceiling = self.TIER_CONFIDENCE_CEILING[
+                result["tier"]
+            ]
+
+            per_component_confidence.append(
+                min(
+                    raw_confidence,
+                    ceiling,
+                )
+            )
+
+        confidence = sum(
+            per_component_confidence
+        ) / len(
+            per_component_confidence
+        )
+
+        # ------------------------------------------------
+        # Breadth penalty: a broad requirement satisfied
+        # by only ONE piece of evidence should not receive
+        # the same confidence as one corroborated by
+        # several independent bullets.
+        #
+        # Evidence extraction can record the same underlying
+        # resume line more than once (e.g. once as a
+        # top-level profile.evidence claim and once as a
+        # synthesized experience/project bullet), so breadth
+        # is measured by DISTINCT source text, not raw item
+        # count — otherwise a single resume line could look
+        # like multiple independent corroborations.
+        # ------------------------------------------------
+
+        distinct_sources = {
+            self._normalize(item["source_text"])
+            for result in component_results
+            for item in result["items"]
+        }
+
+        total_evidence_items = len(
+            distinct_sources
+        )
+
+        if total_evidence_items == 1:
+            confidence *= 0.9
+
+        return confidence
+
+    def _build_match(
+        self,
+        requirement: JDRequirement,
+        match_type: str,
+        evidence_type: str,
+        strength: float,
+        confidence: float,
+        components: list[str],
+        component_results: list[dict],
+        reason: str,
+    ) -> RequirementMatch:
+
+        all_terms: set[str] = set()
+
+        for result in component_results:
+            all_terms.update(result["terms"])
+
+        matched_evidence = list(
+            dict.fromkeys(
+                item["source_text"]
+                for result in component_results
+                for item in result["items"]
+            )
+        )
+
+        matched_sections = list(
+            dict.fromkeys(
+                item["section"]
+                for result in component_results
+                for item in result["items"]
+            )
+        )
+
+        score = (
+            strength
+            * confidence
+            * 100
+        )
+
+        return RequirementMatch(
+            requirement=requirement.name,
+            category=requirement.category,
+            importance=requirement.importance,
+            weight=requirement.weight,
+            match_type=match_type,
+            evidence_type=evidence_type,
+            match_strength=round(
+                strength,
+                3,
+            ),
+            evidence_confidence=round(
+                confidence,
+                3,
+            ),
+            score=round(
+                score,
+                2,
+            ),
+            matched_resume_evidence=matched_evidence,
+            matched_resume_sections=matched_sections,
+            reason=reason,
+            aliases_considered=sorted(
+                all_terms
+            ),
+        )
+
+    def _missing_reason(
+        self,
+        requirement: JDRequirement,
+    ) -> str:
+
+        return (
+            "No direct, controlled-concept, or fuzzy "
+            f"evidence for {requirement.name} was found "
+            "anywhere in the structured resume evidence "
+            "(summary, experience, projects, skills, "
+            "education, certifications)."
+        )
+
+    def _matched_reason(
+        self,
+        requirement: JDRequirement,
+        components: list[str],
+        component_results: list[dict],
+        match_type: str,
+    ) -> str:
+
+        if len(components) == 1:
+
+            tier = component_results[0]["tier"]
+
+            if match_type == "strong":
+
+                return (
+                    f"The resume provides {tier} evidence "
+                    f"for {requirement.name}."
+                )
+
+            return (
+                f"The resume provides {tier} evidence for "
+                f"{requirement.name}, but it is not strong "
+                "enough to classify as a full match."
+            )
+
+        supported = [
+            component
+            for component, result in zip(
+                components,
+                component_results,
+            )
+            if result["tier"] != "unsupported"
+        ]
+
+        unsupported = [
+            component
+            for component, result in zip(
+                components,
+                component_results,
+            )
+            if result["tier"] == "unsupported"
+        ]
+
+        if unsupported:
+
+            return (
+                f"{requirement.name} combines multiple "
+                f"concepts. The resume supports "
+                f"{', '.join(supported)}, but shows no "
+                f"evidence for {', '.join(unsupported)}."
+            )
+
+        return (
+            f"{requirement.name} combines multiple "
+            "concepts, and the resume provides evidence "
+            f"for all of them: {', '.join(supported)}."
+        )
+
+    # --------------------------------------------------------
+    # Evidence search
+    # --------------------------------------------------------
+
+    def _find_evidence(
+        self,
+        candidate_terms: set[str],
+        resume_profile: ResumeProfile,
+    ) -> list[dict]:
+
+        results = []
+
+        all_evidence = list(
+            resume_profile.evidence
+        )
+
+        for skill in resume_profile.skills:
+
+            all_evidence.extend(
+                skill.evidence
+            )
+
+        for experience in resume_profile.experience:
+
+            for bullet in experience.bullets:
+
+                all_evidence.append(
+                    ResumeEvidence(
+                        claim=bullet.text,
+                        category="responsibility",
+                        source_text=bullet.text,
+                        section="experience",
+                        confidence=0.90,
+                    )
+                )
+
+        for project in resume_profile.projects:
+
+            for bullet in project.bullets:
+
+                all_evidence.append(
+                    ResumeEvidence(
+                        claim=bullet.text,
+                        category="project",
+                        source_text=bullet.text,
+                        section="projects",
+                        confidence=0.90,
+                    )
+                )
+
+        for evidence in all_evidence:
+
+            source = self._normalize(
+                evidence.source_text
+            )
+
+            claim = self._normalize(
+                evidence.claim
+            )
+
+            strength = self._calculate_match_strength(
+                candidate_terms,
+                source,
+                claim,
+            )
+
+            if strength > 0:
+
+                results.append(
+                    {
+                        "strength": strength,
+                        "confidence": evidence.confidence,
+                        "source_text": evidence.source_text,
+                        "section": evidence.section,
+                    }
+                )
+
+        return results
+
+    # --------------------------------------------------------
+    # Match strength
+    # --------------------------------------------------------
+
+    def _calculate_match_strength(
+        self,
+        candidate_terms: set[str],
+        source_text: str,
+        claim: str,
+    ) -> float:
+
+        # ----------------------------------------------------
+        # Exact phrase match
+        # ----------------------------------------------------
+
+        for term in candidate_terms:
+
+            if not term:
+                continue
+
+            if self._contains_phrase(
+                source_text,
+                term,
+            ):
+                return 1.0
+
+            if self._contains_phrase(
+                claim,
+                term,
+            ):
+                return 1.0
+
+        # ----------------------------------------------------
+        # Token-based matching
+        # ----------------------------------------------------
+
+        source_tokens = set(
+            self._tokenize(source_text)
+        )
+
+        claim_tokens = set(
+            self._tokenize(claim)
+        )
+
+        best_similarity = 0.0
+
+        for term in candidate_terms:
+
+            term_tokens = set(
+                self._tokenize(term)
+            )
+
+            if not term_tokens:
+                continue
+
+            source_overlap = (
+                len(
+                    term_tokens
+                    & source_tokens
+                )
+                / len(term_tokens)
+            )
+
+            claim_overlap = (
+                len(
+                    term_tokens
+                    & claim_tokens
+                )
+                / len(term_tokens)
+            )
+
+            overlap = max(
+                source_overlap,
+                claim_overlap,
+            )
+
+            best_similarity = max(
+                best_similarity,
+                overlap,
+            )
+
+        # ----------------------------------------------------
+        # Conservative fuzzy matching
+        # ----------------------------------------------------
+
+        if best_similarity >= 0.8:
+
+            return 0.70
+
+        if best_similarity >= 0.5:
+
+            return 0.45
+
+        return 0.0
+
+    # --------------------------------------------------------
+    # Overall score
+    # --------------------------------------------------------
+
+    def _calculate_overall_score(
+        self,
+        results: list[RequirementMatch],
+    ) -> float:
+
+        if not results:
+            return 0.0
+
+        weighted_score = 0.0
+        total_weight = 0.0
+
+        for result in results:
+
+            importance_multiplier = (
+                self.IMPORTANCE_MULTIPLIERS.get(
+                    result.importance,
+                    0.50,
+                )
+            )
+
+            effective_weight = (
+                result.weight
+                * importance_multiplier
+            )
+
+            weighted_score += (
+                result.match_strength
+                * result.evidence_confidence
+                * effective_weight
+            )
+
+            total_weight += effective_weight
+
+        if total_weight == 0:
+
+            return 0.0
+
+        return (
+            weighted_score
+            / total_weight
+        ) * 100
+
+    # --------------------------------------------------------
+    # Summary
+    # --------------------------------------------------------
+
+    def _build_summary(
+        self,
+        results: list[RequirementMatch],
+    ) -> MatchingSummary:
+
+        strong = sum(
+            1
+            for result in results
+            if result.match_type == "strong"
+        )
+
+        partial = sum(
+            1
+            for result in results
+            if result.match_type == "partial"
+        )
+
+        ambiguous = sum(
+            1
+            for result in results
+            if result.match_type == "ambiguous"
+        )
+
+        missing = sum(
+            1
+            for result in results
+            if result.match_type == "missing"
+        )
+
+        required_results = [
+            result
+            for result in results
+            if result.importance == "required"
+        ]
+
+        preferred_results = [
+            result
+            for result in results
+            if result.importance == "preferred"
+        ]
+
+        required_matched = sum(
+            1
+            for result in required_results
+            if result.match_type == "strong"
+        )
+
+        preferred_matched = sum(
+            1
+            for result in preferred_results
+            if result.match_type == "strong"
+        )
+
+        return MatchingSummary(
+            total_requirements=len(
+                results
+            ),
+            strong_matches=strong,
+            partial_matches=partial,
+            ambiguous_matches=ambiguous,
+            missing_matches=missing,
+            required_requirements=len(
+                required_results
+            ),
+            required_matched=required_matched,
+            preferred_requirements=len(
+                preferred_results
+            ),
+            preferred_matched=preferred_matched,
+        )
+
+    # --------------------------------------------------------
+    # Text utilities
+    # --------------------------------------------------------
+
+    @staticmethod
+    def _normalize(text: str) -> str:
+
+        text = text.lower().strip()
+
+        text = (
+            text
+            .replace("–", "-")
+            .replace("—", "-")
+            .replace("_", " ")
+        )
+
+        text = re.sub(
+            r"\s+",
+            " ",
+            text,
+        )
+
+        return text
+
+    @staticmethod
+    def _tokenize(text: str) -> list[str]:
+
+        return re.findall(
+            r"[a-z0-9+#./-]+",
+            text.lower(),
+        )
+
+    @staticmethod
+    def _contains_phrase(
+        text: str,
+        phrase: str,
+    ) -> bool:
+
+        text = text.lower()
+        phrase = phrase.lower()
+
+        pattern = (
+            r"(?<!\w)"
+            + re.escape(phrase)
+            + r"(?!\w)"
+        )
+
+        return bool(
+            re.search(
+                pattern,
+                text,
+            )
+        )
+    def _merge_verification(
+        self,
+        requirement: JDRequirement,
+        preliminary_result: RequirementMatch,
+        verification,
+    ) -> RequirementMatch:
+        """
+        Merges a batched SemanticVerification result (or None,
+        if Gemini did not return a verification for this
+        requirement) back into a RequirementMatch.
+
+        This performs no Gemini calls itself — verification is
+        produced once, up front, for every ambiguous requirement
+        in the analysis via SemanticVerifier.verify_batch().
+        """
+
+        # --------------------------------------------------------
+        # Conservative fallback: if Gemini did not return a
+        # verification for this requirement at all, do not
+        # silently upgrade it — treat it the same as
+        # "insufficient evidence".
+        # --------------------------------------------------------
+
+        if verification is None:
+
+            return RequirementMatch(
+                requirement=requirement.name,
+                category=requirement.category,
+                importance=requirement.importance,
+                weight=requirement.weight,
+                match_type="missing",
+                evidence_type="unsupported",
+                match_strength=0.0,
+                evidence_confidence=0.0,
+                score=0.0,
+                matched_resume_evidence=[],
+                matched_resume_sections=[],
+                reason=(
+                    "Semantic verification did not return a "
+                    "result for this requirement, so it is "
+                    "conservatively treated as unsupported."
+                ),
+                aliases_considered=(
+                    preliminary_result.aliases_considered
+                ),
+            )
+
+        # --------------------------------------------------------
+        # Safety rule:
+        #
+        # Gemini cannot promote a requirement to STRONG unless
+        # it actually provides supporting evidence.
+        # --------------------------------------------------------
+
+        supporting_evidence = (
+            verification.supporting_evidence
+        )
+
+        if not supporting_evidence:
+
+            return RequirementMatch(
+                requirement=requirement.name,
+                category=requirement.category,
+                importance=requirement.importance,
+                weight=requirement.weight,
+                match_type="missing",
+                evidence_type="unsupported",
+                match_strength=0.0,
+                evidence_confidence=0.0,
+                score=0.0,
+                matched_resume_evidence=[],
+                matched_resume_sections=[],
+                reason=(
+                    "The resume contains potentially related "
+                    "information, but there is insufficient "
+                    "evidence to establish this requirement."
+                ),
+                aliases_considered=(
+                    preliminary_result.aliases_considered
+                ),
+            )
+
+        # --------------------------------------------------------
+        # Conservative semantic strength.
+        #
+        # A semantically-verified match is inherently an
+        # inferred judgment call, not a literal phrase hit —
+        # it is labeled "indirect" rather than "direct" even
+        # when the decision is "strong".
+        # --------------------------------------------------------
+
+        if verification.decision == "strong":
+
+            ceiling = 0.90
+
+            match_type = "strong"
+            evidence_type = "indirect"
+
+        elif verification.decision == "partial":
+
+            ceiling = 0.65
+
+            match_type = "partial"
+            evidence_type = "partial"
+
+        elif verification.decision == "missing":
+
+            ceiling = 0.0
+            match_type = "missing"
+            evidence_type = "unsupported"
+
+        else:
+
+            ceiling = 0.40
+
+            match_type = "ambiguous"
+            evidence_type = "ambiguous"
+
+        # ------------------------------------------------
+        # Both the strength AND the confidence exposed to
+        # the candidate are capped by the same ceiling — an
+        # LLM-inferred judgment should never surface as a
+        # falsely precise number (e.g. "92% confidence")
+        # just because Gemini's raw response said so.
+        # ------------------------------------------------
+
+        strength = min(
+            ceiling,
+            verification.confidence,
+        )
+
+        confidence = min(
+            ceiling,
+            verification.confidence,
+        )
+
+        score = (
+            strength
+            * confidence
+            * 100
+        )
+
+        return RequirementMatch(
+            requirement=requirement.name,
+            category=requirement.category,
+            importance=requirement.importance,
+            weight=requirement.weight,
+            match_type=match_type,
+            evidence_type=evidence_type,
+            match_strength=round(
+                strength,
+                3,
+            ),
+            evidence_confidence=round(
+                confidence,
+                3,
+            ),
+            score=round(
+                score,
+                2,
+            ),
+            matched_resume_evidence=(
+                supporting_evidence
+            ),
+            matched_resume_sections=[],
+            reason=verification.reasoning,
+            aliases_considered=(
+                preliminary_result.aliases_considered
+            ),
+        )
