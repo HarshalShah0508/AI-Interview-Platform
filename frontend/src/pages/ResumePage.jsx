@@ -1,4 +1,5 @@
 import ResumeUploadCard from '../components/resume/ResumeUploadCard.jsx'
+import AnalysisHistoryList from '../components/resume-analysis/AnalysisHistoryList.jsx'
 
 function ResumePage() {
   return (
@@ -9,6 +10,13 @@ function ResumePage() {
         <p>Upload a PDF resume that future interview sessions can use for context.</p>
       </div>
       <ResumeUploadCard />
+
+      <div className="page-header">
+        <p className="eyebrow">History</p>
+        <h1>Past Resume ↔ JD Analyses</h1>
+        <p>Revisit the results of job descriptions you've already analyzed your resume against.</p>
+      </div>
+      <AnalysisHistoryList />
     </section>
   )
 }

@@ -111,6 +111,7 @@ Return only the extracted job description text.
                 ),
             prompt,
             ],
+            purpose="jd_image_ocr",
         )
 
         text = (
@@ -256,6 +257,40 @@ as "unclear".
 12. The final representation must be useful for
 matching the JD against a candidate's resume.
 
+13. COMPOUND REQUIREMENTS:
+
+Some requirement names conjoin two or more distinct
+concepts, usually joined by "and", "&", "/", or a comma.
+
+Examples of compound requirement names:
+
+"Frontend Technologies & Web Services"
+"Code Review and Production Safety"
+"Collaborative Coding Experience"
+
+For each requirement whose name bundles multiple
+distinct concepts together, populate "components"
+with short, atomic concept names — one per distinct
+concept, using plain lowercase phrases.
+
+Examples:
+
+"Frontend Technologies & Web Services"
+components: ["frontend technologies", "web services"]
+
+"Code Review and Production Safety"
+components: ["code review", "production safety"]
+
+"Collaborative Coding Experience"
+components: ["collaborative coding experience"]
+(a single concept — do NOT invent a split that
+is not actually present in the requirement name)
+
+If a requirement already names exactly one concept,
+leave "components" empty. Do NOT split a single
+concept into unrelated fragments merely to populate
+this field.
+
 Return ONLY structured data matching the schema.
 """
 
@@ -265,6 +300,7 @@ Return ONLY structured data matching the schema.
                 response_mime_type="application/json",
                 response_schema=JDProfile,
             ),
+            purpose="jd_structuring",
         )
 
         raw_response = (

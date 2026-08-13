@@ -87,3 +87,23 @@ export async function getResumeAnalysisResult(
 
   return response.data;
 }
+
+
+/**
+ * Get the current user's past resume ↔ JD analyses,
+ * most recent first.
+ */
+export async function getResumeAnalysisHistory(
+  token
+) {
+  const response = await apiClient.get(
+    "/resume-analysis/history",
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  return response.data;
+}

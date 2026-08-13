@@ -172,6 +172,7 @@ Return ONLY structured data matching the schema.
             response_mime_type="application/json",
             response_schema=ResumeProfile,
             ),
+            purpose="resume_structuring",
         )
 
         raw_response = (

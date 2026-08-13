@@ -10,6 +10,7 @@ from app.schemas.resume_analysis import (
     JDRequirement,
     ResumeProfile,
     SemanticVerification,
+    SemanticVerificationBatch,
 )
 
 
@@ -21,13 +22,21 @@ class SemanticVerifier:
 
     IMPORTANT:
     This service is not allowed to create resume evidence.
+
+    All ambiguous requirements for one analysis are verified
+    in a SINGLE Gemini call (see verify_batch) rather than one
+    call per requirement, to keep the overall analysis within
+    the project's Gemini call budget.
     """
 
-    def verify(
+    def verify_batch(
         self,
-        requirement: JDRequirement,
+        requirements: list[JDRequirement],
         resume_profile: ResumeProfile,
-    ) -> SemanticVerification:
+    ) -> dict[str, SemanticVerification]:
+
+        if not requirements:
+            return {}
 
         evidence_context = (
             self._build_evidence_context(
@@ -35,18 +44,17 @@ class SemanticVerifier:
             )
         )
 
-        prompt = f"""
-You are the Semantic Verification Engine
-for HotSeat.
+        requirement_blocks = []
 
-Your ONLY task is to determine whether the
-candidate's EXISTING resume evidence satisfies
-the given job-description requirement.
+        for index, requirement in enumerate(
+            requirements,
+            start=1,
+        ):
+            requirement_blocks.append(
+                f"""
+REQUIREMENT #{index}
 
-JOB DESCRIPTION REQUIREMENT
-===========================
-
-Requirement:
+requirement_name (echo this exactly):
 {requirement.name}
 
 Category:
@@ -60,6 +68,26 @@ JD Evidence:
 
 Possible aliases:
 {requirement.aliases}
+"""
+            )
+
+        prompt = f"""
+You are the Semantic Verification Engine
+for HotSeat.
+
+Your ONLY task is to determine, for EACH job-description
+requirement listed below, whether the candidate's EXISTING
+resume evidence satisfies that requirement.
+
+You are verifying {len(requirements)} requirement(s) in
+this single request. Return one verification object per
+requirement, using the exact "requirement_name" value given
+for each requirement so results can be matched back up.
+
+JOB DESCRIPTION REQUIREMENTS
+=============================
+
+{"".join(requirement_blocks)}
 
 
 CANDIDATE RESUME EVIDENCE
@@ -159,15 +187,21 @@ NOT how impressive the candidate is.
 any assumption that would be required to classify
 the candidate more strongly.
 
-Return ONLY structured data matching the requested schema.
+19. Evaluate each requirement independently. Evidence
+that supports one requirement must not be reused to
+justify a different, unrelated requirement.
+
+Return ONLY structured data matching the requested schema,
+with exactly one verification per requirement listed above.
 """
 
         response = api_key_manager.generate_content(
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                response_schema=SemanticVerification,
+                response_schema=SemanticVerificationBatch,
             ),
+            purpose="semantic_verification_batch",
         )
 
         raw = (
@@ -182,7 +216,7 @@ Return ONLY structured data matching the requested schema.
         try:
             parsed = json.loads(raw)
 
-            return SemanticVerification.model_validate(
+            batch = SemanticVerificationBatch.model_validate(
                 parsed
             )
 
@@ -191,6 +225,13 @@ Return ONLY structured data matching the requested schema.
                 "Semantic verifier returned invalid "
                 "structured data."
             ) from exc
+
+        results: dict[str, SemanticVerification] = {}
+
+        for item in batch.verifications:
+            results[item.requirement_name.strip().lower()] = item
+
+        return results
 
     @staticmethod
     def _build_evidence_context(

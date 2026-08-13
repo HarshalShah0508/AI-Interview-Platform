@@ -4,12 +4,20 @@ import { useParams } from "react-router-dom";
 import {
   getResumeAnalysisResult,
 } from "../api/resumeAnalysisApi";
+import useAuth from "../hooks/useAuth";
 
-import MatchOverview from "../components/resume-analysis/MatchOverview";
-import RequirementMatches from "../components/resume-analysis/RequirementMatches";
-import ResumeRecommendations from "../components/resume-analysis/ResumeRecommendations";
-import KeepAsIs from "../components/resume-analysis/KeepAsIs";
-import MissingRequirements from "../components/resume-analysis/MissingRequirements";
+import AnalysisTabs from "../components/resume-analysis/AnalysisTabs";
+import AnalysisSummary from "../components/resume-analysis/AnalysisSummary";
+import RequirementTable from "../components/resume-analysis/RequirementTable";
+import ImprovementTable from "../components/resume-analysis/ImprovementTable";
+import ReviewAreasTable from "../components/resume-analysis/ReviewAreasTable";
+
+const TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "requirements", label: "Requirements" },
+  { id: "improvements", label: "Improvements" },
+  { id: "review", label: "Review Areas" },
+];
 
 export default function ResumeAnalysisPage() {
   const { analysisId } =
@@ -24,12 +32,18 @@ export default function ResumeAnalysisPage() {
   const [error, setError] =
     useState("");
 
+  const [activeTab, setActiveTab] =
+    useState("overview");
+
+  const { token } = useAuth();
+
   useEffect(() => {
+    if (!token) {
+      return;
+    }
+
     const loadResult = async () => {
       try {
-        const token =
-          localStorage.getItem("token");
-
         const result =
           await getResumeAnalysisResult(
             analysisId,
@@ -55,7 +69,7 @@ export default function ResumeAnalysisPage() {
     };
 
     loadResult();
-  }, [analysisId]);
+  }, [analysisId, token]);
 
   if (loading) {
     return (
@@ -80,6 +94,42 @@ export default function ResumeAnalysisPage() {
   const result =
     analysis.result;
 
+  const matchingReport =
+    result.matching_report;
+
+  const recommendationReport =
+    result.recommendation_report;
+
+  const missingAndReviewCount =
+    (matchingReport?.summary?.missing_matches ?? 0) +
+    (matchingReport?.summary?.ambiguous_matches ?? 0);
+
+  const tabs = TABS.map((tab) => {
+
+    if (tab.id === "requirements") {
+      return {
+        ...tab,
+        count: matchingReport?.matches?.length ?? 0,
+      };
+    }
+
+    if (tab.id === "improvements") {
+      return {
+        ...tab,
+        count: recommendationReport?.recommendations?.length ?? 0,
+      };
+    }
+
+    if (tab.id === "review") {
+      return {
+        ...tab,
+        count: missingAndReviewCount,
+      };
+    }
+
+    return tab;
+  });
+
   return (
     <main className="resume-analysis-page">
 
@@ -101,39 +151,44 @@ export default function ResumeAnalysisPage() {
         </div>
       </section>
 
-      <MatchOverview
-        score={analysis.overall_score}
-        matchingReport={
-          result.matching_report
-        }
+      <AnalysisTabs
+        tabs={tabs}
+        activeTab={activeTab}
+        onChange={setActiveTab}
       />
 
-      <RequirementMatches
-        matches={
-          result.matching_report.matches
-        }
-      />
+      {activeTab === "overview" && (
+        <AnalysisSummary
+          score={analysis.overall_score}
+          matchingReport={matchingReport}
+        />
+      )}
 
-      <ResumeRecommendations
-        recommendations={
-          result.recommendation_report
-            .recommendations
-        }
-      />
+      {activeTab === "requirements" && (
+        <RequirementTable
+          matches={matchingReport?.matches}
+        />
+      )}
 
-      <MissingRequirements
-        requirements={
-          result.recommendation_report
-            .missing_requirement_actions
-        }
-      />
+      {activeTab === "improvements" && (
+        <ImprovementTable
+          recommendations={
+            recommendationReport?.recommendations
+          }
+          keepAsIs={
+            recommendationReport?.keep_as_is
+          }
+        />
+      )}
 
-      <KeepAsIs
-        items={
-          result.recommendation_report
-            .keep_as_is
-        }
-      />
+      {activeTab === "review" && (
+        <ReviewAreasTable
+          matches={matchingReport?.matches}
+          missingActions={
+            recommendationReport?.missing_requirement_actions
+          }
+        />
+      )}
 
     </main>
   );

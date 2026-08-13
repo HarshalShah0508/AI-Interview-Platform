@@ -2,7 +2,6 @@ import re
 
 from app.schemas.resume_analysis import (
     JDProfile,
-    JDRequirement,
     ResumeBullet,
     ResumeProfile,
     KeywordCoverage,
@@ -116,6 +115,7 @@ class ResumeOptimizer:
             self._analyze_keyword_coverage(
                 jd_profile,
                 resume_profile,
+                matching_report,
             )
         )
 
@@ -190,44 +190,74 @@ class ResumeOptimizer:
         self,
         jd_profile: JDProfile,
         resume_profile: ResumeProfile,
+        matching_report,
     ) -> list[KeywordCoverage]:
+        """
+        Sources coverage directly from the already-computed
+        RequirementMatcher output instead of re-deriving its
+        own evidence search.
+
+        Requirement matching (including compound-requirement
+        decomposition and controlled concept/indirect evidence)
+        is intentionally implemented ONCE, in RequirementMatcher.
+        Re-implementing a second, weaker "does evidence exist"
+        check here previously caused this method to silently
+        disagree with the matching report — a JD requirement
+        the matcher correctly found indirect evidence for could
+        still show up here as "not present", suppressing the
+        rewrite-eligible findings that feed recommendations.
+        """
+
+        matches_by_requirement = {
+            match.requirement: match
+            for match in matching_report.matches
+        }
 
         results = []
 
         for requirement in jd_profile.requirements:
 
-            keyword = requirement.name
-
-            evidence = self._find_requirement_evidence(
-                requirement,
-                resume_profile,
+            match = matches_by_requirement.get(
+                requirement.name
             )
 
-            occurrences = self._count_occurrences(
-                keyword,
-                resume_profile,
-                requirement.aliases,
-            )
+            if match is None:
 
-            present = len(evidence) > 0
+                results.append(
+                    KeywordCoverage(
+                        keyword=requirement.name,
+                        importance=requirement.importance,
+                        weight=requirement.weight,
+                        present=False,
+                        contextual=False,
+                        occurrences=0,
+                        evidence=[],
+                    )
+                )
 
-            contextual = any(
-                item["contextual"]
-                for item in evidence
+                continue
+
+            present = match.match_type in {
+                "strong",
+                "partial",
+            }
+
+            contextual = bool(
+                set(match.matched_resume_sections)
+                & {"experience", "projects"}
             )
 
             results.append(
                 KeywordCoverage(
-                    keyword=keyword,
+                    keyword=requirement.name,
                     importance=requirement.importance,
                     weight=requirement.weight,
                     present=present,
                     contextual=contextual,
-                    occurrences=occurrences,
-                    evidence=[
-                        item["text"]
-                        for item in evidence
-                    ],
+                    occurrences=len(
+                        match.matched_resume_evidence
+                    ),
+                    evidence=match.matched_resume_evidence,
                 )
             )
 
@@ -858,109 +888,3 @@ class ResumeOptimizer:
 
         return bullets
 
-    def _find_requirement_evidence(
-        self,
-        requirement: JDRequirement,
-        resume_profile: ResumeProfile,
-    ) -> list[dict]:
-
-        terms = [
-            requirement.name.lower(),
-            *[
-                alias.lower()
-                for alias in requirement.aliases
-            ],
-        ]
-
-        evidence = []
-
-        for item in resume_profile.evidence:
-
-            source = item.source_text.lower()
-
-            if any(
-                term in source
-                for term in terms
-            ):
-
-                evidence.append(
-                    {
-                        "text": item.source_text,
-                        "contextual": (
-                            item.section
-                            in {
-                                "experience",
-                                "projects",
-                            }
-                        ),
-                    }
-                )
-
-        for skill in resume_profile.skills:
-
-            skill_terms = [
-                skill.name.lower(),
-                *[
-                    alias.lower()
-                    for alias in skill.aliases
-                ],
-            ]
-
-            if any(
-                jd_term in skill_term
-                or skill_term in jd_term
-                for jd_term in terms
-                for skill_term in skill_terms
-            ):
-
-                for evidence_item in skill.evidence:
-
-                    evidence.append(
-                        {
-                            "text": (
-                                evidence_item.source_text
-                            ),
-                            "contextual": (
-                                evidence_item.section
-                                in {
-                                    "experience",
-                                    "projects",
-                                }
-                            ),
-                        }
-                    )
-
-        return evidence
-
-    def _count_occurrences(
-        self,
-        keyword: str,
-        resume_profile: ResumeProfile,
-        aliases: list[str],
-    ) -> int:
-
-        terms = [
-            keyword,
-            *aliases,
-        ]
-
-        count = 0
-
-        for evidence in resume_profile.evidence:
-
-            source = evidence.source_text.lower()
-
-            for term in terms:
-
-                count += len(
-                    re.findall(
-                        r"(?<!\w)"
-                        + re.escape(
-                            term.lower()
-                        )
-                        + r"(?!\w)",
-                        source,
-                    )
-                )
-
-        return count

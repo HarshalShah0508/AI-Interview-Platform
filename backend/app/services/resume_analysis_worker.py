@@ -25,6 +25,11 @@ from app.services.resume_optimizer import (
 from app.services.recommendation_engine import (
     RecommendationEngine,
 )
+from app.services.api_key_manager import (
+    clear_gemini_context,
+    get_gemini_call_count,
+    set_gemini_context,
+)
 
 
 class ResumeAnalysisWorker:
@@ -38,6 +43,8 @@ class ResumeAnalysisWorker:
     def run(self) -> None:
 
         db: Session = SessionLocal()
+
+        set_gemini_context(self.analysis_id)
 
         try:
 
@@ -310,6 +317,14 @@ class ResumeAnalysisWorker:
                 )
 
         finally:
+
+            print(
+                f"[ResumeAnalysis {self.analysis_id}] "
+                f"Total Gemini calls: "
+                f"{get_gemini_call_count()}"
+            )
+
+            clear_gemini_context()
 
             db.close()
 

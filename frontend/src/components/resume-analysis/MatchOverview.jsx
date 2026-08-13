@@ -5,8 +5,12 @@ export default function MatchOverview({
   const summary =
     matchingReport?.summary;
 
+  const missingAndReview =
+    (summary?.missing_matches ?? 0) +
+    (summary?.ambiguous_matches ?? 0);
+
   return (
-    <section className="match-overview">
+    <div className="match-overview">
 
       <div className="score-card">
         <span>
@@ -22,7 +26,7 @@ export default function MatchOverview({
         </small>
       </div>
 
-      <div className="match-stat">
+      <div className="match-stat match-stat--positive">
         <strong>
           {summary?.strong_matches ?? 0}
         </strong>
@@ -32,7 +36,7 @@ export default function MatchOverview({
         </span>
       </div>
 
-      <div className="match-stat">
+      <div className="match-stat match-stat--info">
         <strong>
           {summary?.partial_matches ?? 0}
         </strong>
@@ -42,13 +46,13 @@ export default function MatchOverview({
         </span>
       </div>
 
-      <div className="match-stat">
+      <div className="match-stat match-stat--warning">
         <strong>
-          {summary?.missing_matches ?? 0}
+          {missingAndReview}
         </strong>
 
         <span>
-          Missing
+          Missing / needs review
         </span>
       </div>
 
@@ -64,6 +68,18 @@ export default function MatchOverview({
         </span>
       </div>
 
-    </section>
+      <div className="match-stat">
+        <strong>
+          {summary?.preferred_matched ?? 0}
+          /
+          {summary?.preferred_requirements ?? 0}
+        </strong>
+
+        <span>
+          Preferred matched
+        </span>
+      </div>
+
+    </div>
   );
 }

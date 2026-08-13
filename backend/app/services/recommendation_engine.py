@@ -7,8 +7,12 @@ from app.core.config import GEMINI_MODEL
 from app.services.api_key_manager import (
     api_key_manager,
 )
+from app.services.requirement_matcher import (
+    RequirementMatcher,
+)
 from app.schemas.resume_analysis import (
     JDProfile,
+    JDRequirement,
     ResumeProfile,
     MatchingReport,
     OptimizationReport,
@@ -29,6 +33,16 @@ class RecommendationEngine:
     The candidate's existing resume evidence is the
     only permitted source of factual claims.
     """
+
+    def __init__(self):
+
+        # Reused only for its deterministic, Gemini-free
+        # component decomposition and controlled concept ->
+        # evidence-keyword mapping, so missing-requirement
+        # guidance stays consistent with how the matcher
+        # itself reasons about a requirement. Constructing
+        # this does not make any Gemini calls.
+        self._requirement_matcher = RequirementMatcher()
 
     def generate(
     self,
@@ -110,14 +124,24 @@ class RecommendationEngine:
     # 3. Missing requirements remain deterministic.
     # ----------------------------------------------------
 
+        requirements_by_name = {
+            requirement.name: requirement
+            for requirement in jd_profile.requirements
+        }
+
         for match in matching_report.matches:
 
             if match.match_type != "missing":
                 continue
 
+            requirement = requirements_by_name.get(
+                match.requirement
+            )
+
             missing_actions.append(
                 self._missing_requirement_action(
-                    match
+                    match,
+                    requirement,
                 )
             )
 
@@ -367,6 +391,7 @@ Do not return explanations outside the JSON object.
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
             ),
+            purpose="batched_recommendations",
         )
 
         raw = (
@@ -624,166 +649,6 @@ Do not return explanations outside the JSON object.
             ),
         )
 
-    def _generate_for_finding(
-        self,
-        finding,
-        jd_profile,
-        resume_profile,
-        matching_report,
-    ):
-
-        evidence_context = self._build_evidence_context(
-            finding,
-            resume_profile,
-        )
-
-        requirement_context = ""
-
-        if finding.jd_requirement:
-
-            requirement_context = (
-                self._find_requirement_context(
-                    finding.jd_requirement,
-                    jd_profile,
-                    matching_report,
-                )
-            )
-
-        prompt = f"""
-You are the Resume Recommendation Engine for HotSeat.
-
-Your job is to improve the wording of an EXISTING
-resume statement for a specific job description.
-
-You are NOT allowed to invent candidate experience.
-
-==================================================
-JOB DESCRIPTION CONTEXT
-==================================================
-
-{requirement_context}
-
-==================================================
-RESUME EVIDENCE
-==================================================
-
-{evidence_context}
-
-==================================================
-CURRENT RESUME TEXT
-==================================================
-
-{finding.original_text}
-
-==================================================
-IDENTIFIED ISSUE
-==================================================
-
-Type:
-{finding.finding_type}
-
-Priority:
-{finding.priority}
-
-Explanation:
-{finding.explanation}
-
-==================================================
-ABSOLUTE SAFETY RULES
-==================================================
-
-1. The candidate's resume evidence is the ONLY
-source of factual information.
-
-2. Do NOT add technologies that are not supported.
-
-3. Do NOT add companies that are not supported.
-
-4. Do NOT add responsibilities that are not supported.
-
-5. Do NOT add achievements that are not supported.
-
-6. Do NOT add leadership claims unless supported.
-
-7. Do NOT add production claims unless supported.
-
-8. Do NOT add scale unless supported.
-
-9. Do NOT add numbers unless those numbers are
-already present in the evidence.
-
-10. Do NOT manufacture percentages.
-
-11. Do NOT manufacture performance improvements.
-
-12. Do NOT manufacture accuracy values.
-
-13. Do NOT manufacture user counts.
-
-14. Do NOT manufacture rankings.
-
-15. Do NOT turn "worked with" into "led" unless
-the evidence explicitly supports leadership.
-
-16. Do NOT turn "used" into "architected" unless
-the evidence supports architecture ownership.
-
-17. Preserve the candidate's actual meaning.
-
-18. Prefer a conservative rewrite over an impressive
-but unsupported rewrite.
-
-19. If there is not enough evidence to safely improve
-the bullet, return the original wording and explain
-why.
-
-20. The recommendation should improve alignment,
-clarity, specificity or impact — not fabricate
-experience.
-
-21. If a metric is absent, do NOT create one.
-
-22. If a metric would improve the bullet, explicitly
-state that a VERIFIED metric could be added if the
-candidate has one.
-
-23. Do not add generic JD keywords just for ATS purposes
-unless the resume evidence actually supports them.
-
-Return ONLY structured data matching the requested schema.
-"""
-
-        response = api_key_manager.generate_content(
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=RecommendationChange,
-            ),
-        )
-
-        raw = (
-            response.text or ""
-        ).strip()
-
-        if not raw:
-            return None
-
-        try:
-
-            parsed = json.loads(raw)
-
-            recommendation = (
-                RecommendationChange.model_validate(
-                    parsed
-                )
-            )
-
-            return recommendation
-
-        except Exception:
-
-            return None
-
     # ========================================================
     # Missing requirement handling
     # ========================================================
@@ -791,17 +656,25 @@ Return ONLY structured data matching the requested schema.
     def _missing_requirement_action(
         self,
         match,
+        requirement: JDRequirement | None,
     ) -> MissingRequirementRecommendation:
+
+        evidence_hint = self._missing_requirement_evidence_hint(
+            match,
+            requirement,
+        )
 
         if match.importance == "required":
 
             action = "verify_experience"
 
             warning = (
-                "Do not add this requirement merely "
-                "because it appears in the JD. Add it "
-                "only if you genuinely have the "
-                "experience and can support it."
+                "Do not add this requirement merely because "
+                "it appears in the JD. Review your projects, "
+                f"internships, and coursework for {evidence_hint}. "
+                "If you genuinely have this experience, surface "
+                "it explicitly in the relevant bullet. If you do "
+                "not, do not add it."
             )
 
         elif match.importance == "preferred":
@@ -809,9 +682,10 @@ Return ONLY structured data matching the requested schema.
             action = "add_if_true"
 
             warning = (
-                "This is preferred by the JD, but the "
-                "resume currently contains no reliable "
-                "evidence for it."
+                "This is preferred by the JD, not required. "
+                f"Review your background for {evidence_hint}. "
+                "Only mention it if it is genuinely true — do "
+                "not add it merely because the JD lists it."
             )
 
         else:
@@ -819,8 +693,10 @@ Return ONLY structured data matching the requested schema.
             action = "do_not_add"
 
             warning = (
-                "There is currently insufficient evidence "
-                "to justify adding this requirement."
+                "There is currently insufficient evidence to "
+                f"justify adding this. If you have real experience "
+                f"with {evidence_hint}, you may add it truthfully; "
+                "otherwise leave your resume as-is."
             )
 
         return MissingRequirementRecommendation(
@@ -831,153 +707,57 @@ Return ONLY structured data matching the requested schema.
             warning=warning,
         )
 
-    # ========================================================
-    # Safety validation
-    # ========================================================
-
-    def _validate_recommendation(
+    def _missing_requirement_evidence_hint(
         self,
-        recommendation: RecommendationChange,
-        resume_profile: ResumeProfile,
-    ) -> RecommendationChange:
+        match,
+        requirement: JDRequirement | None,
+    ) -> str:
+        """
+        Builds a concrete "what to look for" hint for a missing
+        requirement, using the same deterministic component
+        decomposition and controlled concept -> evidence-keyword
+        mapping the matcher itself uses — entirely local, no
+        Gemini call involved.
+        """
 
-        verified_text = self._build_full_resume_evidence(
-            resume_profile
-        )
+        if requirement is None:
+            return match.requirement
 
-        suggested = recommendation.suggested_text
-
-        # ----------------------------------------------------
-        # Any explicitly added facts from the model are
-        # considered dangerous unless independently verified.
-        # ----------------------------------------------------
-
-        if recommendation.added_facts:
-
-            for fact in recommendation.added_facts:
-
-                if not self._fact_exists(
-                    fact,
-                    verified_text,
-                ):
-
-                    recommendation.safety_status = (
-                        "rejected"
-                    )
-
-                    recommendation.confidence = 0.0
-
-                    return recommendation
-
-        # ----------------------------------------------------
-        # If Gemini claims to have added a metric, verify it.
-        # ----------------------------------------------------
-
-        if recommendation.metric_added:
-
-            if not recommendation.metric_source:
-
-                recommendation.safety_status = (
-                    "rejected"
-                )
-
-                recommendation.confidence = 0.0
-
-                return recommendation
-
-            if not self._fact_exists(
-                recommendation.metric_source,
-                verified_text,
-            ):
-
-                recommendation.safety_status = (
-                    "rejected"
-                )
-
-                recommendation.confidence = 0.0
-
-                return recommendation
-        # ----------------------------------------------------
-        # Numeric safety check
-        # ----------------------------------------------------
-
-        original_numbers = self._extract_numbers(
-            recommendation.original_text
-        )
-
-        suggested_numbers = self._extract_numbers(
-            recommendation.suggested_text
-        )
-
-        resume_numbers = self._extract_numbers(
-            verified_text
-        )
-
-        new_numbers = (
-            suggested_numbers
-            - original_numbers
-        )
-
-        unsupported_numbers = (
-            new_numbers
-            - resume_numbers
-        )
-
-        if unsupported_numbers:
-
-            recommendation.safety_status = (
-                "rejected"
+        components = (
+            self._requirement_matcher._resolve_components(
+                requirement
             )
+        )
 
-            recommendation.added_facts.extend(
-                sorted(
-                    unsupported_numbers
+        hint_terms: set[str] = set()
+
+        for component in components:
+
+            hint_terms.update(
+                self._requirement_matcher._concept_hint_terms(
+                    component
                 )
             )
 
-            recommendation.confidence = 0.0
+        if hint_terms:
 
-            return recommendation
+            sample = sorted(hint_terms)[:6]
 
-        # ----------------------------------------------------
-        # Empty or unchanged suggestion
-        # ----------------------------------------------------
+            return ", ".join(sample)
 
-        if not suggested.strip():
+        if len(components) > 1:
 
-            recommendation.safety_status = (
-                "rejected"
+            return ", ".join(components)
+
+        if requirement.aliases:
+
+            return ", ".join(
+                dict.fromkeys(
+                    [requirement.name, *requirement.aliases]
+                )
             )
 
-            recommendation.confidence = 0.0
-
-            return recommendation
-
-        if (
-            self._normalize(suggested)
-            == self._normalize(
-                recommendation.original_text
-            )
-        ):
-
-            recommendation.safety_status = (
-                "needs_verification"
-            )
-
-            recommendation.confidence = min(
-                recommendation.confidence,
-                0.85,
-            )
-
-            return recommendation
-
-        # ----------------------------------------------------
-        # Safe
-        # ----------------------------------------------------
-
-        recommendation.safety_status = "safe"
-
-        return recommendation
+        return requirement.name
 
     # ========================================================
     # Evidence context

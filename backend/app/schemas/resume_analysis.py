@@ -42,6 +42,17 @@ class JDRequirement(BaseModel):
         default_factory=list
     )
 
+    components: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Atomic sub-concepts of a compound requirement "
+            "(e.g. 'Frontend Technologies & Web Services' -> "
+            "['frontend technologies', 'web services']). "
+            "Empty when the requirement already names a single "
+            "concept."
+        ),
+    )
+
 
 class JDProfile(BaseModel):
     job_title: str | None = None
@@ -277,6 +288,14 @@ class RequirementMatch(BaseModel):
         "ambiguous",
     ]
 
+    evidence_type: Literal[
+        "direct",
+        "indirect",
+        "partial",
+        "ambiguous",
+        "unsupported",
+    ] = "unsupported"
+
     match_strength: float = Field(
         ge=0,
         le=1,
@@ -344,6 +363,8 @@ class MatchingReport(BaseModel):
 # ============================================================
 
 class SemanticVerification(BaseModel):
+    requirement_name: str
+
     decision: Literal[
         "strong",
         "partial",
@@ -363,6 +384,18 @@ class SemanticVerification(BaseModel):
     )
 
     unsupported_assumptions: list[str] = Field(
+        default_factory=list
+    )
+
+
+class SemanticVerificationBatch(BaseModel):
+    """
+    Response schema for a single batched Gemini call that
+    verifies every ambiguous requirement for one analysis
+    at once, instead of one Gemini call per requirement.
+    """
+
+    verifications: list[SemanticVerification] = Field(
         default_factory=list
     )
 
