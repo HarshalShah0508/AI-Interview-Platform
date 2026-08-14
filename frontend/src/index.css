@@ -1998,6 +1998,38 @@ textarea::placeholder {
   color: var(--char-text);
 }
 
+.analysis-complete-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 20px 24px;
+  border-radius: 8px;
+  background: var(--green-soft);
+  border: 1px solid oklch(0.62 0.135 150 / 0.35);
+}
+
+.analysis-complete-banner__label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--green);
+  letter-spacing: 0.06em;
+}
+
+.analysis-complete-banner__text {
+  margin: 4px 0 0;
+  color: var(--char-text);
+  font-size: 14px;
+}
+
+.analysis-complete-banner__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 /* ============================================================
    Generate Interview
    ============================================================ */

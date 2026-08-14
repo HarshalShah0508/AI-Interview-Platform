@@ -54,9 +54,11 @@ export default function ResumeAnalysisPage() {
         setAnalysis(result);
 
       } catch (err) {
+        // Don't log the raw error - it carries the request's Authorization
+        // header (Bearer token) in its config.
         console.error(
           "Failed to load analysis:",
-          err
+          err?.response?.data?.detail || err?.message
         );
 
         setError(

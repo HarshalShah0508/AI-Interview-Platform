@@ -1,7 +1,12 @@
 import { Outlet } from 'react-router-dom'
+import { ResumeAnalysisProvider } from './context/ResumeAnalysisContext'
 
 function App() {
-  return <Outlet />
+  return (
+    <ResumeAnalysisProvider>
+      <Outlet />
+    </ResumeAnalysisProvider>
+  )
 }
 
 export default App
