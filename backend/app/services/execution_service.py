@@ -61,6 +61,9 @@ class CodeExecutionService:
         if request.language == "verilog":
             return self._run_verilog(request)
 
+        if request.language == "sql":
+            return self._run_sql(request)
+
         return self._not_implemented(request.language)
 
     def _run_python(
@@ -363,6 +366,91 @@ class CodeExecutionService:
                 )
 
                 execution_time = (time.perf_counter() - execution_start) * 1000
+
+                if execution.returncode != 0:
+                    return CodeRunResponse(
+                        status="runtime_error",
+                        stdout=execution.stdout,
+                        stderr=execution.stderr,
+                        execution_time_ms=round(
+                            execution_time,
+                            2,
+                        ),
+                        memory_kb=None,
+                    )
+
+                return CodeRunResponse(
+                    status="accepted",
+                    stdout=execution.stdout,
+                    stderr="",
+                    execution_time_ms=round(
+                        execution_time,
+                        2,
+                    ),
+                    memory_kb=None,
+                )
+
+            except subprocess.TimeoutExpired:
+                return CodeRunResponse(
+                    status="time_limit_exceeded",
+                    stdout="",
+                    stderr="Time Limit Exceeded",
+                    execution_time_ms=None,
+                    memory_kb=None,
+                )
+
+            except Exception as exception:
+                return CodeRunResponse(
+                    status="internal_error",
+                    stdout="",
+                    stderr=str(exception),
+                    execution_time_ms=None,
+                    memory_kb=None,
+                )
+
+    def _run_sql(
+        self,
+        request: CodeRunRequest,
+    ) -> CodeRunResponse:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            script_file = temp_path / "main.sql"
+            db_file = temp_path / "main.db"
+
+            script_file.write_text(
+                request.code,
+                encoding="utf-8",
+            )
+
+            start = time.perf_counter()
+
+            try:
+                # Each run gets a fresh on-disk SQLite database, so a
+                # submission is expected to be self-contained (schema +
+                # data + query), same as every other language here.
+                # -header/-column give readable tabular output for SELECT
+                # results; -bail stops at the first error instead of
+                # limping through the rest of the script, matching how a
+                # compiled/interpreted language run stops on its first
+                # fatal error.
+                execution = subprocess.run(
+                    [
+                        "sqlite3",
+                        "-header",
+                        "-column",
+                        "-bail",
+                        str(db_file),
+                        f".read {script_file.name}",
+                    ],
+                    input=request.stdin,
+                    capture_output=True,
+                    text=True,
+                    timeout=self.TIMEOUT_SECONDS,
+                    cwd=temp_path,
+                    env=_sandbox_env(),
+                )
+
+                execution_time = (time.perf_counter() - start) * 1000
 
                 if execution.returncode != 0:
                     return CodeRunResponse(
