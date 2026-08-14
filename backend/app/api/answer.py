@@ -1,3 +1,5 @@
+import re
+
 from fastapi import APIRouter
 from fastapi import Depends
 from fastapi import HTTPException
@@ -249,8 +251,14 @@ def get_session_results(
 
     total_score = 0
 
-    strong_topics = []
-    weak_topics = []
+    # Track each distinct concept (merging obviously identical
+    # concepts that only differ by casing/whitespace) along with
+    # how many times it was flagged and, for weaknesses, the
+    # scores of the answers that flagged it — so the final report
+    # can prioritize concepts the candidate repeatedly struggled
+    # with, not just list whatever appeared first.
+    strength_concepts = {}
+    weak_concepts = {}
 
     for question in answered_questions:
 
@@ -258,17 +266,51 @@ def get_session_results(
 
         total_score += answer.score
 
-    # Collect concept-level strengths returned by Gemini
-        if answer.strengths:
-            strong_topics.extend(answer.strengths)
+        for concept in (answer.strengths or []):
 
-    # Collect concept-level improvements returned by Gemini
-        if answer.improvements:
-            weak_topics.extend(answer.improvements)
+            entry = _track_concept(
+                strength_concepts,
+                concept,
+            )
 
-# Remove duplicates while preserving order
-    strong_topics = list(dict.fromkeys(strong_topics))
-    weak_topics = list(dict.fromkeys(weak_topics))
+            if entry:
+                entry["count"] += 1
+
+        for concept in (answer.improvements or []):
+
+            entry = _track_concept(
+                weak_concepts,
+                concept,
+            )
+
+            if entry:
+                entry["count"] += 1
+                entry["scores"].append(answer.score)
+
+    # Strong topics: concepts the candidate demonstrated
+    # repeatedly are surfaced first.
+    strong_topics = [
+        entry["display"]
+        for entry in sorted(
+            strength_concepts.values(),
+            key=lambda entry: -entry["count"],
+        )
+    ]
+
+    # Weak topics: concepts flagged repeatedly are prioritized
+    # first; among concepts flagged an equal number of times,
+    # the ones tied to lower-scoring answers are prioritized,
+    # since they represent more urgent gaps.
+    weak_topics = [
+        entry["display"]
+        for entry in sorted(
+            weak_concepts.values(),
+            key=lambda entry: (
+                -entry["count"],
+                sum(entry["scores"]) / len(entry["scores"]),
+            ),
+        )
+    ]
 
     average_score = total_score / len(answered_questions)
 
@@ -279,3 +321,88 @@ def get_session_results(
         strong_topics=strong_topics,
         weak_topics=weak_topics,
     )
+
+
+# Question stems that indicate a value is a leaked question or
+# instruction rather than a concise concept label.
+_QUESTION_STEM_PREFIXES = (
+    "explain",
+    "describe",
+    "what",
+    "how",
+    "why",
+    "define",
+    "discuss",
+    "elaborate",
+)
+
+
+def _looks_like_concept(raw_concept: str) -> bool:
+    """
+    The evaluation prompt already instructs Gemini to return only
+    concise concept labels (2-5 words), never question text. This
+    is a lightweight local safety net — not a replacement for the
+    prompt — so a stray Gemini response that leaks question text
+    or instructions can never surface as a "topic" in the final
+    report, per the report's explicit requirement to never show
+    question text, question numbers, or truncated questions.
+    """
+
+    text = raw_concept.strip()
+
+    if not text:
+        return False
+
+    if re.fullmatch(
+        r"question\s*#?\s*\d+",
+        text,
+        flags=re.IGNORECASE,
+    ):
+        return False
+
+    if text.endswith("?"):
+        return False
+
+    if len(text.split()) > 8:
+        return False
+
+    first_word = text.split()[0].lower().strip(":,.")
+
+    if first_word in _QUESTION_STEM_PREFIXES:
+        return False
+
+    return True
+
+
+def _track_concept(
+    concepts: dict,
+    raw_concept: str,
+) -> dict | None:
+    """
+    Normalizes a concept string (collapsed whitespace, case
+    folded) so obviously identical concepts like "ACID
+    Properties" and "acid properties" are merged into a single
+    entry, while genuinely distinct concepts (e.g. "Isolation
+    Levels" vs "Transaction Isolation") are kept separate.
+
+    Returns the tracking entry for the concept, or None if the
+    concept string was empty or does not look like a concise
+    concept label (see _looks_like_concept).
+    """
+
+    if not raw_concept or not _looks_like_concept(raw_concept):
+        return None
+
+    key = " ".join(
+        raw_concept.strip().split()
+    ).lower()
+
+    if key not in concepts:
+
+        concepts[key] = {
+            "display": raw_concept.strip(),
+            "count": 0,
+            "scores": [],
+        }
+
+    return concepts[key]
