@@ -16,7 +16,12 @@ function GoogleLoginButton() {
     await googleLogin(credentialResponse.credential);
     navigate("/dashboard");
   } catch (error) {
-    console.error("Google authentication failed:", error);
+    // Don't log the raw error - it can carry the Google ID token or an
+    // Authorization header in its request config.
+    console.error(
+      "Google authentication failed:",
+      error?.response?.data?.detail || error?.message
+    );
 
     alert(
       error.response?.data?.detail ||

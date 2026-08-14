@@ -56,11 +56,20 @@ def generate_questions(
 
     ai_service = AIService()
 
-    questions = ai_service.generate_questions(
-        resume_text=resume_text,
-        role=request.role,
-        difficulty=request.difficulty
-    )
+    try:
+        questions = ai_service.generate_questions(
+            resume_text=resume_text,
+            role=request.role,
+            difficulty=request.difficulty
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "The interview AI service is temporarily "
+                "unavailable. Please try again in a moment."
+            ),
+        ) from exc
 
     question_list = re.findall(
         r'^\d+\..*?(?=^\d+\.|\Z)',
