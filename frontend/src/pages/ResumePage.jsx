@@ -1,23 +1,24 @@
 import ResumeUploadCard from '../components/resume/ResumeUploadCard.jsx'
 import AnalysisHistoryList from '../components/resume-analysis/AnalysisHistoryList.jsx'
+import Navbar from '../components/layout/Navbar.jsx'
 
 function ResumePage() {
   return (
-    <section className="page-shell">
-      <div className="page-header">
-        <p className="eyebrow">Resume</p>
-        <h1>Resume Page</h1>
-        <p>Upload a PDF resume that future interview sessions can use for context.</p>
-      </div>
-      <ResumeUploadCard />
+    <div className="resume-page">
+      <Navbar />
 
-      <div className="page-header">
-        <p className="eyebrow">History</p>
-        <h1>Past Resume ↔ JD Analyses</h1>
-        <p>Revisit the results of job descriptions you've already analyzed your resume against.</p>
-      </div>
-      <AnalysisHistoryList />
-    </section>
+      <main className="resume-container">
+        <ResumeUploadCard />
+
+        <section className="resume-section">
+          <div className="section-header">
+            <div className="eyebrow">PAST ANALYSES</div>
+            <h2>Resume ↔ JD history</h2>
+          </div>
+          <AnalysisHistoryList />
+        </section>
+      </main>
+    </div>
   )
 }
 

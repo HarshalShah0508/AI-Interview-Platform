@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaTrash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import {
@@ -16,6 +16,7 @@ import {
 import AnalysisProgress from "../resume-analysis/AnalysisProgress";
 function ResumeUploadCard() {
   const { token } = useAuth();
+  const fileInputRef = useRef(null);
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [resumes, setResumes] = useState([]);
@@ -26,7 +27,7 @@ function ResumeUploadCard() {
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
 
-  //Jd Analysis 
+  //Jd Analysis
   const [analysisResumeId, setAnalysisResumeId] =
   useState("");
   const [jobDescription, setJobDescription] =
@@ -174,6 +175,9 @@ function ResumeUploadCard() {
       );
 
       setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
 
       await loadResumes();
     } catch (err) {
@@ -264,284 +268,197 @@ function ResumeUploadCard() {
     }
   };
 
+  const latestResumeId = resumes.length
+    ? resumes.reduce((latest, resume) =>
+        new Date(resume.created_at) > new Date(latest.created_at) ? resume : latest
+      ).id
+    : null;
+
   return (
-    <div className="content-card upload-card">
-      <div>
-        <h2>Upload your resume</h2>
+    <>
+      <section className="resume-section">
+        <div className="section-header">
+          <div className="eyebrow">YOUR RESUME</div>
+          <h1>This is what grounds your interview</h1>
+          <p>Every question HotSeat generates is built from the resume you upload here.</p>
+        </div>
 
-        <p>
-          Upload a PDF resume so interview questions can
-          be tailored to your profile.
-        </p>
-      </div>
-
-      <div className="file-dropzone">
-        <label className="form-field">
-          <span>Select PDF resume</span>
-
+        <div className="dropzone">
+          <div className="dropzone__text">
+            <div className="dropzone__label">DROP A PDF OR BROWSE</div>
+            <div className="dropzone__hint">PDF only, up to 10MB</div>
+            {selectedFile && (
+              <div className="file-preview">
+                Selected file: <strong>{selectedFile.name}</strong>
+              </div>
+            )}
+          </div>
           <input
+            ref={fileInputRef}
             type="file"
             accept=".pdf"
             onChange={handleFileChange}
+            hidden
           />
-        </label>
+          <button
+            type="button"
+            className="button button--secondary"
+            onClick={() => fileInputRef.current?.click()}
+          >
+            Choose file
+          </button>
+          <button
+            type="button"
+            className="button button--primary"
+            onClick={handleUpload}
+            disabled={loading || !selectedFile}
+          >
+            {loading ? "Uploading..." : "Upload resume"}
+          </button>
+        </div>
 
-        {selectedFile && (
-          <div className="file-preview">
-            Selected file:
-            <strong> {selectedFile.name}</strong>
-          </div>
-        )}
+        {success && <p className="success-text">{success}</p>}
+        {error && <p className="error-text">{error}</p>}
 
-        <button
-          className="button button--primary"
-          type="button"
-          onClick={handleUpload}
-          disabled={loading}
-        >
-          {loading
-            ? "Uploading..."
-            : "Upload Resume"}
-        </button>
-      </div>
-
-      {success && (
-        <p className="success-text">{success}</p>
-      )}
-
-      {error && (
-        <p className="error-text">{error}</p>
-      )}
-
-      <div className="resume-list-section">
-        <h3>Your uploaded resumes</h3>
-
-        {fetchingResumes ? (
-          <p>Loading resumes...</p>
-        ) : resumes.length === 0 ? (
-          <p>No resumes uploaded yet.</p>
-        ) : (
-          <div className="resume-list">
-            {resumes.map((resume) => (
-              <div
-                className="resume-item"
-                key={resume.id}
-              >
-                <div className="resume-item-header">
-                  <p>
-                    <strong>
-                      {resume.original_filename}
-                    </strong>
-                  </p>
-
-                  <p>
-                    Uploaded on:{" "}
-                    {new Date(
-                      resume.created_at
-                    ).toLocaleString()}
-                  </p>
+        <div className="resume-list">
+          {fetchingResumes ? (
+            <p className="form-hint">Loading resumes...</p>
+          ) : resumes.length === 0 ? (
+            <p className="empty-state">No resumes uploaded yet.</p>
+          ) : (
+            resumes.map((resume) => (
+              <div className="resume-list__item" key={resume.id}>
+                <div className="resume-list__info">
+                  <div className="resume-list__name">{resume.original_filename}</div>
+                  <div className="resume-list__date">
+                    Uploaded {new Date(resume.created_at).toLocaleString()}
+                  </div>
                 </div>
-
+                {resume.id === latestResumeId && (
+                  <span className="difficulty-pill">Active</span>
+                )}
                 <button
                   type="button"
-                  className="resume-delete-button"
-                  title="Delete Resume"
-                  disabled={
-                    deletingResumeId === resume.id
-                  }
-                  onClick={() =>
-                    handleDelete(resume)
-                  }
+                  className="resume-list__delete"
+                  title="Delete resume"
+                  disabled={deletingResumeId === resume.id}
+                  onClick={() => handleDelete(resume)}
                 >
-                  {deletingResumeId ===
-                  resume.id ? (
-                    "..."
-                  ) : (
-                    <FaTrash />
-                  )}
+                  {deletingResumeId === resume.id ? "…" : <FaTrash />}
                 </button>
               </div>
-            ))}
+            ))
+          )}
+        </div>
+      </section>
+
+      <section className="resume-section">
+        <div className="section-header">
+          <div className="eyebrow">RESUME INTELLIGENCE</div>
+          <h2>Check your resume against a job description</h2>
+          <p>See what you already cover, what's missing, and what to fix before you apply.</p>
+        </div>
+
+        <div className="analysis-form-card">
+          <label className="form-field">
+            <span>Resume to evaluate</span>
+            <select
+              value={analysisResumeId}
+              onChange={(event) => setAnalysisResumeId(event.target.value)}
+              disabled={fetchingResumes || resumes.length === 0 || analysisLoading}
+            >
+              <option value="">Select a resume</option>
+              {resumes.map((resume) => (
+                <option key={resume.id} value={resume.id}>
+                  {resume.original_filename}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="form-field">
+            <span>Job description</span>
+            <textarea
+              value={jobDescription}
+              onChange={(event) => {
+                setJobDescription(event.target.value);
+                if (event.target.value.trim()) {
+                  setJobDescriptionFile(null);
+                }
+              }}
+              placeholder="Paste the complete job description here..."
+              rows={6}
+              disabled={analysisLoading}
+            />
+          </label>
+
+          <div className="jd-file-row">
+            <span className="form-hint">or upload the job description as PDF / image</span>
+            <label className="button button--ghost jd-file-row__button">
+              Choose file
+              <input
+                type="file"
+                accept=".pdf,.png,.jpg,.jpeg,.webp"
+                hidden
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+
+                  if (!file) {
+                    return;
+                  }
+
+                  const allowedTypes = [
+                    "application/pdf",
+                    "image/png",
+                    "image/jpeg",
+                    "image/webp",
+                  ];
+
+                  if (!allowedTypes.includes(file.type)) {
+                    setAnalysisError("Please upload a PDF, PNG, JPG or WEBP file.");
+                    event.target.value = "";
+                    return;
+                  }
+
+                  setAnalysisError("");
+                  setJobDescriptionFile(file);
+                  setJobDescription("");
+                }}
+                disabled={analysisLoading}
+              />
+            </label>
           </div>
-        )}
-      </div>
-      <div className="resume-analysis-section">
-  <div className="resume-analysis-header">
-    <div>
-      <h3>
-        Evaluate your resume against a Job Description
-      </h3>
 
-      <p>
-        Select one of your resumes and compare it
-        against a specific job description to see
-        what matches, what is missing, and what
-        you can improve.
-      </p>
-    </div>
-  </div>
+          {jobDescriptionFile && (
+            <p className="file-preview">
+              Selected JD: <strong>{jobDescriptionFile.name}</strong>
+            </p>
+          )}
 
-  <div className="resume-analysis-form">
+          {analysisError && <p className="error-text">{analysisError}</p>}
 
-    <label className="form-field">
-      <span>
-        Select resume to evaluate
-      </span>
-
-      <select
-        value={analysisResumeId}
-        onChange={(event) =>
-          setAnalysisResumeId(
-            event.target.value
-          )
-        }
-        disabled={
-          fetchingResumes ||
-          resumes.length === 0 ||
-          analysisLoading
-        }
-      >
-        <option value="">
-          Select a resume
-        </option>
-
-        {resumes.map((resume) => (
-          <option
-            key={resume.id}
-            value={resume.id}
+          <button
+            type="button"
+            className="button button--primary button--lg button--wide"
+            onClick={handleStartAnalysis}
+            disabled={
+              analysisLoading ||
+              !analysisResumeId ||
+              (!jobDescription.trim() && !jobDescriptionFile)
+            }
           >
-            {resume.original_filename}
-          </option>
-        ))}
-      </select>
-    </label>
+            {analysisLoading ? "Starting analysis..." : "Analyze resume against JD"}
+          </button>
+        </div>
 
-
-    <div className="form-field">
-      <span>
-        Job Description
-      </span>
-
-      <textarea
-        value={jobDescription}
-        onChange={(event) => {
-          setJobDescription(
-            event.target.value
-          );
-
-          if (event.target.value.trim()) {
-            setJobDescriptionFile(null);
-          }
-        }}
-        placeholder={
-          "Paste the complete job description here..."
-        }
-        rows={10}
-        disabled={analysisLoading}
-      />
-    </div>
-
-
-    <div className="jd-file-option">
-      <span>
-        Or upload the Job Description
-      </span>
-
-      <input
-        type="file"
-        accept=".pdf,.png,.jpg,.jpeg,.webp"
-        onChange={(event) => {
-          const file =
-            event.target.files?.[0];
-
-          if (!file) {
-            return;
-          }
-
-          const allowedTypes = [
-            "application/pdf",
-            "image/png",
-            "image/jpeg",
-            "image/webp",
-          ];
-
-          if (
-            !allowedTypes.includes(
-              file.type
-            )
-          ) {
-            setAnalysisError(
-              "Please upload a PDF, PNG, JPG or WEBP file."
-            );
-
-            event.target.value = "";
-
-            return;
-          }
-
-          setAnalysisError("");
-
-          setJobDescriptionFile(file);
-
-          setJobDescription("");
-        }}
-        disabled={analysisLoading}
-      />
-
-      {jobDescriptionFile && (
-        <p className="file-preview">
-          Selected JD:
-          <strong>
-            {" "}
-            {jobDescriptionFile.name}
-          </strong>
-        </p>
-      )}
-    </div>
-
-
-    {analysisError && (
-      <p className="error-text">
-        {analysisError}
-      </p>
-    )}
-
-
-    <button
-      className="button button--primary"
-      type="button"
-      onClick={handleStartAnalysis}
-      disabled={
-        analysisLoading ||
-        !analysisResumeId ||
-        (
-          !jobDescription.trim() &&
-          !jobDescriptionFile
-        )
-      }
-    >
-      {analysisLoading
-        ? "Starting analysis..."
-        : "Analyze Resume Against JD"}
-    </button>
-
-  </div>
-
-
-  {analysisStatus?.status ===
-    "processing" && (
-    <AnalysisProgress
-      progress={
-        analysisStatus.progress
-      }
-      currentStage={
-        analysisStatus.current_stage
-      }
-    />
-  )}
-
-</div>
-    </div>
+        {analysisStatus?.status === "processing" && (
+          <AnalysisProgress
+            progress={analysisStatus.progress}
+            currentStage={analysisStatus.current_stage}
+          />
+        )}
+      </section>
+    </>
   );
 }
 

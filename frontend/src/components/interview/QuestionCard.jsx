@@ -1,20 +1,16 @@
-function QuestionCard({ questionNumber, questionText }) {
+function QuestionCard({ questionText, isFollowUp }) {
   return (
-    <article className="content-card question-card">
-      <p className="eyebrow">
-        Question {questionNumber}
-      </p>
+    <article className="question-card">
+      {isFollowUp && (
+        <div className="follow-up-banner">
+          <span className="follow-up-banner__tag">FOLLOW-UP</span>
+          <span className="follow-up-banner__text">
+            The interviewer is digging deeper into your previous answer.
+          </span>
+        </div>
+      )}
 
-      <div
-        style={{
-          whiteSpace: "pre-wrap",
-          lineHeight: "1.8",
-          fontSize: "18px",
-          color: "#1f2937",
-        }}
-      >
-        {questionText}
-      </div>
+      <p className="question-card__text">{questionText}</p>
     </article>
   );
 }

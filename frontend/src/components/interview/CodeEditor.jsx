@@ -1,4 +1,8 @@
 import Editor from "@monaco-editor/react";
+import LanguageSelector from "./LanguageSelector";
+import {
+  PROGRAMMING_LANGUAGES,
+} from "../../constants/programmingLanguages";
 
 function CodeEditor({
   value,
@@ -7,78 +11,78 @@ function CodeEditor({
   disabled = false,
   onRunCode = () => {},
   isRunning = false,
+  onLanguageChange = () => {},
 }) {
   return (
-    <div className="content-card">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "12px",
-        }}
-      >
-        <h3 style={{ margin: 0 }}>
-          💻 Code
-        </h3>
-
-        <button
-          type="button"
-          className="button"
-          onClick={onRunCode}
-          disabled={disabled || isRunning}
-        >
-          {isRunning ? "Running..." : "▶ Run Code"}
-        </button>
+    <div className="mode-block">
+      <div className="mode-block__header">
+        <span className="mode-block__label">CODE</span>
+        <div className="code-controls">
+          <LanguageSelector
+            languages={PROGRAMMING_LANGUAGES}
+            selectedLanguage={language}
+            onLanguageChange={onLanguageChange}
+          />
+          <button
+            type="button"
+            className="run-button"
+            onClick={onRunCode}
+            disabled={disabled || isRunning}
+          >
+            {isRunning ? "Running…" : "▶ Run code"}
+          </button>
+        </div>
       </div>
 
-      <Editor
-        height="450px"
-        language={language.monacoLanguage}
-        value={value}
-        onChange={(newValue) => onChange(newValue || "")}
-        theme="vs"
-        options={{
-          readOnly: disabled,
+      <div className="editor-shell">
+        <Editor
+          height="360px"
+          language={language.monacoLanguage}
+          value={value}
+          onChange={(newValue) => onChange(newValue || "")}
+          theme="vs-dark"
+          options={{
+            readOnly: disabled,
 
-          fontSize: 14,
+            fontSize: 13,
 
-          fontFamily:
-            "SFMono-Regular, Consolas, Monaco, Menlo, monospace",
+            fontFamily:
+              "'JetBrains Mono', SFMono-Regular, Consolas, Monaco, Menlo, monospace",
 
-          minimap: {
-            enabled: false,
-          },
+            minimap: {
+              enabled: false,
+            },
 
-          automaticLayout: true,
+            automaticLayout: true,
 
-          scrollBeyondLastLine: false,
+            scrollBeyondLastLine: false,
 
-          wordWrap: "on",
+            wordWrap: "on",
 
-          lineNumbers: "on",
+            lineNumbers: "on",
 
-          roundedSelection: true,
+            roundedSelection: true,
 
-          tabSize: 4,
+            tabSize: 4,
 
-          insertSpaces: true,
+            insertSpaces: true,
 
-          autoIndent: "advanced",
+            autoIndent: "advanced",
 
-          formatOnPaste: true,
+            formatOnPaste: true,
 
-          formatOnType: true,
+            formatOnType: true,
 
-          autoClosingBrackets: "always",
+            autoClosingBrackets: "always",
 
-          autoClosingQuotes: "always",
+            autoClosingQuotes: "always",
 
-          matchBrackets: "always",
+            matchBrackets: "always",
 
-          folding: true,
-        }}
-      />
+            folding: true,
+          }}
+        />
+      </div>
     </div>
   );
 }

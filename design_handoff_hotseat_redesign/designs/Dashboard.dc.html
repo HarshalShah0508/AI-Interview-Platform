@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+</style>
+</helmet>
+
+<div style="{{ pageStyle }}">
+
+  <header style="{{ navStyle }}">
+    <a href="#" style="{{ brandStyle }}">HotSeat</a>
+    <nav style="{{ navLinksStyle }}">
+      <a href="#" style="{{ navLinkActiveStyle }}">Dashboard</a>
+      <a href="#" style="{{ navLinkStyle }}">Resume</a>
+      <a href="#" style="{{ navLinkStyle }}">Generate Interview</a>
+      <a href="#" style="{{ navLinkStyle }}">History</a>
+    </nav>
+    <div style="{{ navUserStyle }}">
+      <span style="{{ avatarStyle }}">MC</span>
+      <button type="button" style="{{ logoutButtonStyle }}">Log out</button>
+    </div>
+  </header>
+
+  <main style="{{ containerStyle }}">
+    <div style="{{ headerRowStyle }}">
+      <div style="{{ eyebrowStyle }}">DASHBOARD</div>
+      <h1 style="{{ greetingStyle }}">Welcome back, {{ dashboard.username }}</h1>
+      <p style="{{ emailStyle }}">{{ dashboard.email }}</p>
+    </div>
+
+    <div style="{{ statsStripStyle }}">
+      <div style="{{ statCellStyle }}">
+        <div style="{{ statValueStyle }}">{{ dashboard.total_interviews }}</div>
+        <div style="{{ statLabelStyle }}">TOTAL INTERVIEWS</div>
+      </div>
+      <div style="{{ statDividerStyle }}"></div>
+      <div style="{{ statCellStyle }}">
+        <div style="{{ statValueStyle }}">{{ dashboard.completed_interviews }}</div>
+        <div style="{{ statLabelStyle }}">COMPLETED</div>
+      </div>
+      <div style="{{ statDividerStyle }}"></div>
+      <div style="{{ statCellStyle }}">
+        <div style="{{ statValueStyle }}">{{ dashboard.in_progress_interviews }}</div>
+        <div style="{{ statLabelStyle }}">IN PROGRESS</div>
+      </div>
+      <div style="{{ statDividerStyle }}"></div>
+      <div style="{{ statCellWideStyle }}">
+        <div style="{{ statValueSmallStyle }}">{{ dashboard.latest_resume }}</div>
+        <div style="{{ statLabelStyle }}">LATEST RESUME</div>
+      </div>
+    </div>
+
+    <div style="{{ mainGridStyle }}">
+      <a href="#" style="{{ ctaCardStyle }}">
+        <div style="{{ eyebrowStyle }}">READY WHEN YOU ARE</div>
+        <h2 style="{{ ctaHeadlineStyle }}">Start your next interview</h2>
+        <p style="{{ ctaBodyStyle }}">Configure a role and difficulty, and HotSeat will build a session around your latest resume.</p>
+        <span style="{{ ctaButtonStyle }}">Enter the HotSeat</span>
+      </a>
+
+      <div style="{{ sideColStyle }}">
+        <a href="#" style="{{ sideCardStyle }}">
+          <div style="{{ sideCardLabelStyle }}">RESUME</div>
+          <div style="{{ sideCardTitleStyle }}">{{ dashboard.latest_resume }}</div>
+          <div style="{{ sideCardMetaStyle }}">Manage resumes &amp; JD match &rarr;</div>
+        </a>
+        <a href="#" style="{{ sideCardStyle }}">
+          <div style="{{ sideCardLabelStyle }}">HISTORY</div>
+          <div style="{{ sideCardTitleStyle }}">{{ dashboard.total_interviews }} past sessions</div>
+          <div style="{{ sideCardMetaStyle }}">Review scores &amp; feedback &rarr;</div>
+        </a>
+      </div>
+    </div>
+
+    <div style="{{ latestSectionStyle }}">
+      <div style="{{ eyebrowStyle }}">MOST RECENT SESSION</div>
+      <div style="{{ latestCardStyle }}">
+        <div style="{{ latestInfoStyle }}">
+          <h3 style="{{ latestRoleStyle }}">{{ dashboard.latest_interview.role }}</h3>
+          <div style="{{ latestMetaRowStyle }}">
+            <span style="{{ difficultyBadgeStyle }}">{{ dashboard.latest_interview.difficulty }}</span>
+            <span style="{{ latestDateStyle }}">{{ dashboard.latest_interview.created_at }}</span>
+          </div>
+        </div>
+        <a href="#" style="{{ secondaryButtonStyle }}">View in history</a>
+      </div>
+    </div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CHAR = "oklch(0.16 0.011 45)";
+const CHAR_RAISED = "oklch(0.21 0.013 45)";
+const CHAR_ELEVATED = "oklch(0.245 0.018 42)";
+const CHAR_BORDER = "oklch(0.31 0.015 45)";
+const CHAR_TEXT = "oklch(0.94 0.006 70)";
+const CHAR_TEXT_SOFT = "oklch(0.66 0.011 60)";
+const ACCENT = "oklch(0.66 0.19 35)";
+const ACCENT_SOFT = "oklch(0.66 0.19 35 / 0.14)";
+
+const DISPLAY = "'Space Grotesk', 'Inter', sans-serif";
+const BODY = "'Inter', sans-serif";
+const MONO = "'JetBrains Mono', monospace";
+
+class Component extends DCLogic {
+  renderVals() {
+    const dashboard = {
+      username: "Maya Chen",
+      email: "maya.chen@gmail.com",
+      latest_resume: "Maya_Chen_Resume_2026.pdf",
+      total_interviews: 12,
+      completed_interviews: 9,
+      in_progress_interviews: 3,
+      latest_interview: { role: "Backend Engineer", difficulty: "Hard", created_at: "Aug 12, 2026 \u00b7 6:40 PM" },
+    };
+
+    return {
+      dashboard,
+      pageStyle: { background: CHAR, color: CHAR_TEXT, fontFamily: BODY, minHeight: "100vh" },
+
+      navStyle: { position: "sticky", top: 0, zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", padding: "16px clamp(20px, 5vw, 48px)", background: "oklch(0.16 0.011 45 / 0.94)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${CHAR_BORDER}` },
+      brandStyle: { fontFamily: DISPLAY, fontWeight: 700, fontSize: "19px", color: CHAR_TEXT, flexShrink: 0 },
+      navLinksStyle: { display: "flex", gap: "clamp(8px, 2vw, 26px)", flexWrap: "wrap", flex: 1, justifyContent: "center" },
+      navLinkStyle: { fontSize: "14px", fontWeight: 500, color: CHAR_TEXT_SOFT, padding: "6px 2px" },
+      navLinkActiveStyle: { fontSize: "14px", fontWeight: 600, color: CHAR_TEXT, padding: "6px 2px", borderBottom: `2px solid ${ACCENT}` },
+      navUserStyle: { display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 },
+      avatarStyle: { width: "32px", height: "32px", borderRadius: "50%", background: CHAR_RAISED, border: `1px solid ${CHAR_BORDER}`, color: CHAR_TEXT, display: "inline-flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "12px", fontWeight: 600 },
+      logoutButtonStyle: { border: `1px solid ${CHAR_BORDER}`, background: "transparent", color: CHAR_TEXT, fontSize: "13.5px", fontWeight: 600, padding: "7px 14px", borderRadius: "4px" },
+
+      containerStyle: { maxWidth: "1120px", margin: "0 auto", padding: "clamp(28px, 4vw, 48px) clamp(20px, 4vw, 24px) 80px", display: "flex", flexDirection: "column", gap: "32px" },
+      headerRowStyle: { display: "flex", flexDirection: "column", gap: "6px" },
+      eyebrowStyle: { fontFamily: MONO, fontSize: "12px", fontWeight: 600, letterSpacing: "0.1em", color: ACCENT },
+      greetingStyle: { fontFamily: DISPLAY, fontSize: "clamp(26px, 3.2vw, 34px)", fontWeight: 700, margin: 0, color: CHAR_TEXT, letterSpacing: "-0.01em" },
+      emailStyle: { fontSize: "14.5px", color: CHAR_TEXT_SOFT, margin: 0 },
+
+      statsStripStyle: { display: "flex", alignItems: "stretch", background: CHAR_RAISED, border: `1px solid ${CHAR_BORDER}`, borderRadius: "6px", padding: "18px 24px", flexWrap: "wrap", gap: "20px" },
+      statCellStyle: { display: "flex", flexDirection: "column", gap: "4px", minWidth: "90px" },
+      statCellWideStyle: { display: "flex", flexDirection: "column", gap: "4px", minWidth: "160px", flex: 1 },
+      statValueStyle: { fontFamily: DISPLAY, fontSize: "28px", fontWeight: 700, color: CHAR_TEXT },
+      statValueSmallStyle: { fontFamily: DISPLAY, fontSize: "16px", fontWeight: 600, color: CHAR_TEXT, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+      statLabelStyle: { fontFamily: MONO, fontSize: "10.5px", fontWeight: 600, color: CHAR_TEXT_SOFT, letterSpacing: "0.06em" },
+      statDividerStyle: { width: "1px", background: CHAR_BORDER, alignSelf: "stretch" },
+
+      mainGridStyle: { display: "grid", gridTemplateColumns: "minmax(280px, 2fr) minmax(220px, 1fr)", gap: "20px" },
+      ctaCardStyle: { display: "flex", flexDirection: "column", gap: "12px", alignItems: "flex-start", background: CHAR_ELEVATED, border: `1px solid oklch(0.66 0.19 35 / 0.3)`, borderRadius: "8px", padding: "36px", color: CHAR_TEXT },
+      ctaHeadlineStyle: { fontFamily: DISPLAY, fontSize: "clamp(22px, 2.6vw, 30px)", fontWeight: 700, margin: 0, color: CHAR_TEXT },
+      ctaBodyStyle: { fontSize: "15px", color: CHAR_TEXT_SOFT, margin: 0, maxWidth: "420px", lineHeight: 1.55 },
+      ctaButtonStyle: { marginTop: "10px", display: "inline-flex", height: "44px", alignItems: "center", padding: "0 22px", borderRadius: "4px", background: ACCENT, color: "#fff", fontWeight: 600, fontSize: "14.5px" },
+
+      sideColStyle: { display: "flex", flexDirection: "column", gap: "16px" },
+      sideCardStyle: { display: "flex", flexDirection: "column", gap: "8px", background: CHAR_RAISED, border: `1px solid ${CHAR_BORDER}`, borderRadius: "8px", padding: "20px", flex: 1, justifyContent: "center" },
+      sideCardLabelStyle: { fontFamily: MONO, fontSize: "10.5px", fontWeight: 600, color: CHAR_TEXT_SOFT, letterSpacing: "0.06em" },
+      sideCardTitleStyle: { fontFamily: DISPLAY, fontSize: "16px", fontWeight: 600, color: CHAR_TEXT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+      sideCardMetaStyle: { fontSize: "13px", color: ACCENT, fontWeight: 600 },
+
+      latestSectionStyle: { display: "flex", flexDirection: "column", gap: "14px" },
+      latestCardStyle: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", flexWrap: "wrap", background: CHAR_RAISED, border: `1px solid ${CHAR_BORDER}`, borderRadius: "8px", padding: "24px" },
+      latestInfoStyle: { display: "flex", flexDirection: "column", gap: "8px" },
+      latestRoleStyle: { fontFamily: DISPLAY, fontSize: "19px", fontWeight: 600, color: CHAR_TEXT, margin: 0 },
+      latestMetaRowStyle: { display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" },
+      difficultyBadgeStyle: { fontFamily: MONO, fontSize: "11px", fontWeight: 600, color: ACCENT, background: ACCENT_SOFT, padding: "4px 10px", borderRadius: "999px" },
+      latestDateStyle: { fontFamily: MONO, fontSize: "12px", color: CHAR_TEXT_SOFT },
+      secondaryButtonStyle: { display: "inline-flex", height: "40px", alignItems: "center", padding: "0 18px", borderRadius: "4px", border: `1px solid ${CHAR_BORDER}`, color: CHAR_TEXT, fontWeight: 600, fontSize: "13.5px" },
+    };
+  }
+}
+
+</script>
+</body>
+</html>

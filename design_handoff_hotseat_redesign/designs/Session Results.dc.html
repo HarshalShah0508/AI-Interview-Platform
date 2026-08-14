@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+</style>
+</helmet>
+
+<div style="{{ pageStyle }}">
+  <header style="{{ navStyle }}">
+    <a href="#" style="{{ brandStyle }}">HotSeat</a>
+    <nav style="{{ navLinksStyle }}">
+      <a href="#" style="{{ navLinkStyle }}">Dashboard</a>
+      <a href="#" style="{{ navLinkStyle }}">Resume</a>
+      <a href="#" style="{{ navLinkStyle }}">Generate Interview</a>
+      <a href="#" style="{{ navLinkActiveStyle }}">History</a>
+    </nav>
+    <div style="{{ navUserStyle }}">
+      <span style="{{ avatarStyle }}">MC</span>
+      <button type="button" style="{{ logoutButtonStyle }}">Log out</button>
+    </div>
+  </header>
+
+  <main style="{{ containerStyle }}">
+    <div style="{{ headerRowStyle }}">
+      <div style="{{ eyebrowStyle }}">SESSION SUMMARY</div>
+      <h1 style="{{ titleStyle }}">{{ results.role }} &middot; {{ results.difficulty }}</h1>
+      <p style="{{ subStyle }}">Completed {{ results.created_at }}</p>
+    </div>
+
+    <div style="{{ scoreRowStyle }}">
+      <div style="{{ scoreBlockStyle }}">
+        <div style="{{ scoreNumStyle }}">{{ results.average_score }}<span style="{{ scoreOutOfStyle }}">/10</span></div>
+        <div style="{{ scoreLabelStyle }}">AVERAGE SCORE</div>
+      </div>
+      <div style="{{ metaDividerStyle }}"></div>
+      <div style="{{ scoreBlockSmallStyle }}">
+        <div style="{{ metaNumStyle }}">{{ results.questions_attempted }}</div>
+        <div style="{{ scoreLabelStyle }}">QUESTIONS ATTEMPTED</div>
+      </div>
+    </div>
+
+    <div style="{{ topicsGridStyle }}">
+      <div style="{{ topicsColStyle }}">
+        <div style="{{ topicsLabelStyle }}">STRONG TOPICS</div>
+        <div style="{{ topicPillRowStyle }}">
+          <sc-for list="{{ results.strong_topics }}" as="topic" hint-placeholder-count="3">
+            <span style="{{ strongPillStyle }}">{{ topic }}</span>
+          </sc-for>
+        </div>
+      </div>
+      <div style="{{ topicsColStyle }}">
+        <div style="{{ topicsLabelStyle }}">WEAK TOPICS</div>
+        <div style="{{ topicPillRowStyle }}">
+          <sc-for list="{{ results.weak_topics }}" as="topic" hint-placeholder-count="2">
+            <span style="{{ weakPillStyle }}">{{ topic }}</span>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="{{ questionsSectionStyle }}">
+      <div style="{{ eyebrowStyle }}">QUESTION-BY-QUESTION</div>
+      <div style="{{ questionListStyle }}">
+        <sc-for list="{{ questions }}" as="q" hint-placeholder-count="4">
+          <div style="{{ questionRowStyle }}">
+            <div style="{{ questionInfoStyle }}">
+              <div style="{{ questionTagRowStyle }}">
+                <span style="{{ q.tagStyle }}">{{ q.tagLabel }}</span>
+              </div>
+              <p style="{{ questionTextStyle }}">{{ q.text }}</p>
+              <p style="{{ questionFeedbackStyle }}">{{ q.feedback }}</p>
+            </div>
+            <span style="{{ questionScoreStyle }}">{{ q.score }}/10</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="{{ actionsRowStyle }}">
+      <a href="#" style="{{ secondaryActionStyle }}">Back to dashboard</a>
+      <a href="#" style="{{ primaryActionStyle }}">Start a new interview</a>
+    </div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CHAR = "oklch(0.16 0.011 45)";
+const CHAR_RAISED = "oklch(0.21 0.013 45)";
+const CHAR_BORDER = "oklch(0.31 0.015 45)";
+const CHAR_TEXT = "oklch(0.94 0.006 70)";
+const CHAR_TEXT_SOFT = "oklch(0.66 0.011 60)";
+const ACCENT = "oklch(0.66 0.19 35)";
+const ACCENT_SOFT = "oklch(0.66 0.19 35 / 0.14)";
+const GREEN = "oklch(0.68 0.14 150)";
+const GREEN_SOFT = "oklch(0.68 0.14 150 / 0.15)";
+
+const DISPLAY = "'Space Grotesk', 'Inter', sans-serif";
+const BODY = "'Inter', sans-serif";
+const MONO = "'JetBrains Mono', monospace";
+
+const tagPrimary = { fontFamily: MONO, fontSize: "10.5px", fontWeight: 700, color: CHAR_TEXT_SOFT, border: `1px solid ${CHAR_BORDER}`, padding: "2px 8px", borderRadius: "999px", letterSpacing: "0.04em" };
+const tagFollowUp = { fontFamily: MONO, fontSize: "10.5px", fontWeight: 700, color: ACCENT, border: `1px solid ${ACCENT}`, padding: "2px 8px", borderRadius: "999px", letterSpacing: "0.04em" };
+
+class Component extends DCLogic {
+  renderVals() {
+    const results = {
+      role: "Backend Engineer",
+      difficulty: "Hard",
+      created_at: "Aug 12, 2026 \u00b7 7:15 PM",
+      average_score: 7.8,
+      questions_attempted: 8,
+      strong_topics: ["Database indexing", "API design", "Ownership & impact"],
+      weak_topics: ["Distributed systems tradeoffs", "Big-O rigor"],
+    };
+
+    const questions = [
+      { tagLabel: "Q1", tagStyle: tagPrimary, text: "Walk me through a backend service you designed end to end.", feedback: "Clear ownership and solid system boundaries.", score: 8 },
+      { tagLabel: "Q2", tagStyle: tagPrimary, text: "How would you scale this service to 10x traffic?", feedback: "Good instincts on caching, light on data partitioning.", score: 7 },
+      { tagLabel: "Q3", tagStyle: tagPrimary, text: "You mentioned optimizing a query \u2014 walk through the fix.", feedback: "Correct index fix, complexity argument was informal.", score: 7 },
+      { tagLabel: "Q3a \u00b7 Follow-up", tagStyle: tagFollowUp, text: "Can you prove that O(log n) bound precisely?", feedback: "Solid recovery, gave a clear proof sketch.", score: 9 },
+    ];
+
+    return {
+      results, questions,
+      pageStyle: { background: CHAR, color: CHAR_TEXT, fontFamily: BODY, minHeight: "100vh" },
+
+      navStyle: { position: "sticky", top: 0, zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", padding: "16px clamp(20px, 5vw, 48px)", background: "oklch(0.16 0.011 45 / 0.94)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${CHAR_BORDER}` },
+      brandStyle: { fontFamily: DISPLAY, fontWeight: 700, fontSize: "19px", color: CHAR_TEXT, flexShrink: 0 },
+      navLinksStyle: { display: "flex", gap: "clamp(8px, 2vw, 26px)", flexWrap: "wrap", flex: 1, justifyContent: "center" },
+      navLinkStyle: { fontSize: "14px", fontWeight: 500, color: CHAR_TEXT_SOFT, padding: "6px 2px" },
+      navLinkActiveStyle: { fontSize: "14px", fontWeight: 600, color: CHAR_TEXT, padding: "6px 2px", borderBottom: `2px solid ${ACCENT}` },
+      navUserStyle: { display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 },
+      avatarStyle: { width: "32px", height: "32px", borderRadius: "50%", background: CHAR_RAISED, border: `1px solid ${CHAR_BORDER}`, color: CHAR_TEXT, display: "inline-flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "12px", fontWeight: 600 },
+      logoutButtonStyle: { border: `1px solid ${CHAR_BORDER}`, background: "transparent", color: CHAR_TEXT, fontSize: "13.5px", fontWeight: 600, padding: "7px 14px", borderRadius: "4px" },
+
+      containerStyle: { maxWidth: "880px", margin: "0 auto", padding: "clamp(28px, 4vw, 48px) clamp(20px, 4vw, 24px) 96px", display: "flex", flexDirection: "column", gap: "36px" },
+      headerRowStyle: { display: "flex", flexDirection: "column", gap: "6px" },
+      eyebrowStyle: { fontFamily: MONO, fontSize: "12px", fontWeight: 600, letterSpacing: "0.1em", color: ACCENT },
+      titleStyle: { fontFamily: DISPLAY, fontSize: "clamp(26px, 3.2vw, 32px)", fontWeight: 700, margin: 0, color: CHAR_TEXT, letterSpacing: "-0.01em" },
+      subStyle: { fontSize: "14.5px", color: CHAR_TEXT_SOFT, margin: 0 },
+
+      scoreRowStyle: { display: "flex", alignItems: "center", gap: "36px", background: CHAR_RAISED, border: `1px solid ${CHAR_BORDER}`, borderRadius: "8px", padding: "32px", flexWrap: "wrap" },
+      scoreBlockStyle: { display: "flex", flexDirection: "column", gap: "4px" },
+      scoreBlockSmallStyle: { display: "flex", flexDirection: "column", gap: "4px" },
+      scoreNumStyle: { fontFamily: DISPLAY, fontSize: "56px", fontWeight: 700, color: ACCENT, lineHeight: 1 },
+      scoreOutOfStyle: { fontSize: "22px", fontWeight: 600, color: CHAR_TEXT_SOFT },
+      metaNumStyle: { fontFamily: DISPLAY, fontSize: "40px", fontWeight: 700, color: CHAR_TEXT, lineHeight: 1 },
+      scoreLabelStyle: { fontFamily: MONO, fontSize: "11px", fontWeight: 600, color: CHAR_TEXT_SOFT, letterSpacing: "0.06em" },
+      metaDividerStyle: { width: "1px", alignSelf: "stretch", background: CHAR_BORDER },
+
+      topicsGridStyle: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "24px" },
+      topicsColStyle: { display: "flex", flexDirection: "column", gap: "12px" },
+      topicsLabelStyle: { fontFamily: MONO, fontSize: "11px", fontWeight: 700, color: CHAR_TEXT_SOFT, letterSpacing: "0.06em" },
+      topicPillRowStyle: { display: "flex", flexWrap: "wrap", gap: "8px" },
+      strongPillStyle: { fontSize: "13px", fontWeight: 600, color: GREEN, background: GREEN_SOFT, padding: "6px 12px", borderRadius: "999px" },
+      weakPillStyle: { fontSize: "13px", fontWeight: 600, color: ACCENT, background: ACCENT_SOFT, padding: "6px 12px", borderRadius: "999px" },
+
+      questionsSectionStyle: { display: "flex", flexDirection: "column", gap: "16px" },
+      questionListStyle: { display: "flex", flexDirection: "column", gap: "12px" },
+      questionRowStyle: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", background: CHAR_RAISED, border: `1px solid ${CHAR_BORDER}`, borderRadius: "8px", padding: "20px" },
+      questionInfoStyle: { display: "flex", flexDirection: "column", gap: "8px", flex: 1, minWidth: 0 },
+      questionTagRowStyle: { display: "flex", gap: "8px" },
+      questionTextStyle: { fontFamily: DISPLAY, fontSize: "15.5px", fontWeight: 600, color: CHAR_TEXT, margin: 0, lineHeight: 1.4 },
+      questionFeedbackStyle: { fontSize: "13.5px", color: CHAR_TEXT_SOFT, margin: 0, lineHeight: 1.55 },
+      questionScoreStyle: { fontFamily: DISPLAY, fontSize: "20px", fontWeight: 700, color: CHAR_TEXT, flexShrink: 0 },
+
+      actionsRowStyle: { display: "flex", gap: "14px", flexWrap: "wrap", paddingTop: "8px" },
+      secondaryActionStyle: { display: "inline-flex", height: "46px", alignItems: "center", padding: "0 22px", borderRadius: "4px", border: `1px solid ${CHAR_BORDER}`, color: CHAR_TEXT, fontWeight: 600, fontSize: "14.5px" },
+      primaryActionStyle: { display: "inline-flex", height: "46px", alignItems: "center", padding: "0 24px", borderRadius: "4px", background: ACCENT, color: "#fff", fontWeight: 700, fontSize: "14.5px" },
+    };
+  }
+}
+
+</script>
+</body>
+</html>

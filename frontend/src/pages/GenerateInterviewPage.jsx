@@ -1,16 +1,23 @@
 import InterviewGeneratorForm from "../components/interview/InterviewGeneratorForm.jsx";
+import Navbar from "../components/layout/Navbar.jsx";
 
 function GenerateInterviewPage() {
   return (
-    <section className="page-shell">
-      <div className="page-header">
-        <p className="eyebrow">Question generation</p>
-        <h1>Generate Interview</h1>
-        <p>Choose a role and difficulty to shape your next practice session.</p>
-      </div>
+    <div className="generate-page">
+      <Navbar />
+      <main className="generate-container">
+        <div className="generate-card">
+          <div className="eyebrow">INTERVIEW SETUP</div>
+          <h1 className="generate-card__headline">Configure your session</h1>
+          <p className="generate-card__sub">
+            HotSeat will generate a resume-tailored interview for the role and
+            difficulty you choose below.
+          </p>
 
-      <InterviewGeneratorForm />
-    </section>
+          <InterviewGeneratorForm />
+        </div>
+      </main>
+    </div>
   );
 }
 

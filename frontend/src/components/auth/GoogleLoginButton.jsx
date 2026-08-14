@@ -27,12 +27,17 @@ function GoogleLoginButton() {
 };
 
   return (
-    <div className="google-login-button">
+    <div className="google-login-wrap">
       <GoogleLogin
         onSuccess={handleSuccess}
         onError={() => {
           alert("Google Sign-In was cancelled or failed.");
         }}
+        theme="filled_black"
+        shape="rectangular"
+        size="large"
+        text="continue_with"
+        width="360"
       />
     </div>
   );
