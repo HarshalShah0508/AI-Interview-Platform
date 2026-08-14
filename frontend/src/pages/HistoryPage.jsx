@@ -1,18 +1,20 @@
 import HistoryList from "../components/history/HistoryList";
+import Navbar from "../components/layout/Navbar.jsx";
 
 function HistoryPage() {
   return (
-    <section className="page-shell">
-      <div className="page-header">
-        <p className="eyebrow">History</p>
-        <h1>Interview History</h1>
-        <p>
-          Review previous interview sessions and continue unfinished ones.
-        </p>
-      </div>
+    <div className="history-page">
+      <Navbar />
+      <main className="history-container">
+        <div className="section-header">
+          <div className="eyebrow">HISTORY</div>
+          <h1>Interview history</h1>
+          <p>Review previous sessions and continue anything unfinished.</p>
+        </div>
 
-      <HistoryList />
-    </section>
+        <HistoryList />
+      </main>
+    </div>
   );
 }
 

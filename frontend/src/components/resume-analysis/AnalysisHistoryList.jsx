@@ -23,48 +23,28 @@ function AnalysisHistoryItem({ analysis }) {
   ).toLocaleString();
 
   return (
-    <article className="history-item">
-      <div>
-        <p className="eyebrow">
-          Resume ↔ JD Analysis
-        </p>
-
-        <h2>
-          {analysis.job_title || "Untitled role"}
-        </h2>
-
-        <p>
-          <strong>Resume:</strong>{" "}
-          {analysis.resume_filename || "Unknown resume"}
-        </p>
-
-        <p>
-          <strong>Analyzed:</strong> {createdDate}
-        </p>
-
-        <p>
-          <span className={`badge badge--${badge.tone}`}>
-            {badge.label}
-          </span>
-
-          {analysis.status === "completed" && (
-            <>
-              {" "}
-              <strong>Score:</strong>{" "}
-              {analysis.overall_score ?? "—"}/100
-            </>
-          )}
-        </p>
+    <article className="list-row">
+      <div className="list-row__info">
+        <div className="list-row__title">{analysis.job_title || "Untitled role"}</div>
+        <div className="list-row__meta">
+          <span>{analysis.resume_filename || "Unknown resume"}</span>
+          <span>·</span>
+          <span>{createdDate}</span>
+        </div>
       </div>
 
-      {analysis.status === "completed" && (
-        <Link
-          className="button button--primary"
-          to={`/resume-analysis/${analysis.analysis_id}`}
-        >
-          View Results
-        </Link>
-      )}
+      <div className="list-row__actions">
+        <span className={`badge badge--${badge.tone}`}>{badge.label}</span>
+
+        {analysis.status === "completed" && (
+          <>
+            <span className="list-row__score">{analysis.overall_score ?? "—"}/100</span>
+            <Link className="button button--primary button--sm" to={`/resume-analysis/${analysis.analysis_id}`}>
+              View results
+            </Link>
+          </>
+        )}
+      </div>
     </article>
   );
 }
@@ -99,7 +79,7 @@ export default function AnalysisHistoryList() {
   }, [token]);
 
   if (loading) {
-    return <p>Loading your past analyses...</p>;
+    return <p className="form-hint">Loading your past analyses...</p>;
   }
 
   if (error) {
@@ -108,17 +88,14 @@ export default function AnalysisHistoryList() {
 
   if (analyses.length === 0) {
     return (
-      <div className="content-card">
-        <p>
-          You haven't analyzed a resume against a job
-          description yet.
-        </p>
-      </div>
+      <p className="empty-state">
+        You haven't analyzed a resume against a job description yet.
+      </p>
     );
   }
 
   return (
-    <div className="history-list">
+    <div className="list-row-group">
       {analyses.map((analysis) => (
         <AnalysisHistoryItem
           key={analysis.analysis_id}

@@ -11,7 +11,6 @@ import VoiceInput from "./VoiceInput";
 import NotesInput from "./NotesInput";
 import CodeEditor from "./CodeEditor";
 import CombinedPreview from "./CombinedPreview";
-import LanguageSelector from "./LanguageSelector";
 import ConsoleOutput from "./ConsoleOutput";
 import CustomInput from "./CustomInput";
 
@@ -45,8 +44,8 @@ const AnswerBox = forwardRef(function AnswerBox(
   const [selectedLanguage, setSelectedLanguage] =
     useState(DEFAULT_LANGUAGE);
 
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const hasContent =
     voiceText.trim() ||
@@ -115,7 +114,7 @@ const AnswerBox = forwardRef(function AnswerBox(
   const handleSubmit = async (event) => {
     if (event) event.preventDefault();
 
-    if (disabled) return;
+    if (disabled || submitting) return;
 
     if (!hasContent) {
       setError(
@@ -125,7 +124,7 @@ const AnswerBox = forwardRef(function AnswerBox(
     }
 
     try {
-      setLoading(true);
+      setSubmitting(true);
       setError("");
 
       const response = await submitAnswer(
@@ -156,9 +155,7 @@ const AnswerBox = forwardRef(function AnswerBox(
       );
 
     } finally {
-
-      setLoading(false);
-
+      setSubmitting(false);
     }
   };
 
@@ -179,9 +176,16 @@ const AnswerBox = forwardRef(function AnswerBox(
 
   return (
     <form
-      className="answer-box"
+      className="answer-card"
       onSubmit={handleSubmit}
     >
+      <div className="answer-card__header">
+        <div className="answer-card__label">YOUR ANSWER</div>
+        <div className="answer-card__sublabel">
+          Think. Explain. Write. Code. Submit — all three modes are graded together.
+        </div>
+      </div>
+
       <VoiceInput
         value={voiceText}
         onChange={setVoiceText}
@@ -194,12 +198,6 @@ const AnswerBox = forwardRef(function AnswerBox(
         disabled={disabled}
       />
 
-      <LanguageSelector
-        languages={PROGRAMMING_LANGUAGES}
-        selectedLanguage={selectedLanguage}
-        onLanguageChange={handleLanguageChange}
-      />
-
       <CodeEditor
         value={code}
         onChange={setCode}
@@ -207,6 +205,7 @@ const AnswerBox = forwardRef(function AnswerBox(
         disabled={disabled}
         onRunCode={handleRunCode}
         isRunning={executionStatus === "running"}
+        onLanguageChange={handleLanguageChange}
       />
 
       <CustomInput
@@ -231,30 +230,6 @@ const AnswerBox = forwardRef(function AnswerBox(
           {error}
         </p>
       )}
-
-      <div
-        style={{
-        display: "flex",
-        justifyContent: "flex-end",
-        marginTop: "16px",
-      }}
->
-      <button
-        className="button button--primary"
-        type="submit"
-        disabled={
-          loading ||
-          disabled ||
-          !hasContent
-        }
-  >
-        {disabled
-          ? "Already Submitted"
-          : loading
-          ? "Submitting..."
-          : "Submit Answer"}
-      </button>
-</div>
     </form>
   );
 });

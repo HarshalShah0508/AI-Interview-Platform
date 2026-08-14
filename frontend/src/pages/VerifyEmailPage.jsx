@@ -41,49 +41,41 @@ function VerifyEmailPage() {
   }, [searchParams]);
 
   return (
-    <div className="auth-page">
-
-      <div className="auth-card">
-
-        {status === "loading" && (
-          <>
-            <h2>Verifying Email...</h2>
-            <p>Please wait.</p>
-          </>
-        )}
-
-        {status === "success" && (
-          <>
-            <h2>✅ Email Verified</h2>
-
-            <p>{message}</p>
-
-            <Link
-              to="/login"
-              className="button button--primary"
-            >
-              Go to Login
-            </Link>
-          </>
-        )}
-
-        {status === "error" && (
-          <>
-            <h2>❌ Verification Failed</h2>
-
-            <p>{message}</p>
-
-            <Link
-              to="/signup"
-              className="button button--primary"
-            >
-              Back to Signup
-            </Link>
-          </>
-        )}
-
+    <div className="verify-page">
+      <div className="verify-page__header">
+        <div className="eyebrow">EMAIL VERIFICATION</div>
+        <h2>Confirming your account</h2>
       </div>
 
+      {status === "loading" && (
+        <div className="verify-card">
+          <p className="verify-card__body">Please wait while we verify your email…</p>
+        </div>
+      )}
+
+      {status === "success" && (
+        <div className="verify-card">
+          <span className="verify-card__tag verify-card__tag--success">SUCCESS</span>
+          <span className="verify-card__icon verify-card__icon--success" />
+          <h3 className="verify-card__title">Email verified</h3>
+          <p className="verify-card__body">{message}</p>
+          <Link to="/login" className="button button--primary">
+            Go to login
+          </Link>
+        </div>
+      )}
+
+      {status === "error" && (
+        <div className="verify-card">
+          <span className="verify-card__tag verify-card__tag--error">ERROR</span>
+          <span className="verify-card__icon verify-card__icon--error" />
+          <h3 className="verify-card__title">Verification failed</h3>
+          <p className="verify-card__body">{message}</p>
+          <Link to="/signup" className="button button--secondary">
+            Back to signup
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

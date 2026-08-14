@@ -77,7 +77,7 @@ function LoginForm() {
 };
 
   return (
-    <form className="auth-card" onSubmit={handleSubmit}>
+    <form className="auth-form" onSubmit={handleSubmit}>
       <label className="form-field">
         <span>Email</span>
         <input
@@ -103,36 +103,34 @@ function LoginForm() {
       </label>
 
       {error && <p className="error-text">{error}</p>}
-      {showResend && (
-  <button
-    type="button"
-    className="button button--secondary"
-    onClick={handleResendVerification}
-  >
-    Resend Verification Email
-  </button>
-)}
 
-{successMessage && (
-  <p className="success-text">
-    {successMessage}
-  </p>
-)}
-
-      <button className="button button--primary" type="submit">
-        Login
+      <button className="button button--primary button--lg button--wide" type="submit">
+        Log in
       </button>
+
       <div className="auth-divider">
-        <hr />
-        <span>OR</span>
-        <hr />
+        <span className="auth-divider__line" />
+        <span className="auth-divider__text">OR</span>
+        <span className="auth-divider__line" />
       </div>
 
       <GoogleLoginButton />
 
-      <p className="form-footer">
-        New to Hot Seat? <Link to="/signup">Create an account</Link>
+      <p className="auth-form-footer">
+        New to HotSeat? <Link to="/signup">Create an account</Link>
       </p>
+
+      {showResend && (
+        <div className="auth-alert">
+          <div className="auth-alert__label">STATE · EMAIL NOT VERIFIED</div>
+          <p className="auth-alert__text">Please verify your email before logging in.</p>
+          <button type="button" className="auth-alert__action" onClick={handleResendVerification}>
+            Resend verification email
+          </button>
+        </div>
+      )}
+
+      {successMessage && <p className="success-text">{successMessage}</p>}
     </form>
   );
 }

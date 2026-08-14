@@ -1,5 +1,5 @@
 import { useEffect, useState , useRef } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { getInterviewSession } from "../api/interviewApi";
 import useAuth from "../hooks/useAuth";
@@ -82,19 +82,11 @@ function InterviewSessionPage() {
   }, [sessionId, token]);
 
   if (loading) {
-    return (
-      <section className="page-shell">
-        <p>Loading interview...</p>
-      </section>
-    );
+    return <div className="page-loading">Loading interview…</div>;
   }
 
   if (error) {
-    return (
-      <section className="page-shell">
-        <p className="error-text">{error}</p>
-      </section>
-    );
+    return <div className="page-error">{error}</div>;
   }
 
   const currentQuestion =
@@ -103,10 +95,11 @@ function InterviewSessionPage() {
   const currentFeedback =
     feedbackMap[currentQuestion.id];
 
-  const totalMainQuestions =
-    session.questions.filter(
-      (question) => !question.is_follow_up
-    ).length;
+  const mainQuestions = session.questions.filter(
+    (question) => !question.is_follow_up
+  );
+
+  const totalMainQuestions = mainQuestions.length;
 
   const currentMainQuestionNumber =
     session.questions
@@ -114,6 +107,9 @@ function InterviewSessionPage() {
       .filter(
         (question) => !question.is_follow_up
       ).length;
+
+  const currentMainIndex = currentMainQuestionNumber - 1;
+
       const handleAnswerSubmitted = (response) => {
   setFeedbackMap((prev) => ({
     ...prev,
@@ -197,94 +193,56 @@ const handleFinishInterview = () => {
     if (!confirmFinish) return;
   }
 
-  navigate(`/results/${sessionId}`);
+  navigate(`/results/${sessionId}`, {
+    state: {
+      role: session.role,
+      difficulty: session.difficulty,
+      createdAt: session.created_at,
+      questions: session.questions,
+      feedbackMap,
+    },
+  });
 };
+
+const isLastQuestion = currentQuestionIndex === session.questions.length - 1;
+
 return (
-  <section className="page-shell">
-    <div className="page-header">
-      <p className="eyebrow">Practice Session</p>
+  <div className="workspace">
+    <header className="workspace-topbar">
+      <Link to="/dashboard" className="workspace-topbar__brand">
+        HotSeat
+      </Link>
 
-      <h1>
-        {session.role} • {session.difficulty}
-      </h1>
-
-      <div className="question-progress">
-        <p>
-          Question {currentMainQuestionNumber} of{" "}
-          {totalMainQuestions}
-        </p>
-
-        {currentQuestion.is_follow_up && (
-          <div className="follow-up-banner">
-            <strong>🔍 Follow-up Question</strong>
-
-            <p>
-              The interviewer wants to explore this topic
-              in more depth based on your previous answer.
-            </p>
-          </div>
-        )}
+      <div className="workspace-topbar__progress">
+        <div className="workspace-topbar__progress-text">
+          Question {currentMainQuestionNumber} of {totalMainQuestions} · {session.role} ·{" "}
+          {session.difficulty}
+        </div>
+        <div className="workspace-topbar__dots">
+          {mainQuestions.map((question, index) => {
+            let state = "open";
+            if (index === currentMainIndex) {
+              state = "current";
+            } else if (answeredQuestions.has(question.id)) {
+              state = "done";
+            }
+            return (
+              <span
+                key={question.id}
+                className={`workspace-dot workspace-dot--${state}`}
+              />
+            );
+          })}
+        </div>
       </div>
-      <div className="page-actions page-actions--top">
 
-  <button
-    className="button button--secondary"
-    onClick={handlePrevious}
-    disabled={currentQuestionIndex === 0}
-  >
-    ← Previous
-  </button>
+      <Link to="/dashboard" className="workspace-topbar__exit">
+        Exit interview
+      </Link>
+    </header>
 
-  <button
-    className="button button--primary"
-    onClick={() => answerBoxRef.current?.submit()}
-    disabled={answeredQuestions.has(currentQuestion.id)}
-  >
-    Submit Answer
-  </button>
-
-  {currentQuestionIndex <
-session.questions.length - 1 ? (
-
-  readyForNext ? (
-
-    <button
-      className="button button--primary"
-      onClick={handleNext}
-    >
-      {nextIsFollowUp
-        ? "Continue to Follow-up →"
-        : "Next Question →"}
-    </button>
-
-  ) : (
-
-    <button
-      className="button button--secondary"
-      onClick={handleNext}
-    >
-      Next / Skip →
-    </button>
-
-  )
-
-) : (
-
-  <button
-    className="button button--primary"
-    onClick={handleFinishInterview}
-  >
-    Finish Interview
-  </button>
-
-)}
-
-</div>
-    </div>
-
-    <div className="interview-workspace">
+    <main className="workspace-main">
       <QuestionCard
-        questionNumber={currentMainQuestionNumber}
         questionText={currentQuestion.question_text}
         isFollowUp={currentQuestion.is_follow_up}
       />
@@ -300,57 +258,56 @@ session.questions.length - 1 ? (
       {currentFeedback && (
         <FeedbackCard {...currentFeedback} />
       )}
+    </main>
 
-      <div className="page-actions">
-
-  <button
-    className="button button--secondary"
-    onClick={handlePrevious}
-    disabled={currentQuestionIndex === 0}
-  >
-    Previous
-  </button>
-
-  {currentQuestionIndex <
-  session.questions.length - 1 ? (
-
-    readyForNext ? (
-
-      <button
-        className="button button--primary"
-        onClick={handleNext}
-      >
-        {session.questions[currentQuestionIndex + 1]
-          ?.is_follow_up
-          ? "Continue to Follow-up →"
-          : "Next Question →"}
-      </button>
-
-    ) : (
-
+    <footer className="workspace-actionbar">
       <button
         className="button button--secondary"
-        onClick={handleNext}
+        onClick={handlePrevious}
+        disabled={currentQuestionIndex === 0}
       >
-        Next / Skip
+        ← Previous
       </button>
 
-    )
-
-  ) : (
-
-    <button
-      className="button button--primary"
-      onClick={handleFinishInterview}
-    >
-      Finish Interview
-    </button>
-
-  )}
-
-</div>
-    </div>
-  </section>
+      <div className="workspace-actionbar__right">
+        {!isLastQuestion ? (
+          readyForNext ? (
+            <button className="button button--primary" onClick={handleNext}>
+              {nextIsFollowUp ? "Continue to Follow-up →" : "Next Question →"}
+            </button>
+          ) : (
+            <>
+              <button className="button button--secondary" onClick={handleNext}>
+                Next / Skip
+              </button>
+              <button
+                className="button button--primary"
+                onClick={() => answerBoxRef.current?.submit()}
+                disabled={answeredQuestions.has(currentQuestion.id)}
+              >
+                Submit answer
+              </button>
+            </>
+          )
+        ) : (
+          <>
+            {!readyForNext && (
+              <button
+                className="button button--secondary"
+                onClick={() => answerBoxRef.current?.submit()}
+                disabled={answeredQuestions.has(currentQuestion.id)}
+              >
+                Submit answer
+              </button>
+            )}
+            <button className="button button--primary" onClick={handleFinishInterview}>
+              Finish Interview
+            </button>
+          </>
+        )}
+      </div>
+    </footer>
+  </div>
 );
 }
 

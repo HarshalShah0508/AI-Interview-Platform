@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  a { color: inherit; text-decoration: none; }
+</style>
+</helmet>
+
+<div style="{{ pageStyle }}">
+  <header style="{{ navStyle }}">
+    <a href="#" style="{{ brandStyle }}">HotSeat</a>
+    <nav style="{{ navLinksStyle }}">
+      <a href="#" style="{{ navLinkStyle }}">Dashboard</a>
+      <a href="#" style="{{ navLinkStyle }}">Resume</a>
+      <a href="#" style="{{ navLinkStyle }}">Generate Interview</a>
+      <a href="#" style="{{ navLinkActiveStyle }}">History</a>
+    </nav>
+    <div style="{{ navUserStyle }}">
+      <span style="{{ avatarStyle }}">MC</span>
+      <button type="button" style="{{ logoutButtonStyle }}">Log out</button>
+    </div>
+  </header>
+
+  <main style="{{ containerStyle }}">
+    <div style="{{ headerRowStyle }}">
+      <div style="{{ eyebrowStyle }}">HISTORY</div>
+      <h1 style="{{ titleStyle }}">Interview history</h1>
+      <p style="{{ subStyle }}">Review previous sessions and continue anything unfinished.</p>
+    </div>
+
+    <div style="{{ listStyle }}">
+      <sc-for list="{{ sessions }}" as="s" hint-placeholder-count="4">
+        <div style="{{ itemStyle }}">
+          <div style="{{ itemInfoStyle }}">
+            <div style="{{ itemTopRowStyle }}">
+              <h2 style="{{ itemRoleStyle }}">{{ s.role }}</h2>
+              <span style="{{ s.statusStyle }}">{{ s.statusLabel }}</span>
+            </div>
+            <div style="{{ itemMetaRowStyle }}">
+              <span style="{{ difficultyPillStyle }}">{{ s.difficulty }}</span>
+              <span style="{{ itemDateStyle }}">{{ s.created_at }}</span>
+              <sc-if value="{{ s.hasScore }}" hint-placeholder-val="{{ true }}">
+                <span style="{{ itemScoreStyle }}">Avg {{ s.average_score }}/10</span>
+              </sc-if>
+            </div>
+          </div>
+          <div style="{{ itemActionsStyle }}">
+            <sc-if value="{{ s.inProgress }}" hint-placeholder-val="{{ false }}">
+              <a href="#" style="{{ secondaryActionStyle }}">Continue interview</a>
+            </sc-if>
+            <sc-if value="{{ s.completed }}" hint-placeholder-val="{{ true }}">
+              <a href="#" style="{{ primaryActionStyle }}">View results</a>
+            </sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </main>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CHAR = "oklch(0.16 0.011 45)";
+const CHAR_RAISED = "oklch(0.21 0.013 45)";
+const CHAR_BORDER = "oklch(0.31 0.015 45)";
+const CHAR_TEXT = "oklch(0.94 0.006 70)";
+const CHAR_TEXT_SOFT = "oklch(0.66 0.011 60)";
+const ACCENT = "oklch(0.66 0.19 35)";
+const ACCENT_SOFT = "oklch(0.66 0.19 35 / 0.14)";
+const AMBER = "oklch(0.75 0.14 75)";
+const AMBER_SOFT = "oklch(0.75 0.14 75 / 0.15)";
+const GREEN = "oklch(0.68 0.14 150)";
+const GREEN_SOFT = "oklch(0.68 0.14 150 / 0.15)";
+
+const DISPLAY = "'Space Grotesk', 'Inter', sans-serif";
+const BODY = "'Inter', sans-serif";
+const MONO = "'JetBrains Mono', monospace";
+
+const statusCompleted = { fontFamily: MONO, fontSize: "10.5px", fontWeight: 700, color: GREEN, background: GREEN_SOFT, padding: "3px 10px", borderRadius: "999px", letterSpacing: "0.04em" };
+const statusInProgress = { fontFamily: MONO, fontSize: "10.5px", fontWeight: 700, color: AMBER, background: AMBER_SOFT, padding: "3px 10px", borderRadius: "999px", letterSpacing: "0.04em" };
+
+class Component extends DCLogic {
+  renderVals() {
+    const sessions = [
+      { role: "Backend Engineer", difficulty: "Hard", created_at: "Aug 12, 2026", statusLabel: "Completed", statusStyle: statusCompleted, hasScore: true, average_score: 7.8, completed: true, inProgress: false },
+      { role: "Frontend Engineer", difficulty: "Medium", created_at: "Aug 5, 2026", statusLabel: "In progress", statusStyle: statusInProgress, hasScore: false, completed: false, inProgress: true },
+      { role: "Backend Engineer", difficulty: "Medium", created_at: "Jul 22, 2026", statusLabel: "Completed", statusStyle: statusCompleted, hasScore: true, average_score: 8.4, completed: true, inProgress: false },
+      { role: "Backend Engineer", difficulty: "Easy", created_at: "Jul 9, 2026", statusLabel: "Completed", statusStyle: statusCompleted, hasScore: true, average_score: 6.9, completed: true, inProgress: false },
+    ];
+
+    return {
+      sessions,
+      pageStyle: { background: CHAR, color: CHAR_TEXT, fontFamily: BODY, minHeight: "100vh" },
+
+      navStyle: { position: "sticky", top: 0, zIndex: 10, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "16px", padding: "16px clamp(20px, 5vw, 48px)", background: "oklch(0.16 0.011 45 / 0.94)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${CHAR_BORDER}` },
+      brandStyle: { fontFamily: DISPLAY, fontWeight: 700, fontSize: "19px", color: CHAR_TEXT, flexShrink: 0 },
+      navLinksStyle: { display: "flex", gap: "clamp(8px, 2vw, 26px)", flexWrap: "wrap", flex: 1, justifyContent: "center" },
+      navLinkStyle: { fontSize: "14px", fontWeight: 500, color: CHAR_TEXT_SOFT, padding: "6px 2px" },
+      navLinkActiveStyle: { fontSize: "14px", fontWeight: 600, color: CHAR_TEXT, padding: "6px 2px", borderBottom: `2px solid ${ACCENT}` },
+      navUserStyle: { display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 },
+      avatarStyle: { width: "32px", height: "32px", borderRadius: "50%", background: CHAR_RAISED, border: `1px solid ${CHAR_BORDER}`, color: CHAR_TEXT, display: "inline-flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontSize: "12px", fontWeight: 600 },
+      logoutButtonStyle: { border: `1px solid ${CHAR_BORDER}`, background: "transparent", color: CHAR_TEXT, fontSize: "13.5px", fontWeight: 600, padding: "7px 14px", borderRadius: "4px" },
+
+      containerStyle: { maxWidth: "880px", margin: "0 auto", padding: "clamp(28px, 4vw, 48px) clamp(20px, 4vw, 24px) 96px", display: "flex", flexDirection: "column", gap: "28px" },
+      headerRowStyle: { display: "flex", flexDirection: "column", gap: "6px" },
+      eyebrowStyle: { fontFamily: MONO, fontSize: "12px", fontWeight: 600, letterSpacing: "0.1em", color: ACCENT },
+      titleStyle: { fontFamily: DISPLAY, fontSize: "clamp(26px, 3.2vw, 32px)", fontWeight: 700, margin: 0, color: CHAR_TEXT, letterSpacing: "-0.01em" },
+      subStyle: { fontSize: "14.5px", color: CHAR_TEXT_SOFT, margin: 0 },
+
+      listStyle: { display: "flex", flexDirection: "column", gap: "12px" },
+      itemStyle: { display: "flex", justifyContent: "space-between", alignItems: "center", gap: "20px", flexWrap: "wrap", background: CHAR_RAISED, border: `1px solid ${CHAR_BORDER}`, borderRadius: "8px", padding: "22px 24px" },
+      itemInfoStyle: { display: "flex", flexDirection: "column", gap: "8px", minWidth: 0 },
+      itemTopRowStyle: { display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" },
+      itemRoleStyle: { fontFamily: DISPLAY, fontSize: "17px", fontWeight: 600, color: CHAR_TEXT, margin: 0 },
+      itemMetaRowStyle: { display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" },
+      difficultyPillStyle: { fontFamily: MONO, fontSize: "11px", fontWeight: 600, color: ACCENT, background: ACCENT_SOFT, padding: "3px 10px", borderRadius: "999px" },
+      itemDateStyle: { fontFamily: MONO, fontSize: "12px", color: CHAR_TEXT_SOFT },
+      itemScoreStyle: { fontFamily: MONO, fontSize: "12px", fontWeight: 600, color: CHAR_TEXT },
+      itemActionsStyle: { display: "flex", gap: "10px", flexWrap: "wrap" },
+      secondaryActionStyle: { display: "inline-flex", height: "40px", alignItems: "center", padding: "0 18px", borderRadius: "4px", border: `1px solid ${CHAR_BORDER}`, color: CHAR_TEXT, fontWeight: 600, fontSize: "13.5px" },
+      primaryActionStyle: { display: "inline-flex", height: "40px", alignItems: "center", padding: "0 18px", borderRadius: "4px", background: ACCENT, color: "#fff", fontWeight: 600, fontSize: "13.5px" },
+    };
+  }
+}
+
+</script>
+</body>
+</html>
