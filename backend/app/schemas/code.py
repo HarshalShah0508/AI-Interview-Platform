@@ -10,6 +10,7 @@ SupportedLanguage = Literal[
     "javascript",
     "c",
     "verilog",
+    "sql",
 ]
 
 
