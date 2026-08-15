@@ -3312,22 +3312,6 @@ textarea::placeholder {
   .analysis-section {
     padding: 20px;
   }
-  .auth-divider {
-    display: flex;
-    align-items: center;
-    margin: 20px 0;
-}
-
-  .auth-divider hr {
-    flex: 1;
-}
-
-  .auth-divider span {
-    margin: 0 12px;
-    color: #888;
-    font-size: 14px;
-    font-weight: 500;
-}
 
   .match-overview {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3382,10 +3366,5 @@ textarea::placeholder {
 
   .truncated-text {
     -webkit-line-clamp: 3;
-  }
-  .google-login-button {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
   }
 }

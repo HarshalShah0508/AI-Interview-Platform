@@ -107,13 +107,6 @@ function LoginForm() {
       <button className="button button--primary button--lg button--wide" type="submit">
         Log in
       </button>
-      <div className="auth-divider">
-        <hr />
-        <span>OR</span>
-        <hr />
-      </div>
-
-      <GoogleLoginButton />
 
       <div className="auth-divider">
         <span className="auth-divider__line" />
