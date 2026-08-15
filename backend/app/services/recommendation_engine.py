@@ -21,6 +21,18 @@ from app.schemas.resume_analysis import (
     MissingRequirementRecommendation,
     RecommendationDraft,
     RecommendationReport,
+    PartialMatchGuidance,
+    PartialMatchGuidanceDraft,
+)
+
+# Fixed disclaimer always attached to Partial Match guidance.
+# This is set by Python, not requested from Gemini — it must
+# never depend on the AI reliably including it.
+PARTIAL_MATCH_SAFETY_NOTE = (
+    "Use these examples as guidance only. Do not add claims "
+    "such as specific technologies, an existing codebase, "
+    "team size, responsibilities, or outcomes unless they "
+    "genuinely reflect your actual experience."
 )
 
 
@@ -58,9 +70,13 @@ class RecommendationEngine:
 
         missing_actions = []
 
+        partial_match_guidance = []
+
     # ----------------------------------------------------
-    # 1. Generate ALL rewrite recommendations in ONE
-    #    Gemini request.
+    # 1. Generate ALL rewrite recommendations AND all
+    #    Partial Match wording guidance in ONE combined
+    #    Gemini request — not one call per finding and not
+    #    a separate call for guidance.
     # ----------------------------------------------------
 
         findings = [
@@ -69,13 +85,22 @@ class RecommendationEngine:
             if finding.safe_to_rewrite
         ]
 
-        if findings:
+        partial_matches = [
+            match
+            for match in matching_report.matches
+            if match.match_type == "partial"
+        ]
 
-            drafts = self._generate_batch_recommendations(
-                findings=findings,
-                jd_profile=jd_profile,
-                resume_profile=resume_profile,
-                matching_report=matching_report,
+        if findings or partial_matches:
+
+            drafts, guidance_drafts = (
+                self._generate_batch_recommendations(
+                    findings=findings,
+                    partial_matches=partial_matches,
+                    jd_profile=jd_profile,
+                    resume_profile=resume_profile,
+                    matching_report=matching_report,
+                )
             )
 
             for draft in drafts:
@@ -93,6 +118,14 @@ class RecommendationEngine:
                 recommendations.append(
                     validated
                 )
+
+            partial_match_guidance = (
+                self._build_partial_match_guidance(
+                    partial_matches=partial_matches,
+                    guidance_drafts=guidance_drafts,
+                    resume_profile=resume_profile,
+                )
+            )
 
     # ----------------------------------------------------
     # 2. Strong bullets that should remain unchanged.
@@ -164,6 +197,7 @@ class RecommendationEngine:
         recommendations=recommendations,
         keep_as_is=keep_as_is,
         missing_requirement_actions=missing_actions,
+        partial_match_guidance=partial_match_guidance,
         safety_rejected_count=(
             len(findings) - len(recommendations)
             if findings
@@ -180,10 +214,20 @@ class RecommendationEngine:
     def _generate_batch_recommendations(
         self,
         findings,
+        partial_matches,
         jd_profile,
         resume_profile,
         matching_report,
-    ) -> list[RecommendationDraft]:
+    ) -> tuple[
+        list[RecommendationDraft],
+        list[PartialMatchGuidanceDraft],
+    ]:
+        """
+        Generates rewrite recommendations AND Partial Match
+        wording guidance in a SINGLE Gemini call — not one call
+        per finding, and not a separate call for guidance.
+        """
+
         finding_context = []
 
         for index, finding in enumerate(
@@ -239,6 +283,36 @@ with this finding:
 """
             )
 
+        partial_match_context = []
+
+        for index, match in enumerate(
+            partial_matches,
+            start=1,
+        ):
+
+            evidence_lines = (
+                "\n".join(
+                    f"- {item}"
+                    for item in match.matched_resume_evidence
+                )
+                or "- No specific evidence lines recorded."
+            )
+
+            partial_match_context.append(
+                f"""
+PARTIAL MATCH #{index}
+
+Requirement:
+{match.requirement}
+
+Why it is currently only a partial match:
+{match.reason}
+
+Resume evidence already found for this requirement:
+{evidence_lines}
+"""
+            )
+
         full_resume_evidence = (
             self._build_full_resume_evidence(
                 resume_profile
@@ -274,7 +348,40 @@ VERIFIED RESUME EVIDENCE
 OPTIMIZATION FINDINGS
 ==================================================
 
-{"".join(finding_context)}
+{"".join(finding_context) or "(No optimization findings this run.)"}
+
+==================================================
+PARTIAL MATCH REQUIREMENTS
+==================================================
+
+For each requirement below, the resume shows SOME genuine
+relevant evidence, but it does not clearly or fully
+demonstrate the requirement. Your job is to explain how the
+candidate's EXISTING evidence could be worded more clearly
+and explicitly — NOT to invent new experience.
+
+{"".join(partial_match_context) or "(No partial match requirements this run.)"}
+
+For each Partial Match requirement, provide:
+
+- "how_to_strengthen": 1-3 sentences explaining what
+  additional TRUE detail (if the candidate genuinely has it)
+  would make the existing evidence more clearly satisfy the
+  requirement. Frame this as "if you also did X" guidance,
+  never as a statement of fact about the candidate.
+
+- "example_wording": 1 to 3 example bullet rewordings that
+  show how the SAME genuine experience could be phrased more
+  explicitly IF the additional detail is true. These are
+  hypothetical illustrations, not claims. Do not include more
+  than 3.
+
+Do NOT claim the candidate has leadership, ownership,
+production experience, a specific team size, or any specific
+technology not already present in that requirement's own
+evidence. The example wording may use conditional/illustrative
+phrasing (e.g. "learned the existing architecture") ONLY as an
+example of PHRASING — never assert it happened.
 
 ==================================================
 ABSOLUTE TRUTH RULES
@@ -374,14 +481,20 @@ Return ONLY a JSON object matching:
 {{
     "recommendations": [
         RecommendationDraft
+    ],
+    "partial_match_guidance": [
+        PartialMatchGuidanceDraft
     ]
 }}
 
-Do not return safety_status.
+Do not return safety_status or confidence for
+recommendations. Do not return evidence_found, why_partial,
+or safety_note for partial_match_guidance entries. Those are
+all calculated independently by HotSeat.
 
-Do not return confidence.
-
-Those will be calculated independently by HotSeat.
+If there are no optimization findings, return an empty
+"recommendations" array. If there are no partial match
+requirements, return an empty "partial_match_guidance" array.
 
 Do not return explanations outside the JSON object.
 """
@@ -399,21 +512,29 @@ Do not return explanations outside the JSON object.
         ).strip()
 
         if not raw:
-            return []
+            return [], []
 
         try:
             parsed = json.loads(raw)
 
-            drafts = parsed.get(
-                "recommendations",
-                [],
+        except Exception as exc:
+            print(
+                "[RecommendationEngine] "
+                f"Failed to parse batch response as JSON: "
+                f"{exc}"
             )
 
-            return [
+            return [], []
+
+        try:
+            drafts = [
                 RecommendationDraft.model_validate(
                     item
                 )
-                for item in drafts
+                for item in parsed.get(
+                    "recommendations",
+                    [],
+                )
             ]
 
         except Exception as exc:
@@ -423,7 +544,30 @@ Do not return explanations outside the JSON object.
                 f"{exc}"
             )
 
-            return []
+            drafts = []
+
+        try:
+
+            guidance_drafts = [
+                PartialMatchGuidanceDraft.model_validate(
+                    item
+                )
+                for item in parsed.get(
+                    "partial_match_guidance",
+                    [],
+                )
+            ]
+
+        except Exception as exc:
+            print(
+                "[RecommendationEngine] "
+                f"Failed to parse partial match guidance: "
+                f"{exc}"
+            )
+
+            guidance_drafts = []
+
+        return drafts, guidance_drafts
 
     def _validate_draft(
         self,
@@ -758,6 +902,153 @@ Do not return explanations outside the JSON object.
             )
 
         return requirement.name
+
+    # ========================================================
+    # Partial Match improvement guidance
+    # ========================================================
+
+    def _build_partial_match_guidance(
+        self,
+        partial_matches,
+        guidance_drafts: list[PartialMatchGuidanceDraft],
+        resume_profile: ResumeProfile,
+    ) -> list[PartialMatchGuidance]:
+        """
+        Builds the final, safe PartialMatchGuidance for every
+        Partial Match requirement.
+
+        evidence_found and why_partial are ALWAYS taken directly
+        from the already-validated deterministic RequirementMatch
+        (never from Gemini) — they are already known and grounded
+        by construction. Only how_to_strengthen and example_wording
+        come from Gemini, and both are validated before use. The
+        safety_note is a fixed disclaimer Python always attaches,
+        regardless of what Gemini returned.
+
+        If Gemini omitted a requirement, returned an empty
+        how_to_strengthen, or the whole batch call failed, a
+        deterministic fallback is used so the feature never
+        silently disappears for a Partial Match.
+        """
+
+        drafts_by_requirement = {
+            self._normalize(draft.requirement): draft
+            for draft in guidance_drafts
+        }
+
+        resume_numbers = self._extract_numbers(
+            self._build_full_resume_evidence(
+                resume_profile
+            )
+        )
+
+        results: list[PartialMatchGuidance] = []
+
+        for match in partial_matches:
+
+            draft = drafts_by_requirement.get(
+                self._normalize(match.requirement)
+            )
+
+            how_to_strengthen = None
+            example_wording: list[str] = []
+
+            if draft is not None:
+
+                candidate_text = (
+                    draft.how_to_strengthen or ""
+                ).strip()
+
+                if candidate_text:
+                    how_to_strengthen = candidate_text
+
+                for example in draft.example_wording:
+
+                    text = (example or "").strip()
+
+                    if not text:
+                        continue
+
+                    # Reject any example that introduces a
+                    # number not present anywhere in the
+                    # resume — a fabricated metric/percentage
+                    # reads as a concrete fact even inside a
+                    # hypothetical example, so it is dropped
+                    # rather than shown.
+                    example_numbers = self._extract_numbers(
+                        text
+                    )
+
+                    if example_numbers - resume_numbers:
+                        continue
+
+                    example_wording.append(text)
+
+                    if len(example_wording) >= 3:
+                        break
+
+            if how_to_strengthen is None:
+
+                how_to_strengthen = (
+                    self._fallback_how_to_strengthen(
+                        match
+                    )
+                )
+
+            results.append(
+                PartialMatchGuidance(
+                    requirement=match.requirement,
+                    evidence_found=(
+                        match.matched_resume_evidence
+                    ),
+                    why_partial=match.reason,
+                    how_to_strengthen=how_to_strengthen,
+                    example_wording=example_wording,
+                    safety_note=PARTIAL_MATCH_SAFETY_NOTE,
+                )
+            )
+
+        return results
+
+    def _fallback_how_to_strengthen(
+        self,
+        match,
+    ) -> str:
+        """
+        Deterministic, Gemini-free fallback guidance, used when
+        Gemini did not provide usable wording for this Partial
+        Match requirement. Reuses the alias/concept terms the
+        matcher already considered for this requirement.
+        """
+
+        normalized_requirement = self._normalize(
+            match.requirement
+        )
+
+        terms = sorted(
+            {
+                term
+                for term in match.aliases_considered
+                if term and term != normalized_requirement
+            }
+        )[:5]
+
+        if terms:
+
+            return (
+                "Review your experience for more explicit "
+                f"detail related to {match.requirement}. If "
+                f"it genuinely applies, mention specifics such "
+                f"as {', '.join(terms)} directly in the "
+                "relevant bullet."
+            )
+
+        return (
+            "Review your experience for more explicit detail "
+            f"that clearly demonstrates {match.requirement}, "
+            "and mention it directly in the relevant bullet if "
+            "it is genuinely true."
+        )
 
     # ========================================================
     # Evidence context

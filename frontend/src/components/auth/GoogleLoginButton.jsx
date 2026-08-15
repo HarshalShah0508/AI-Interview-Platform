@@ -16,7 +16,12 @@ function GoogleLoginButton() {
     await googleLogin(credentialResponse.credential);
     navigate("/dashboard");
   } catch (error) {
-    console.error("Google authentication failed:", error);
+    // Don't log the raw error - it can carry the Google ID token or an
+    // Authorization header in its request config.
+    console.error(
+      "Google authentication failed:",
+      error?.response?.data?.detail || error?.message
+    );
 
     alert(
       error.response?.data?.detail ||
@@ -27,12 +32,17 @@ function GoogleLoginButton() {
 };
 
   return (
-    <div className="google-login-button">
+    <div className="google-login-wrap">
       <GoogleLogin
         onSuccess={handleSuccess}
         onError={() => {
           alert("Google Sign-In was cancelled or failed.");
         }}
+        theme="filled_black"
+        shape="rectangular"
+        size="large"
+        text="continue_with"
+        width="360"
       />
     </div>
   );

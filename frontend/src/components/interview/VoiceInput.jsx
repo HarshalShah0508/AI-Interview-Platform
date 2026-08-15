@@ -111,8 +111,16 @@ function VoiceInput({
   };
 
   return (
-    <div className="content-card">
-      <h3>🎤 Voice Explanation</h3>
+    <div className="mode-block">
+      <div className="mode-block__header">
+        <span className="mode-block__label">VOICE EXPLANATION</span>
+        {isListening && (
+          <span className="recording-badge">
+            <span className="recording-dot" />
+            Recording
+          </span>
+        )}
+      </div>
 
       {!supported && (
         <p className="error-text">
@@ -121,23 +129,18 @@ function VoiceInput({
       )}
 
       <textarea
-        rows={6}
+        className="transcript-box"
+        rows={4}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         placeholder="Speak or edit the transcript..."
       />
 
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          marginTop: "12px",
-        }}
-      >
+      <div className="voice-button-row">
         <button
           type="button"
-          className="button button--secondary"
+          className="button button--ghost"
           onClick={startListening}
           disabled={
             disabled ||
@@ -145,33 +148,21 @@ function VoiceInput({
             isListening
           }
         >
-          Start Recording
+          Start recording
         </button>
 
         <button
           type="button"
-          className="button button--secondary"
+          className="button button--ghost button--ghost-active"
           onClick={stopListening}
           disabled={
             disabled ||
             !isListening
           }
         >
-          Stop Recording
+          Stop recording
         </button>
       </div>
-
-      {isListening && (
-        <p
-          style={{
-            marginTop: "12px",
-            color: "green",
-            fontWeight: "bold",
-          }}
-        >
-          🎤 Recording...
-        </p>
-      )}
     </div>
   );
 }

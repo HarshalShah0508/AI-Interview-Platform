@@ -3,24 +3,7 @@ import { Link } from "react-router-dom";
 
 import { getDashboard } from "../api/dashboardApi";
 import useAuth from "../hooks/useAuth";
-
-const actionCards = [
-  {
-    title: "Upload Resume",
-    description: "Add a PDF resume so future interview questions can match your background.",
-    to: "/resume",
-  },
-  {
-    title: "Generate Interview",
-    description: "Choose a role and difficulty to prepare a focused practice session.",
-    to: "/generate-interview",
-  },
-  {
-    title: "Interview History",
-    description: "Review previous practice sessions and revisit your progress.",
-    to: "/history",
-  },
-];
+import Navbar from "../components/layout/Navbar.jsx";
 
 function DashboardPage() {
   const { token } = useAuth();
@@ -50,86 +33,119 @@ function DashboardPage() {
   }, [token]);
 
   if (loading) {
-    return <p>Loading dashboard...</p>;
+    return (
+      <>
+        <Navbar />
+        <div className="page-loading">Loading dashboard…</div>
+      </>
+    );
   }
 
   if (error) {
-    return <p className="error-text">{error}</p>;
+    return (
+      <>
+        <Navbar />
+        <div className="page-error">{error}</div>
+      </>
+    );
   }
 
+  const latestInterview = dashboard.latest_interview;
+
   return (
-    <section className="page-shell dashboard-page">
-      <div className="page-header">
-        <p className="eyebrow">Dashboard</p>
+    <div className="dashboard-page">
+      <Navbar />
 
-        <h1>Welcome, {dashboard.username} 👋</h1>
-
-        <p>{dashboard.email}</p>
-      </div>
-
-      <div className="results-summary">
-        <div>
-          <p>Latest Resume</p>
-          <strong style={{ fontSize: "18px" }}>
-            {dashboard.latest_resume ?? "No Resume Uploaded"}
-          </strong>
+      <main className="dashboard-container">
+        <div className="dashboard-header">
+          <div className="eyebrow">DASHBOARD</div>
+          <h1 className="dashboard-greeting">Welcome back, {dashboard.username}</h1>
+          <p className="dashboard-email">{dashboard.email}</p>
         </div>
 
-        <div>
-          <p>Total Interviews</p>
-          <strong>{dashboard.total_interviews}</strong>
+        <div className="stats-strip">
+          <div className="stats-strip__cell">
+            <div className="stats-strip__value">{dashboard.total_interviews}</div>
+            <div className="stats-strip__label">TOTAL INTERVIEWS</div>
+          </div>
+          <div className="stats-strip__divider" />
+          <div className="stats-strip__cell">
+            <div className="stats-strip__value">{dashboard.completed_interviews}</div>
+            <div className="stats-strip__label">COMPLETED</div>
+          </div>
+          <div className="stats-strip__divider" />
+          <div className="stats-strip__cell">
+            <div className="stats-strip__value">{dashboard.in_progress_interviews}</div>
+            <div className="stats-strip__label">IN PROGRESS</div>
+          </div>
+          <div className="stats-strip__divider" />
+          <div className="stats-strip__cell stats-strip__cell--wide">
+            <div className="stats-strip__value stats-strip__value--small">
+              {dashboard.latest_resume ?? "No resume uploaded"}
+            </div>
+            <div className="stats-strip__label">LATEST RESUME</div>
+          </div>
         </div>
 
-        <div>
-          <p>Completed</p>
-          <strong>{dashboard.completed_interviews}</strong>
+        <div className="dashboard-grid">
+          <Link to="/generate-interview" className="dashboard-cta-card">
+            <div className="eyebrow">READY WHEN YOU ARE</div>
+            <h2>Start your next interview</h2>
+            <p>
+              Configure a role and difficulty, and HotSeat will build a session around
+              your latest resume.
+            </p>
+            <span className="dashboard-cta-card__button">Enter the HotSeat</span>
+          </Link>
+
+          <div className="dashboard-side-col">
+            <Link to="/resume" className="dashboard-side-card">
+              <div className="dashboard-side-card__label">RESUME</div>
+              <div className="dashboard-side-card__title">
+                {dashboard.latest_resume ?? "No resume yet"}
+              </div>
+              <div className="dashboard-side-card__meta">Manage resumes &amp; JD match →</div>
+            </Link>
+            <Link to="/history" className="dashboard-side-card">
+              <div className="dashboard-side-card__label">HISTORY</div>
+              <div className="dashboard-side-card__title">
+                {dashboard.total_interviews} past sessions
+              </div>
+              <div className="dashboard-side-card__meta">Review scores &amp; feedback →</div>
+            </Link>
+          </div>
         </div>
 
-        <div>
-          <p>In Progress</p>
-          <strong>{dashboard.in_progress_interviews}</strong>
-        </div>
-
-        <div style={{ gridColumn: "1 / -1" }}>
-          <p>Latest Interview</p>
-
-          {dashboard.latest_interview ? (
-            <>
-              <strong style={{ fontSize: "18px" }}>
-                {dashboard.latest_interview.role}
-              </strong>
-
-              <br />
-
-              <span>
-                {dashboard.latest_interview.difficulty} •{" "}
-                {new Date(
-                  dashboard.latest_interview.created_at
-                ).toLocaleString()}
-              </span>
-            </>
+        <div className="dashboard-latest">
+          <div className="eyebrow">MOST RECENT SESSION</div>
+          {latestInterview ? (
+            <div className="dashboard-latest__card">
+              <div className="dashboard-latest__info">
+                <h3 className="dashboard-latest__role">{latestInterview.role}</h3>
+                <div className="dashboard-latest__meta-row">
+                  <span className="difficulty-pill">{latestInterview.difficulty}</span>
+                  <span className="dashboard-latest__date">
+                    {new Date(latestInterview.created_at).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              <Link to="/history" className="button button--secondary">
+                View in history
+              </Link>
+            </div>
           ) : (
-            <strong style={{ fontSize: "18px" }}>
-              No interviews yet
-            </strong>
+            <div className="dashboard-latest__card">
+              <p className="dashboard-latest__empty">
+                No interviews yet — start your first session to see it here.
+              </p>
+              <Link to="/generate-interview" className="button button--primary">
+                Generate an interview
+              </Link>
+            </div>
           )}
         </div>
-      </div>
-
-      <div className="action-grid">
-        {actionCards.map((card) => (
-          <Link
-            key={card.title}
-            to={card.to}
-            className="action-card"
-          >
-            <h2>{card.title}</h2>
-            <p>{card.description}</p>
-            <span>Open</span>
-          </Link>
-        ))}
-      </div>
-    </section>
+      </main>
+    </div>
   );
 }
 

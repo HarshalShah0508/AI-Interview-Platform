@@ -4,11 +4,14 @@ function NotesInput({
   disabled = false,
 }) {
   return (
-    <div className="content-card">
-      <h3>⌨️ Additional Notes</h3>
+    <div className="mode-block">
+      <div className="mode-block__header">
+        <span className="mode-block__label">ADDITIONAL NOTES</span>
+      </div>
 
       <textarea
-        rows={6}
+        className="notes-textarea"
+        rows={4}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}

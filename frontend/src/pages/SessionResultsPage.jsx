@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 
 import { getSessionResults } from "../api/answerApi";
 import useAuth from "../hooks/useAuth";
+import Navbar from "../components/layout/Navbar.jsx";
 
 function SessionResultsPage() {
   const { sessionId } = useParams();
   const { token } = useAuth();
+  const location = useLocation();
+  const navState = location.state || {};
 
   const [results, setResults] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -34,77 +37,138 @@ function SessionResultsPage() {
 
   if (loading) {
     return (
-      <section className="page-shell">
-        <p>Loading results...</p>
-      </section>
+      <>
+        <Navbar />
+        <div className="page-loading">Loading results…</div>
+      </>
     );
   }
 
   if (error) {
     return (
-      <section className="page-shell">
-        <p className="error-text">{error}</p>
-      </section>
+      <>
+        <Navbar />
+        <div className="page-error">{error}</div>
+      </>
     );
   }
 
+  const questionBreakdown = (navState.questions || [])
+    .filter((question) => navState.feedbackMap?.[question.id])
+    .map((question, index, answeredList) => {
+      const feedback = navState.feedbackMap[question.id];
+      const mainNumber = answeredList
+        .slice(0, index + 1)
+        .filter((q) => !q.is_follow_up).length;
+
+      return {
+        id: question.id,
+        tagLabel: question.is_follow_up ? `Q${mainNumber} · Follow-up` : `Q${mainNumber || index + 1}`,
+        isFollowUp: question.is_follow_up,
+        text: question.question_text,
+        feedback: feedback.feedback,
+        score: feedback.score,
+      };
+    });
+
   return (
-    <section className="page-shell">
-      <div className="page-header">
-        <p className="eyebrow">Interview Results</p>
-        <h1>Session Summary</h1>
-      </div>
+    <div className="results-page">
+      <Navbar />
 
-      <div className="content-card results-card">
-        <h2>Overall Performance</h2>
+      <main className="results-container">
+        <div className="section-header">
+          <div className="eyebrow">SESSION SUMMARY</div>
+          <h1>
+            {navState.role || "Interview"}
+            {navState.difficulty ? ` · ${navState.difficulty}` : ""}
+          </h1>
+          {navState.createdAt && (
+            <p>Completed {new Date(navState.createdAt).toLocaleString()}</p>
+          )}
+        </div>
 
-        <p>
-          <strong>Average Score:</strong> {results.average_score}/10
-        </p>
+        <div className="results-score-row">
+          <div className="results-score-block">
+            <div className="results-score-num">
+              {results.average_score}
+              <span className="results-score-outof">/10</span>
+            </div>
+            <div className="results-score-label">AVERAGE SCORE</div>
+          </div>
+          <div className="results-score-divider" />
+          <div className="results-score-block">
+            <div className="results-meta-num">{results.questions_attempted}</div>
+            <div className="results-score-label">QUESTIONS ATTEMPTED</div>
+          </div>
+        </div>
 
-        <p>
-          <strong>Questions Attempted:</strong>{" "}
-          {results.questions_attempted}
-        </p>
+        <div className="results-topics-grid">
+          <div className="results-topics-col">
+            <div className="results-topics-label">STRONG TOPICS</div>
+            <div className="results-topic-pills">
+              {results.strong_topics.length === 0 ? (
+                <span className="form-hint">None yet</span>
+              ) : (
+                results.strong_topics.map((topic) => (
+                  <span key={topic} className="topic-pill topic-pill--strong">
+                    {topic}
+                  </span>
+                ))
+              )}
+            </div>
+          </div>
+          <div className="results-topics-col">
+            <div className="results-topics-label">WEAK TOPICS</div>
+            <div className="results-topic-pills">
+              {results.weak_topics.length === 0 ? (
+                <span className="form-hint">None yet</span>
+              ) : (
+                results.weak_topics.map((topic) => (
+                  <span key={topic} className="topic-pill topic-pill--weak">
+                    {topic}
+                  </span>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
 
-        <h3>Strong Topics</h3>
-
-        {results.strong_topics.length === 0 ? (
-          <p>None</p>
-        ) : (
-          <ul>
-            {results.strong_topics.map((topic, index) => (
-              <li key={index}>{topic}</li>
-            ))}
-          </ul>
+        {questionBreakdown.length > 0 && (
+          <div className="results-questions">
+            <div className="eyebrow">QUESTION-BY-QUESTION</div>
+            <div className="list-row-group">
+              {questionBreakdown.map((q) => (
+                <div className="results-question-row" key={q.id}>
+                  <div className="results-question-row__info">
+                    <div className="results-question-row__tags">
+                      <span
+                        className={`results-question-tag ${
+                          q.isFollowUp ? "results-question-tag--followup" : ""
+                        }`}
+                      >
+                        {q.tagLabel}
+                      </span>
+                    </div>
+                    <p className="results-question-row__text">{q.text}</p>
+                    <p className="results-question-row__feedback">{q.feedback}</p>
+                  </div>
+                  <span className="results-question-row__score">{q.score}/10</span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
 
-        <h3>Weak Topics</h3>
-
-        {results.weak_topics.length === 0 ? (
-          <p>None</p>
-        ) : (
-          <ul>
-            {results.weak_topics.map((topic, index) => (
-              <li key={index}>{topic}</li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className="page-actions">
-        <Link className="button button--secondary" to="/dashboard">
-          Dashboard
-        </Link>
-
-        <Link
-          className="button button--primary"
-          to="/generate-interview"
-        >
-          New Interview
-        </Link>
-      </div>
-    </section>
+        <div className="results-actions">
+          <Link className="button button--secondary" to="/dashboard">
+            Back to dashboard
+          </Link>
+          <Link className="button button--primary" to="/generate-interview">
+            Start a new interview
+          </Link>
+        </div>
+      </main>
+    </div>
   );
 }
 

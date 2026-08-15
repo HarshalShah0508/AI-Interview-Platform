@@ -99,6 +99,30 @@ class RequirementMatcher:
             "api",
             "apis",
         },
+
+        "react.js": {
+            "react",
+            "reactjs",
+        },
+
+        "react": {
+            "react.js",
+            "reactjs",
+        },
+
+        "node.js": {
+            "node",
+            "nodejs",
+        },
+
+        "vue.js": {
+            "vue",
+            "vuejs",
+        },
+
+        "next.js": {
+            "nextjs",
+        },
     }
 
     # --------------------------------------------------------
@@ -284,6 +308,15 @@ class RequirementMatcher:
         re.IGNORECASE,
     )
 
+    # Requirement categories treated as contextual/semantic
+    # (Part 3) rather than objective/technical. Zero keyword
+    # overlap for these does not prove "missing" the way it
+    # does for a technical skill name.
+    CONTEXTUAL_CATEGORIES = {
+        "soft_skill",
+        "responsibility",
+    }
+
     # --------------------------------------------------------
     # Public API
     # --------------------------------------------------------
@@ -325,13 +358,33 @@ class RequirementMatcher:
         ]
 
         verifications = {}
+        evidence_map: dict[str, list[str]] = {}
 
         if ambiguous_requirements:
+
+            # ----------------------------------------------------
+            # Retrieval step: for each ambiguous requirement, pull
+            # only the top-K most relevant resume evidence lines
+            # instead of dumping the entire resume into the
+            # prompt. These are RETRIEVAL signals only (broader
+            # than the tier-gated matching above) — their
+            # presence means "worth Gemini's attention", not
+            # proof. Gemini still has to decide strong/partial/
+            # missing based on what's actually here.
+            # ----------------------------------------------------
+
+            evidence_map = {
+                requirement.name: self._retrieve_relevant_evidence(
+                    requirement,
+                    resume_profile,
+                )
+                for requirement in ambiguous_requirements
+            }
 
             verifications = (
                 self.semantic_verifier.verify_batch(
                     requirements=ambiguous_requirements,
-                    resume_profile=resume_profile,
+                    evidence_map=evidence_map,
                 )
             )
 
@@ -352,6 +405,10 @@ class RequirementMatcher:
                     requirement,
                     preliminary_result,
                     verification,
+                    evidence_map.get(
+                        requirement.name,
+                        [],
+                    ),
                 )
 
             else:
@@ -603,6 +660,134 @@ class RequirementMatcher:
         return matched_terms
 
     # --------------------------------------------------------
+    # Evidence retrieval (for ambiguous requirements only)
+    # --------------------------------------------------------
+
+    def _retrieve_relevant_evidence(
+        self,
+        requirement: JDRequirement,
+        resume_profile: ResumeProfile,
+        limit: int = 8,
+    ) -> list[str]:
+        """
+        Retrieves the top-K most relevant resume evidence lines
+        for a requirement, using a broader term pool than the
+        tier-gated matching above (includes weak fuzzy hits).
+
+        This is a RETRIEVAL step, not a matching decision — the
+        goal is to hand Gemini a small, focused evidence set
+        instead of the entire resume, so semantic verification
+        stays cheap, grounded, and easy to validate. Presence in
+        this list does not imply the requirement is satisfied.
+        """
+
+        components = self._resolve_components(
+            requirement
+        )
+
+        search_terms: set[str] = set()
+
+        for component in components:
+
+            search_terms.add(component)
+
+            search_terms.update(
+                self.COMMON_ALIASES.get(
+                    component,
+                    set(),
+                )
+            )
+
+            search_terms.update(
+                self._concept_hint_terms(component)
+            )
+
+        if len(components) == 1:
+
+            search_terms.update(
+                self._normalize(alias)
+                for alias in requirement.aliases
+            )
+
+        candidates = self._find_evidence(
+            search_terms,
+            resume_profile,
+        )
+
+        ranked = sorted(
+            candidates,
+            key=lambda item: -item["strength"],
+        )
+
+        seen: set[str] = set()
+        results: list[str] = []
+
+        for item in ranked:
+
+            key = self._normalize(
+                item["source_text"]
+            )
+
+            if key in seen:
+                continue
+
+            seen.add(key)
+
+            results.append(
+                item["source_text"]
+            )
+
+            if len(results) >= limit:
+                break
+
+        if results:
+            return results
+
+        # --------------------------------------------------------
+        # No keyword-level signal at all. For CONTEXTUAL
+        # requirements only, fall back to a small generic sample
+        # of resume bullets as background context — genuinely
+        # contextual evidence (e.g. "learned an unfamiliar
+        # system") may not contain any of our controlled trigger
+        # phrases, so Gemini still deserves a look at what the
+        # resume actually says before this is called Missing.
+        # This is still just RETRIEVAL, not a match decision.
+        # --------------------------------------------------------
+
+        if requirement.category not in self.CONTEXTUAL_CATEGORIES:
+            return []
+
+        generic_candidates: list[str] = []
+
+        for experience in resume_profile.experience:
+
+            for bullet in experience.bullets:
+                generic_candidates.append(bullet.text)
+
+        for project in resume_profile.projects:
+
+            for bullet in project.bullets:
+                generic_candidates.append(bullet.text)
+
+        fallback_seen: set[str] = set()
+        fallback_results: list[str] = []
+
+        for text in generic_candidates:
+
+            key = self._normalize(text)
+
+            if key in fallback_seen:
+                continue
+
+            fallback_seen.add(key)
+            fallback_results.append(text)
+
+            if len(fallback_results) >= min(limit, 5):
+                break
+
+        return fallback_results
+
+    # --------------------------------------------------------
     # Aggregation across components
     # --------------------------------------------------------
 
@@ -634,6 +819,42 @@ class RequirementMatcher:
             tier == "unsupported"
             for tier in tiers
         ):
+
+            # ------------------------------------------------
+            # For CONTEXTUAL requirements (soft skills,
+            # responsibilities), zero keyword-level overlap
+            # does NOT prove the requirement is unsupported —
+            # per Part 3/4, these should not be decided by
+            # keyword matching alone. Route them into the
+            # batched semantic-verification pool instead of
+            # deterministically declaring them missing. This
+            # costs no extra Gemini calls (still one shared
+            # batched call) — it only adds this requirement's
+            # block to that call.
+            #
+            # Objective/technical requirements are NOT routed
+            # here: for those, keyword absence genuinely does
+            # mean the skill wasn't mentioned.
+            # ------------------------------------------------
+
+            if requirement.category in self.CONTEXTUAL_CATEGORIES:
+
+                return self._build_match(
+                    requirement=requirement,
+                    match_type="ambiguous",
+                    evidence_type="ambiguous",
+                    strength=0.0,
+                    confidence=0.0,
+                    components=components,
+                    component_results=component_results,
+                    reason=(
+                        "No keyword-level evidence was found "
+                        f"for {requirement.name}, but this is a "
+                        "contextual requirement, so it is being "
+                        "reviewed for indirect or implied "
+                        "evidence before being classified."
+                    ),
+                )
 
             return self._build_match(
                 requirement=requirement,
@@ -1338,6 +1559,7 @@ class RequirementMatcher:
         requirement: JDRequirement,
         preliminary_result: RequirementMatch,
         verification,
+        retrieved_evidence: list[str],
     ) -> RequirementMatch:
         """
         Merges a batched SemanticVerification result (or None,
@@ -1347,6 +1569,13 @@ class RequirementMatcher:
         This performs no Gemini calls itself — verification is
         produced once, up front, for every ambiguous requirement
         in the analysis via SemanticVerifier.verify_batch().
+
+        `retrieved_evidence` is the exact evidence pool that was
+        given to Gemini for this requirement. Any
+        "supporting_evidence" string Gemini returns that does
+        NOT correspond to something in that pool is treated as
+        hallucinated and dropped before it can influence the
+        result (evidence-grounding validation).
         """
 
         # --------------------------------------------------------
@@ -1381,15 +1610,35 @@ class RequirementMatcher:
             )
 
         # --------------------------------------------------------
+        # Evidence-grounding validation: every piece of
+        # "supporting_evidence" Gemini cites must correspond to
+        # something actually in the retrieved evidence pool we
+        # gave it. Anything else is hallucinated and is dropped
+        # before it can influence the result.
+        # --------------------------------------------------------
+
+        normalized_pool = {
+            self._normalize(item)
+            for item in retrieved_evidence
+        }
+
+        supporting_evidence = [
+            item
+            for item in verification.supporting_evidence
+            if any(
+                self._normalize(item) in pool_item
+                or pool_item in self._normalize(item)
+                for pool_item in normalized_pool
+            )
+        ]
+
+        # --------------------------------------------------------
         # Safety rule:
         #
         # Gemini cannot promote a requirement to STRONG unless
-        # it actually provides supporting evidence.
+        # it actually provides supporting evidence that survived
+        # grounding validation above.
         # --------------------------------------------------------
-
-        supporting_evidence = (
-            verification.supporting_evidence
-        )
 
         if not supporting_evidence:
 
@@ -1438,18 +1687,18 @@ class RequirementMatcher:
             match_type = "partial"
             evidence_type = "partial"
 
-        elif verification.decision == "missing":
+        else:
+
+            # Covers both an explicit "missing" decision and
+            # Gemini's own "ambiguous" decision. Final match
+            # classifications are only strong/partial/missing —
+            # if even semantic verification can't confidently
+            # place a requirement, the conservative outcome is
+            # missing, not a fourth terminal state.
 
             ceiling = 0.0
             match_type = "missing"
             evidence_type = "unsupported"
-
-        else:
-
-            ceiling = 0.40
-
-            match_type = "ambiguous"
-            evidence_type = "ambiguous"
 
         # ------------------------------------------------
         # Both the strength AND the confidence exposed to

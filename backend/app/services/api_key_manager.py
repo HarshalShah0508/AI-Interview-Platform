@@ -58,9 +58,14 @@ class APIKeyManager:
 
     Responsibilities:
     - Maintain multiple Gemini API keys.
-    - Rotate to the next key when Gemini returns 429.
+    - Rotate to the next key instantly when Gemini returns 429
+      (quota) or a 404 caused by the current key lacking access
+      to the configured model, and retry the same in-flight
+      request on the new key.
     - Retry with bounded exponential backoff when Gemini
       returns 503 (model temporarily unavailable/overloaded).
+    - Let a key marked exhausted become eligible again after a
+      cooldown, since Gemini quotas reset per-minute.
     - Support both simple prompts and structured
       google-genai requests.
     - Share the same rotation state across the application.
@@ -80,6 +85,14 @@ class APIKeyManager:
     BASE_BACKOFF_SECONDS = 1.0
     MAX_BACKOFF_SECONDS = 8.0
 
+    # How long a key stays skipped after being marked exhausted
+    # (rate-limited or found to lack model access). Gemini quotas
+    # are per-minute, so a key that looked exhausted a minute ago
+    # is very likely usable again — without this, exhausted_keys
+    # only ever grows and the whole pool eventually looks dead for
+    # the lifetime of the process.
+    EXHAUSTION_COOLDOWN_SECONDS = 60
+
     def __init__(self):
 
         self.api_keys = list(
@@ -97,7 +110,8 @@ class APIKeyManager:
 
         self.current_index = 0
 
-        self.exhausted_keys = set()
+        # index -> timestamp (time.time()) it was marked exhausted
+        self.exhausted_keys = {}
 
         self.lock = threading.Lock()
 
@@ -128,24 +142,36 @@ class APIKeyManager:
     def _move_to_next_key(self):
         """
         Mark the current key as exhausted and
-        move to the next available key.
+        instantly move to the next available key.
+
+        A key marked exhausted is only skipped for
+        EXHAUSTION_COOLDOWN_SECONDS — after that it is treated as
+        available again, since Gemini quotas reset per-minute and
+        a permanently-blacklisted key would otherwise shrink the
+        usable pool to nothing over the life of the process.
         """
 
         with self.lock:
+
+            now = time.time()
 
             exhausted_index = (
                 self.current_index
             )
 
-            self.exhausted_keys.add(
-                exhausted_index
-            )
+            self.exhausted_keys[exhausted_index] = now
 
             for index in range(
                 len(self.api_keys)
             ):
 
-                if index in self.exhausted_keys:
+                exhausted_at = self.exhausted_keys.get(index)
+
+                if (
+                    exhausted_at is not None
+                    and (now - exhausted_at)
+                    < self.EXHAUSTION_COOLDOWN_SECONDS
+                ):
                     continue
 
                 self.current_index = index
@@ -343,6 +369,37 @@ class APIKeyManager:
 
                     continue
 
+                if self._is_key_access_error(
+                    error
+                ):
+
+                    current_key_number = (
+                        self.current_index + 1
+                    )
+
+                    print(
+                        "\n[Gemini API] "
+                        f"API Key #{current_key_number} "
+                        "does not have access to this model "
+                        "(404). Rotating keys."
+                    )
+
+                    try:
+                        self._move_to_next_key()
+
+                    except RuntimeError:
+
+                        self._log_call_result(
+                            analysis_id,
+                            call_number,
+                            purpose,
+                            "failed (no configured key has model access)",
+                        )
+
+                        raise
+
+                    continue
+
                 if self._is_unavailable_error(
                     error
                 ):
@@ -449,6 +506,57 @@ class APIKeyManager:
                 "quota exceeded",
                 "quota",
                 "too many requests",
+            )
+        )
+
+    # ========================================================
+    # Key-access detection (404 / model not available to this key)
+    # ========================================================
+
+    @staticmethod
+    def _is_key_access_error(
+        error,
+    ):
+        """
+        Detect a 404 caused by the *current key's* project not
+        having access to the configured model — this is a
+        per-key provisioning problem, not a bad request, so it
+        should trigger rotation to the next key exactly like a
+        429 does, rather than being re-raised immediately.
+
+        Deliberately narrow (status 404 + a model/access-shaped
+        message) rather than "any 404", so a genuinely malformed
+        request still fails fast instead of being retried against
+        every configured key.
+        """
+
+        status_code = getattr(
+            error,
+            "status_code",
+            None,
+        )
+
+        code = getattr(
+            error,
+            "code",
+            None,
+        )
+
+        if status_code != 404 and code != 404:
+            return False
+
+        message = str(
+            error
+        ).lower()
+
+        return any(
+            phrase in message
+            for phrase in (
+                "not found for api version",
+                "not supported for generatecontent",
+                "is not found",
+                "does not have access",
+                "permission",
             )
         )
 

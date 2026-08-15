@@ -6,6 +6,7 @@ import {
 } from "../api/resumeAnalysisApi";
 import useAuth from "../hooks/useAuth";
 
+import Navbar from "../components/layout/Navbar.jsx";
 import AnalysisTabs from "../components/resume-analysis/AnalysisTabs";
 import AnalysisSummary from "../components/resume-analysis/AnalysisSummary";
 import RequirementTable from "../components/resume-analysis/RequirementTable";
@@ -53,9 +54,11 @@ export default function ResumeAnalysisPage() {
         setAnalysis(result);
 
       } catch (err) {
+        // Don't log the raw error - it carries the request's Authorization
+        // header (Bearer token) in its config.
         console.error(
           "Failed to load analysis:",
-          err
+          err?.response?.data?.detail || err?.message
         );
 
         setError(
@@ -73,17 +76,23 @@ export default function ResumeAnalysisPage() {
 
   if (loading) {
     return (
-      <div className="analysis-loading">
-        Loading analysis...
-      </div>
+      <>
+        <Navbar />
+        <div className="analysis-loading">
+          Loading analysis...
+        </div>
+      </>
     );
   }
 
   if (error) {
     return (
-      <div className="analysis-error">
-        {error}
-      </div>
+      <>
+        <Navbar />
+        <div className="analysis-error">
+          {error}
+        </div>
+      </>
     );
   }
 
@@ -131,6 +140,8 @@ export default function ResumeAnalysisPage() {
   });
 
   return (
+    <>
+    <Navbar />
     <main className="resume-analysis-page">
 
       <section className="analysis-header">
@@ -167,6 +178,9 @@ export default function ResumeAnalysisPage() {
       {activeTab === "requirements" && (
         <RequirementTable
           matches={matchingReport?.matches}
+          partialMatchGuidance={
+            recommendationReport?.partial_match_guidance
+          }
         />
       )}
 
@@ -191,5 +205,6 @@ export default function ResumeAnalysisPage() {
       )}
 
     </main>
+    </>
   );
 }

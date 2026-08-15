@@ -5,22 +5,21 @@ function FeedbackCard({
   improvements = [],
 }) {
   return (
-    <article className="content-card feedback-card">
-      <div className="feedback-card__header">
+    <article className="prev-feedback">
+      <div className="prev-feedback__header">
         <div>
-          <p className="eyebrow">AI Evaluation</p>
-          <h2>Answer Feedback</h2>
+          <div className="eyebrow">AI EVALUATION · PREVIOUS QUESTION</div>
+          <h3 className="prev-feedback__title">Answer feedback</h3>
         </div>
-
-        <span className="score-badge">{score}/10</span>
+        <span className="prev-feedback__score">{score}/10</span>
       </div>
 
-      <p>{feedback}</p>
+      <p className="prev-feedback__body">{feedback}</p>
 
-      <div className="feedback-grid">
+      <div className="prev-feedback__grid">
         <div>
-          <h3>Strengths</h3>
-          <ul>
+          <div className="prev-feedback__col-label">STRENGTHS</div>
+          <ul className="prev-feedback__list">
             {strengths.map((item, index) => (
               <li key={index}>{item}</li>
             ))}
@@ -28,8 +27,8 @@ function FeedbackCard({
         </div>
 
         <div>
-          <h3>Improvements</h3>
-          <ul>
+          <div className="prev-feedback__col-label">IMPROVEMENTS</div>
+          <ul className="prev-feedback__list">
             {improvements.map((item, index) => (
               <li key={index}>{item}</li>
             ))}

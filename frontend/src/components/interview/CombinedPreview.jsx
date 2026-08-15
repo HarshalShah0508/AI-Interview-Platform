@@ -28,22 +28,19 @@ function CombinedPreview({
     : "Your combined answer will appear here...";
 
   return (
-    <div className="content-card">
-      <h3>👀 Combined Answer Preview</h3>
+    <div className="combined-preview">
+      <div className="combined-preview__row">
+        <span className="combined-preview__label">Combined answer preview</span>
+        <span className="combined-preview__meta">
+          Voice + Notes + Code will be submitted as one response
+        </span>
+      </div>
 
       <textarea
+        className="combined-preview__box"
         value={preview}
         readOnly
-        rows={16}
-        style={{
-          width: "100%",
-          fontFamily:
-            "SFMono-Regular, Consolas, Monaco, Menlo, monospace",
-          fontSize: "14px",
-          lineHeight: "1.5",
-          resize: "vertical",
-          whiteSpace: "pre-wrap",
-        }}
+        rows={6}
       />
     </div>
   );
