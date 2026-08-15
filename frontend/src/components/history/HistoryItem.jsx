@@ -4,40 +4,21 @@ function HistoryItem({ session }) {
   const createdDate = new Date(session.created_at).toLocaleString();
 
   return (
-    <article className="history-item">
-      <div>
-        <p className="eyebrow">Interview Session</p>
-
-        <h2>{session.role}</h2>
-
-        <p>
-          <strong>Difficulty:</strong> {session.difficulty}
-        </p>
-
-        <p>
-          <strong>Created:</strong> {createdDate}
-        </p>
+    <article className="list-row">
+      <div className="list-row__info">
+        <div className="list-row__title">{session.role}</div>
+        <div className="list-row__meta">
+          <span className="difficulty-pill">{session.difficulty}</span>
+          <span>{createdDate}</span>
+        </div>
       </div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          flexWrap: "wrap",
-        }}
-      >
-        <Link
-          className="button button--secondary"
-          to={`/interview/${session.session_id}`}
-        >
-          Continue Interview
+      <div className="list-row__actions">
+        <Link className="button button--secondary button--sm" to={`/interview/${session.session_id}`}>
+          Continue interview
         </Link>
-
-        <Link
-          className="button button--primary"
-          to={`/results/${session.session_id}`}
-        >
-          View Results
+        <Link className="button button--primary button--sm" to={`/results/${session.session_id}`}>
+          View results
         </Link>
       </div>
     </article>

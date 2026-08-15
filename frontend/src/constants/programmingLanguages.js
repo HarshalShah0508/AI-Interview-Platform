@@ -76,6 +76,23 @@ end
 
 endmodule`,
 },
+{
+  id: "sql",
+  name: "SQL",
+  monacoLanguage: "sql",
+  extension: ".sql",
+  starterCode: `CREATE TABLE employees (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    salary INTEGER
+);
+
+INSERT INTO employees (id, name, salary) VALUES
+    (1, 'Alice', 90000),
+    (2, 'Bob', 75000);
+
+SELECT * FROM employees;`,
+},
 ];
 
 export const DEFAULT_LANGUAGE = PROGRAMMING_LANGUAGES[0];

@@ -33,7 +33,7 @@ function HistoryList() {
   }, [token]);
 
   if (loading) {
-    return <p>Loading interview history...</p>;
+    return <p className="form-hint">Loading interview history...</p>;
   }
 
   if (error) {
@@ -41,15 +41,11 @@ function HistoryList() {
   }
 
   if (sessions.length === 0) {
-    return (
-      <div className="content-card">
-        <p>No interview sessions found.</p>
-      </div>
-    );
+    return <p className="empty-state">No interview sessions found.</p>;
   }
 
   return (
-    <div className="history-list">
+    <div className="list-row-group">
       {sessions.map((session) => (
         <HistoryItem
           key={session.session_id}

@@ -85,10 +85,20 @@ def submit_answer(
             detail=str(e)
         )
     
-    evaluation = ai_service.evaluate_answer(
-        question_text=question.question_text,
-        user_answer=combined_answer
-    )
+    try:
+        evaluation = ai_service.evaluate_answer(
+            question_text=question.question_text,
+            user_answer=combined_answer
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "The answer evaluation service is temporarily "
+                "unavailable. Please try submitting again in a "
+                "moment."
+            ),
+        ) from exc
 
     answer = Answer(
         question_id=question.id,
