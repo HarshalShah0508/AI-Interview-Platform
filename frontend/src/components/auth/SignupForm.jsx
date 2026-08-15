@@ -23,20 +23,31 @@ function SignupForm() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
     setError("");
 
     try {
       await signup(formData);
-      navigate("/dashboard");
-    } catch (err) {
-      setError("Signup failed. Try a different email.");
-    }
-  };
+
+      alert(
+        "Account created successfully! Please check your email and verify your account before logging in."
+    );
+
+      navigate("/login");
+
+  } catch (err) {
+
+      setError(
+        err.response?.data?.detail ||
+        "Signup failed."
+    );
+  }
+};
 
   return (
-    <form className="auth-card" onSubmit={handleSubmit}>
+    <form className="auth-form" onSubmit={handleSubmit}>
       <label className="form-field">
-        <span>Username</span>
+        <span>Name</span>
         <input
           type="text"
           name="username"
@@ -73,8 +84,8 @@ function SignupForm() {
 
       {error && <p className="error-text">{error}</p>}
 
-      <button className="button button--primary" type="submit">
-        Signup
+      <button className="button button--primary button--lg button--wide" type="submit">
+        Create account
       </button>
       <div className="auth-divider">
         <hr />
@@ -84,8 +95,16 @@ function SignupForm() {
 
       <GoogleLoginButton />
 
-      <p className="form-footer">
-        Already have an account? <Link to="/login">Login</Link>
+      <div className="auth-divider">
+        <span className="auth-divider__line" />
+        <span className="auth-divider__text">OR</span>
+        <span className="auth-divider__line" />
+      </div>
+
+      <GoogleLoginButton />
+
+      <p className="auth-form-footer">
+        Already have an account? <Link to="/login">Log in</Link>
       </p>
     </form>
   );

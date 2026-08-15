@@ -4,9 +4,9 @@ import {
   login as loginApi,
   signup as signupApi,
   googleLogin as googleLoginApi,
+  resendVerificationEmail as resendVerificationEmailApi,
 } from "../api/authApi";
 import { getToken, removeToken, setToken } from "../utils/token";
-
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
@@ -16,28 +16,28 @@ export function AuthProvider({ children }) {
 
   const login = async ({ email, password }) => {
     try {
-      console.log("1. Calling /login");
-
       const data = await loginApi({ email, password });
-      console.log("2. Login response:", data);
 
       setToken(data.access_token);
       setAuthToken(data.access_token);
 
-      console.log("3. Calling /me");
-
       const currentUser = await getMe(data.access_token);
-      console.log("4. Current user:", currentUser);
 
       setUser(currentUser);
 
-      console.log("5. Login completed");
-
       return currentUser;
     } catch (error) {
-      console.error("LOGIN ERROR:", error);
+      // Never log the raw error object here - for a failed login it carries
+      // the axios request config, which includes the submitted password.
+      console.error(
+        "Login failed:",
+        error?.response?.data?.detail || error?.message
+      );
       throw error;
     }
+};
+  const resendVerificationEmail = async (email) => {
+    return await resendVerificationEmailApi(email);
 };
   const googleLogin = async (idToken) => {
     try {
@@ -52,15 +52,23 @@ export function AuthProvider({ children }) {
 
       return currentUser;
   } catch (error) {
-    console.error("GOOGLE LOGIN ERROR:", error);
+    // Same reasoning as login(): don't log the raw error, it can carry
+    // request headers/body (e.g. the Google ID token or a Bearer token).
+    console.error(
+      "Google login failed:",
+      error?.response?.data?.detail || error?.message
+    );
     throw error;
   }
 };
 
   const signup = async ({ username, email, password }) => {
-    await signupApi({ username, email, password });
-    return login({ email, password });
-  };
+  return await signupApi({
+    username,
+    email,
+    password,
+  });
+};
 
   const logout = () => {
     removeToken();
@@ -103,6 +111,7 @@ export function AuthProvider({ children }) {
         login,
         googleLogin,
         signup,
+        resendVerificationEmail,
         logout,
       }}
     >

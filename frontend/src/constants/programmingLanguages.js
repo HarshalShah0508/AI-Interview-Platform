@@ -51,6 +51,48 @@ if __name__ == "__main__":
 
 main();`,
   },
+  {
+  id: "c",
+  name: "C",
+  monacoLanguage: "c",
+  extension: ".c",
+  starterCode: `#include <stdio.h>
+
+int main() {
+
+    return 0;
+}`,
+},
+{
+  id: "verilog",
+  name: "Verilog",
+  monacoLanguage: "verilog",
+  extension: ".v",
+  starterCode: `module main;
+
+initial begin
+
+end
+
+endmodule`,
+},
+{
+  id: "sql",
+  name: "SQL",
+  monacoLanguage: "sql",
+  extension: ".sql",
+  starterCode: `CREATE TABLE employees (
+    id INTEGER PRIMARY KEY,
+    name TEXT,
+    salary INTEGER
+);
+
+INSERT INTO employees (id, name, salary) VALUES
+    (1, 'Alice', 90000),
+    (2, 'Bob', 75000);
+
+SELECT * FROM employees;`,
+},
 ];
 
 export const DEFAULT_LANGUAGE = PROGRAMMING_LANGUAGES[0];

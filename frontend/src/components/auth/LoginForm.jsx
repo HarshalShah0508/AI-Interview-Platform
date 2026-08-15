@@ -4,7 +4,12 @@ import useAuth from "../../hooks/useAuth";
 import GoogleLoginButton from "./GoogleLoginButton";
 function LoginForm() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const {
+    login,
+    resendVerificationEmail,
+} = useAuth();
+  const [showResend, setShowResend] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const [formData, setFormData] = useState({
     email: "",
@@ -23,21 +28,56 @@ function LoginForm() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError("");
+    setSuccessMessage("");
+    setShowResend(false);
 
     try {
       await login(formData);
       navigate("/dashboard");
     } catch (err) {
-      console.error(err);
-      console.error(err.response);
-      console.error(err.response?.data);
 
-      setError(err.message);
-    }
+      const message =
+        err.response?.data?.detail ||
+        "Login failed.";
+
+      setError(message);
+
+      if (
+        err.response?.status === 403 &&
+        message ===
+          "Please verify your email before logging in."
+      ) {
+          setShowResend(true);
+      } else {
+          setShowResend(false);
+  }
+}
   };
+  const handleResendVerification = async () => {
+
+  try {
+
+    const response =
+      await resendVerificationEmail(
+        formData.email
+      );
+
+    setSuccessMessage(
+      response.message
+    );
+
+  } catch {
+
+    setError(
+      "Unable to resend verification email."
+    );
+    setSuccessMessage("");
+  }
+
+};
 
   return (
-    <form className="auth-card" onSubmit={handleSubmit}>
+    <form className="auth-form" onSubmit={handleSubmit}>
       <label className="form-field">
         <span>Email</span>
         <input
@@ -64,8 +104,8 @@ function LoginForm() {
 
       {error && <p className="error-text">{error}</p>}
 
-      <button className="button button--primary" type="submit">
-        Login
+      <button className="button button--primary button--lg button--wide" type="submit">
+        Log in
       </button>
       <div className="auth-divider">
         <hr />
@@ -75,9 +115,29 @@ function LoginForm() {
 
       <GoogleLoginButton />
 
-      <p className="form-footer">
-        New to Hot Seat? <Link to="/signup">Create an account</Link>
+      <div className="auth-divider">
+        <span className="auth-divider__line" />
+        <span className="auth-divider__text">OR</span>
+        <span className="auth-divider__line" />
+      </div>
+
+      <GoogleLoginButton />
+
+      <p className="auth-form-footer">
+        New to HotSeat? <Link to="/signup">Create an account</Link>
       </p>
+
+      {showResend && (
+        <div className="auth-alert">
+          <div className="auth-alert__label">STATE · EMAIL NOT VERIFIED</div>
+          <p className="auth-alert__text">Please verify your email before logging in.</p>
+          <button type="button" className="auth-alert__action" onClick={handleResendVerification}>
+            Resend verification email
+          </button>
+        </div>
+      )}
+
+      {successMessage && <p className="success-text">{successMessage}</p>}
     </form>
   );
 }

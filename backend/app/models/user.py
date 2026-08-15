@@ -1,3 +1,4 @@
+from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import Integer
 from sqlalchemy import String
@@ -44,6 +45,12 @@ class User(Base):
         default="local"
     )
 
+    email_verified = Column(
+        Boolean,
+        nullable=False,
+        default=False
+    )
+
     resumes = relationship(
         "Resume",
         back_populates="owner",
@@ -52,6 +59,12 @@ class User(Base):
 
     interview_sessions = relationship(
         "InterviewSession",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    
+    verification_tokens = relationship(
+        "EmailVerificationToken",
         back_populates="user",
         cascade="all, delete-orphan"
     )

@@ -4,25 +4,16 @@ function CustomInput({
   disabled = false,
 }) {
   return (
-    <div className="content-card">
-      <h3>⌨️ Custom Input (stdin)</h3>
-
+    <div className="stdin-row">
+      <span className="mode-block__label">STDIN</span>
       <textarea
+        className="stdin-input"
+        rows={2}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        rows={6}
         spellCheck={false}
-        placeholder={`Example
-
-5
-1 2 3 4 5`}
-        style={{
-          width: "100%",
-          resize: "vertical",
-          fontFamily:
-            "SFMono-Regular, Consolas, Monaco, Menlo, monospace",
-        }}
+        placeholder={`Custom input for test run\n5\n1 2 3 4 5`}
       />
     </div>
   );

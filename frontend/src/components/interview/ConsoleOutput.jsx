@@ -21,46 +21,18 @@ function ConsoleOutput({
     not_implemented: "Not Implemented",
   };
 
-  return (
-    <div className="content-card">
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: "12px",
-        }}
-      >
-        <h3 style={{ margin: 0 }}>
-          🖥 Console Output
-        </h3>
+  const isError = ["runtime_error", "compilation_error", "internal_error"].includes(status);
 
-        <span
-          style={{
-            fontWeight: "600",
-            fontSize: "14px",
-          }}
-        >
-          Status: {statusLabel[status] || status}
+  return (
+    <div className="console-shell">
+      <div className="console-shell__header">
+        <span className="console-shell__title">CONSOLE OUTPUT</span>
+        <span className={`console-shell__status ${isError ? "console-shell__status--error" : ""}`}>
+          {statusLabel[status] || status}
         </span>
       </div>
 
-      <pre
-        style={{
-          minHeight: "120px",
-          margin: 0,
-          padding: "12px",
-          background: "#111827",
-          color: "#f3f4f6",
-          borderRadius: "8px",
-          overflowX: "auto",
-          whiteSpace: "pre-wrap",
-          fontFamily:
-            "SFMono-Regular, Consolas, Monaco, Menlo, monospace",
-        }}
-      >
-        {displayText}
-      </pre>
+      <pre className="console-shell__body">{displayText}</pre>
     </div>
   );
 }

@@ -2,21 +2,23 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi import status
 from sqlalchemy.orm import Session
-
+from fastapi import Query
 from app.database.database import get_db
 from app.models.user import User
-
+from app.services.email_service import EmailService
 from app.schemas.user import (
     UserCreate,
     UserResponse,
     GoogleLoginRequest
 )
-
+from app.services.email_verification_service import (
+    EmailVerificationService,
+)
 from app.utils.security import (
     hash_password,
     verify_password
 )
-
+from app.schemas.user import ResendVerificationRequest
 from app.utils.jwt_handler import (
     create_access_token,
     get_current_user
@@ -56,16 +58,30 @@ def signup(
         hashed_password=hash_password(
             user.password
         ),
-        auth_provider="local"
+        auth_provider="local",
+        email_verified=False,
     )
 
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
 
+    verification_token = (
+        EmailVerificationService.generate_verification_token(
+            db=db,
+            user_id=new_user.id,
+        )
+    )
+
+    EmailService().send_verification_email(
+        recipient_email=new_user.email,
+        recipient_name=new_user.username,
+        verification_token=verification_token,
+    )
+
     return {
-        "message": "User created successfully",
-        "user_id": new_user.id
+        "message":
+            "Account created successfully. Please check your email to verify your account."
     }
 
 
@@ -101,6 +117,15 @@ def login(
             status_code=401,
             detail="Invalid credentials"
         )
+    
+    if (
+    user.auth_provider == "local"
+    and not user.email_verified
+):
+        raise HTTPException(
+            status_code=403,
+            detail="Please verify your email before logging in."
+    )
 
     access_token = create_access_token(
         {
@@ -123,8 +148,65 @@ def google_auth(
         request.id_token,
         db
     )
+@router.get("/auth/verify-email")
+def verify_email(
+    token: str = Query(...),
+    db: Session = Depends(get_db),
+):
 
+    user = EmailVerificationService.verify_token(
+        db=db,
+        token=token,
+    )
 
+    return {
+        "message": "Email verified successfully.",
+        "email": user.email,
+    }
+@router.post("/auth/resend-verification")
+def resend_verification_email(
+    request: ResendVerificationRequest,
+    db: Session = Depends(get_db),
+):
+
+    user = (
+        db.query(User)
+        .filter(User.email == request.email)
+        .first()
+    )
+
+    # Never reveal whether the email exists
+    if (
+        user is None
+        or user.auth_provider != "local"
+        or user.email_verified
+    ):
+        return {
+            "message": (
+                "If your account requires verification, "
+                "a verification email has been sent."
+            )
+        }
+
+    verification_token = (
+        EmailVerificationService.generate_verification_token(
+            db=db,
+            user_id=user.id,
+        )
+    )
+
+    EmailService().send_verification_email(
+        recipient_email=user.email,
+        recipient_name=user.username,
+        verification_token=verification_token,
+    )
+
+    return {
+        "message": (
+            "If your account requires verification, "
+            "a verification email has been sent."
+        )
+    }
 @router.get(
     "/me",
     response_model=UserResponse

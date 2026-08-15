@@ -23,7 +23,7 @@ Returns exactly one category:
 - product_management
 """
 
-from app.services.api_key_manager import APIKeyManager
+from app.services.api_key_manager import api_key_manager
 
 
 SOFTWARE_KEYWORDS = {
@@ -248,7 +248,7 @@ class RoleClassifier:
 
     def __init__(self):
 
-        self.key_manager = APIKeyManager()
+        self.key_manager = api_key_manager
 
     @staticmethod
     def _normalize_role(role: str) -> str:

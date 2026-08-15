@@ -2,23 +2,43 @@ import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 
+import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
 import DashboardPage from "./pages/DashboardPage";
 import ResumePage from "./pages/ResumePage";
+import ResumeAnalysisPage from "./pages/ResumeAnalysisPage";
 import GenerateInterviewPage from "./pages/GenerateInterviewPage";
 import InterviewSessionPage from "./pages/InterviewSessionPage";
 import HistoryPage from "./pages/HistoryPage";
 import SessionResultsPage from "./pages/SessionResultsPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
-      { index: true, element: <LoginPage /> },
-      { path: "login", element: <LoginPage /> },
-      { path: "signup", element: <SignupPage /> },
+      {
+        index: true,
+        element: <LandingPage />,
+      },
+
+      {
+        path: "login",
+        element: <LoginPage />,
+      },
+
+      {
+        path: "signup",
+        element: <SignupPage />,
+      },
+
+      // Public route
+      {
+        path: "verify-email",
+        element: <VerifyEmailPage />,
+      },
 
       {
         path: "dashboard",
@@ -28,6 +48,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       {
         path: "resume",
         element: (
@@ -36,6 +57,16 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
+      {
+        path: "resume-analysis/:analysisId",
+        element: (
+          <ProtectedRoute>
+            <ResumeAnalysisPage />
+          </ProtectedRoute>
+        ),
+      },
+
       {
         path: "generate-interview",
         element: (
@@ -44,6 +75,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       {
         path: "interview/:sessionId",
         element: (
@@ -52,6 +84,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       {
         path: "history",
         element: (
@@ -60,6 +93,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       {
         path: "results/:sessionId",
         element: (

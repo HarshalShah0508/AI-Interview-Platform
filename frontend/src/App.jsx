@@ -1,15 +1,11 @@
 import { Outlet } from 'react-router-dom'
-
-import Navbar from './components/layout/Navbar.jsx'
+import { ResumeAnalysisProvider } from './context/ResumeAnalysisContext'
 
 function App() {
   return (
-    <div className="app-shell">
-      <Navbar />
-      <main className="page-container">
-        <Outlet />
-      </main>
-    </div>
+    <ResumeAnalysisProvider>
+      <Outlet />
+    </ResumeAnalysisProvider>
   )
 }
 

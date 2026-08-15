@@ -17,8 +17,10 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     curl \
     nodejs \
+    iverilog \
     npm \
     default-jdk \
+    sqlite3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies first (better Docker cache)

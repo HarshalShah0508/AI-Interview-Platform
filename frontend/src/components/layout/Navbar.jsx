@@ -8,47 +8,42 @@ const privateLinks = [
   { label: "History", to: "/history" },
 ];
 
-const publicLinks = [
-  { label: "Login", to: "/login" },
-  { label: "Signup", to: "/signup" },
-];
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  const initials = parts.slice(0, 2).map((part) => part[0]?.toUpperCase());
+  return initials.join("") || "?";
+}
 
 function Navbar() {
-  const { isAuthenticated, logout } = useAuth();
+  const { user, logout } = useAuth();
 
   return (
     <header className="navbar">
-      <NavLink className="navbar__brand" to={isAuthenticated ? "/dashboard" : "/login"}>
+      <NavLink className="navbar__brand" to="/dashboard">
         HotSeat
       </NavLink>
 
       <nav className="navbar__links" aria-label="Main navigation">
-        {isAuthenticated ? (
-          <>
-            <div className="navbar__group">
-              {privateLinks.map((item) => (
-                <NavLink key={item.to} className="navbar__link" to={item.to}>
-                  {item.label}
-                </NavLink>
-              ))}
-            </div>
-
-            <div className="navbar__group navbar__group--auth">
-              <button className="button button--secondary" onClick={logout}>
-                Logout
-              </button>
-            </div>
-          </>
-        ) : (
-          <div className="navbar__group navbar__group--auth">
-            {publicLinks.map((item) => (
-              <NavLink key={item.to} className="navbar__link" to={item.to}>
-                {item.label}
-              </NavLink>
-            ))}
-          </div>
-        )}
+        {privateLinks.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) =>
+              isActive ? "navbar__link navbar__link--active" : "navbar__link"
+            }
+          >
+            {item.label}
+          </NavLink>
+        ))}
       </nav>
+
+      <div className="navbar__user">
+        <span className="navbar__avatar">{getInitials(user?.username)}</span>
+        <button className="navbar__logout" type="button" onClick={logout}>
+          Log out
+        </button>
+      </div>
     </header>
   );
 }
