@@ -2,7 +2,15 @@ import RequirementRow from "./RequirementRow";
 
 export default function RequirementTable({
   matches,
+  partialMatchGuidance,
 }) {
+  const guidanceByRequirement = new Map(
+    (partialMatchGuidance || []).map((item) => [
+      item.requirement,
+      item,
+    ])
+  );
+
   if (!matches?.length) {
     return (
       <p className="empty-state">
@@ -45,6 +53,9 @@ export default function RequirementTable({
           <RequirementRow
             key={match.requirement}
             match={match}
+            guidance={guidanceByRequirement.get(
+              match.requirement
+            )}
           />
         ))}
 

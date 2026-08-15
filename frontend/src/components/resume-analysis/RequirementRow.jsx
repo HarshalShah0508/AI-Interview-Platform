@@ -12,6 +12,7 @@ import {
 
 export default function RequirementRow({
   match,
+  guidance,
 }) {
   const [expanded, setExpanded] = useState(false);
 
@@ -80,7 +81,7 @@ export default function RequirementRow({
       </button>
 
       {expanded && (
-        <RequirementDetails match={match} />
+        <RequirementDetails match={match} guidance={guidance} />
       )}
 
     </div>

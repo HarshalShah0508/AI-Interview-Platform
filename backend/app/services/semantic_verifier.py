@@ -8,7 +8,6 @@ from app.services.api_key_manager import (
 )
 from app.schemas.resume_analysis import (
     JDRequirement,
-    ResumeProfile,
     SemanticVerification,
     SemanticVerificationBatch,
 )
@@ -27,22 +26,24 @@ class SemanticVerifier:
     in a SINGLE Gemini call (see verify_batch) rather than one
     call per requirement, to keep the overall analysis within
     the project's Gemini call budget.
+
+    Each requirement is given ONLY its own retrieved evidence
+    (a small, ranked list of relevant resume lines chosen by
+    RequirementMatcher._retrieve_relevant_evidence) instead of
+    the entire resume — this keeps the prompt focused, keeps
+    the request cheap, and makes it possible to validate that
+    every "supporting_evidence" item Gemini cites actually came
+    from the evidence it was given.
     """
 
     def verify_batch(
         self,
         requirements: list[JDRequirement],
-        resume_profile: ResumeProfile,
+        evidence_map: dict[str, list[str]],
     ) -> dict[str, SemanticVerification]:
 
         if not requirements:
             return {}
-
-        evidence_context = (
-            self._build_evidence_context(
-                resume_profile
-            )
-        )
 
         requirement_blocks = []
 
@@ -50,6 +51,29 @@ class SemanticVerifier:
             requirements,
             start=1,
         ):
+            evidence_lines = evidence_map.get(
+                requirement.name,
+                [],
+            )
+
+            if evidence_lines:
+
+                evidence_block = "\n".join(
+                    f"{line_index}. {text}"
+                    for line_index, text in enumerate(
+                        evidence_lines,
+                        start=1,
+                    )
+                )
+
+            else:
+
+                evidence_block = (
+                    "(No potentially relevant resume "
+                    "evidence was retrieved for this "
+                    "requirement.)"
+                )
+
             requirement_blocks.append(
                 f"""
 REQUIREMENT #{index}
@@ -68,6 +92,9 @@ JD Evidence:
 
 Possible aliases:
 {requirement.aliases}
+
+Allowed resume evidence for THIS requirement:
+{evidence_block}
 """
             )
 
@@ -84,23 +111,24 @@ this single request. Return one verification object per
 requirement, using the exact "requirement_name" value given
 for each requirement so results can be matched back up.
 
+Each requirement lists its OWN "Allowed resume evidence"
+block. Use ONLY that requirement's own evidence block when
+evaluating it. Do NOT borrow evidence from a different
+requirement's block, and do NOT use any information about
+the candidate that is not explicitly present in the
+requirement's own evidence block.
+
 JOB DESCRIPTION REQUIREMENTS
 =============================
 
 {"".join(requirement_blocks)}
 
 
-CANDIDATE RESUME EVIDENCE
-=========================
-
-{evidence_context}
-
-
 STRICT RULES
 ============
 
-1. You may ONLY use information present in the
-candidate resume evidence provided above.
+1. You may ONLY use information present in the requirement's
+own "Allowed resume evidence" block above.
 
 2. NEVER invent experience.
 
@@ -171,14 +199,19 @@ strong
 12. Generic statements without enough evidence should
 remain ambiguous or missing.
 
-13. Every supporting evidence item MUST come directly
-from the provided resume evidence.
+13. Every "supporting_evidence" item you return MUST be an
+exact or near-exact excerpt from that requirement's own
+"Allowed resume evidence" block. Do not paraphrase, combine,
+or invent evidence. If you cannot quote real evidence from
+the block, do not claim support.
 
 14. Do not rewrite or improve the resume.
 
 15. Do not suggest adding anything.
 
-16. If evidence is insufficient, say so.
+16. If the evidence is insufficient, say so — use decision
+"missing" rather than stretching a weak signal into
+"partial" or "strong".
 
 17. Confidence represents confidence in the decision,
 NOT how impressive the candidate is.
@@ -187,9 +220,10 @@ NOT how impressive the candidate is.
 any assumption that would be required to classify
 the candidate more strongly.
 
-19. Evaluate each requirement independently. Evidence
-that supports one requirement must not be reused to
-justify a different, unrelated requirement.
+19. Evaluate each requirement independently using only its
+own evidence block. Evidence that supports one requirement
+must not be reused to justify a different, unrelated
+requirement.
 
 Return ONLY structured data matching the requested schema,
 with exactly one verification per requirement listed above.
@@ -232,69 +266,3 @@ with exactly one verification per requirement listed above.
             results[item.requirement_name.strip().lower()] = item
 
         return results
-
-    @staticmethod
-    def _build_evidence_context(
-        resume_profile: ResumeProfile,
-    ) -> str:
-
-        evidence = []
-
-        for item in resume_profile.evidence:
-
-            evidence.append(
-                f"""
-Section: {item.section}
-Claim: {item.claim}
-Source: {item.source_text}
-Confidence: {item.confidence}
-"""
-            )
-
-        for skill in resume_profile.skills:
-
-            for item in skill.evidence:
-
-                evidence.append(
-                    f"""
-Skill: {skill.name}
-Section: {item.section}
-Claim: {item.claim}
-Source: {item.source_text}
-Confidence: {item.confidence}
-"""
-                )
-
-        for project in resume_profile.projects:
-
-            for bullet in project.bullets:
-
-                evidence.append(
-                    f"""
-Project: {project.name}
-Section: projects
-Source: {bullet.text}
-Technologies: {bullet.technologies}
-Metrics: {[m.value for m in bullet.metrics]}
-"""
-                )
-
-        for experience in resume_profile.experience:
-
-            for bullet in experience.bullets:
-
-                evidence.append(
-                    f"""
-Experience: {experience.role}
-Company: {experience.company}
-Section: experience
-Source: {bullet.text}
-Technologies: {bullet.technologies}
-Metrics: {[m.value for m in bullet.metrics]}
-"""
-                )
-
-        if not evidence:
-            return "No usable resume evidence was extracted."
-
-        return "\n".join(evidence)

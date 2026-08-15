@@ -1120,6 +1120,25 @@ p {
   text-align: center;
 }
 
+.partial-guidance {
+  display: grid;
+  gap: 16px;
+  padding-top: 16px;
+  margin-top: 4px;
+  border-top: 1px dashed #dfe6f0;
+}
+
+.partial-guidance-example {
+  border-color: #bfdbfe;
+  background: #eef4ff;
+}
+
+.partial-guidance-notice {
+  text-align: left;
+  font-size: 13px;
+  font-weight: 650;
+}
+
 /* ------------------------------------------------------------
    Keep as-is
    ------------------------------------------------------------ */

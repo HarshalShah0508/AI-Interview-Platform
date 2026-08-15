@@ -647,6 +647,46 @@ class MissingRequirementRecommendation(BaseModel):
     warning: str
 
 
+class PartialMatchGuidanceDraft(BaseModel):
+    """
+    Untrusted wording guidance produced by Gemini for a single
+    Partial Match requirement.
+
+    Intentionally does NOT contain evidence_found, why_partial,
+    or safety_note — those are always filled in locally by
+    Python from already-validated deterministic data (evidence_
+    found/why_partial come straight from the matcher's own
+    RequirementMatch; safety_note is a fixed disclaimer Python
+    always appends), so Gemini cannot omit or weaken them.
+    """
+
+    requirement: str
+
+    how_to_strengthen: str
+
+    example_wording: list[str] = Field(
+        default_factory=list
+    )
+
+
+class PartialMatchGuidance(BaseModel):
+    requirement: str
+
+    evidence_found: list[str] = Field(
+        default_factory=list
+    )
+
+    why_partial: str
+
+    how_to_strengthen: str
+
+    example_wording: list[str] = Field(
+        default_factory=list
+    )
+
+    safety_note: str
+
+
 class RecommendationReport(BaseModel):
     recommendations: list[RecommendationChange] = Field(
         default_factory=list
@@ -658,6 +698,15 @@ class RecommendationReport(BaseModel):
 
     missing_requirement_actions: list[
         MissingRequirementRecommendation
+    ] = Field(
+        default_factory=list
+    )
+
+    # Additive field: older stored analysis results simply lack
+    # this key, and default to an empty list rather than
+    # failing validation, so existing records remain readable.
+    partial_match_guidance: list[
+        PartialMatchGuidance
     ] = Field(
         default_factory=list
     )

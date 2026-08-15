@@ -167,6 +167,9 @@ export default function ResumeAnalysisPage() {
       {activeTab === "requirements" && (
         <RequirementTable
           matches={matchingReport?.matches}
+          partialMatchGuidance={
+            recommendationReport?.partial_match_guidance
+          }
         />
       )}
 
