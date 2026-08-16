@@ -16,6 +16,7 @@ from app.schemas.answer import (
     AnswerResponse,
     AnswerDetail,
     SessionResultsResponse,
+    SkippedQuestionInfo,
     FollowUpQuestionResponse,
 )
 
@@ -241,7 +242,38 @@ def get_session_results(
     questions = (
         db.query(Question)
         .filter(Question.session_id == session.id)
+        .order_by(Question.id)
         .all()
+    )
+
+    # Main-question numbering must ignore follow-up questions,
+    # so an inserted follow-up never shifts the number of the
+    # main question that comes after it.
+    main_questions = [
+        question
+        for question in questions
+        if not question.is_follow_up
+    ]
+
+    # A skipped question is simply a main question the user
+    # never submitted an answer for, evaluated at the moment the
+    # report is requested - this is derived entirely from
+    # existing data (no new "skipped" field needed) and is
+    # naturally correct for every case in the spec: skip-then-
+    # answer-later leaves an Answer row and so is no longer
+    # skipped, and finishing the interview early simply leaves
+    # the remaining questions unanswered, which is exactly what
+    # "skipped" means once the report is being viewed. Follow-up
+    # questions are excluded from this list, consistent with the
+    # main-question-only numbering above.
+    skipped_main_questions = [
+        (index + 1, question)
+        for index, question in enumerate(main_questions)
+        if not question.answer
+    ]
+
+    skipped_questions = _build_skipped_questions(
+        skipped_main_questions
     )
 
     answered_questions = [
@@ -257,6 +289,7 @@ def get_session_results(
             questions_attempted=0,
             strong_topics=[],
             weak_topics=[],
+            skipped_questions=skipped_questions,
         )
 
     total_score = 0
@@ -330,7 +363,41 @@ def get_session_results(
         questions_attempted=len(answered_questions),
         strong_topics=strong_topics,
         weak_topics=weak_topics,
+        skipped_questions=skipped_questions,
     )
+
+
+def _build_skipped_questions(
+    skipped_main_questions: list[tuple[int, Question]],
+) -> list[SkippedQuestionInfo]:
+    """
+    Turns (main_question_number, Question) pairs into
+    SkippedQuestionInfo entries, with a specific study topic for
+    each - determined in a single batched Gemini call covering
+    every skipped question in the session (never one call per
+    question).
+    """
+
+    if not skipped_main_questions:
+        return []
+
+    topics = AIService().generate_skipped_topics(
+        [
+            question.question_text
+            for _, question in skipped_main_questions
+        ]
+    )
+
+    return [
+        SkippedQuestionInfo(
+            question_number=question_number,
+            topic=topic,
+        )
+        for (question_number, _), topic in zip(
+            skipped_main_questions,
+            topics,
+        )
+    ]
 
 
 # Question stems that indicate a value is a leaked question or

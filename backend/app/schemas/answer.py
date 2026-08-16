@@ -52,9 +52,15 @@ class AnswerDetail(BaseModel):
         from_attributes = True
 
 
+class SkippedQuestionInfo(BaseModel):
+    question_number: int
+    topic: str
+
+
 class SessionResultsResponse(BaseModel):
     session_id: int
     average_score: float
     questions_attempted: int
     strong_topics: List[str]
     weak_topics: List[str]
+    skipped_questions: List[SkippedQuestionInfo] = []
