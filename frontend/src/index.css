@@ -2735,6 +2735,11 @@ textarea::placeholder {
   background: var(--accent-soft);
 }
 
+.topic-pill--skipped {
+  color: var(--amber);
+  background: var(--amber-soft);
+}
+
 .results-questions {
   display: flex;
   flex-direction: column;
