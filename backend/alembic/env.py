@@ -15,6 +15,7 @@ from app.models.interview_session import InterviewSession
 from app.models.question import Question
 from app.models.answer import Answer
 from app.models.email_verification_token import EmailVerificationToken
+from app.models.password_reset_token import PasswordResetToken
 
 config = context.config
 
