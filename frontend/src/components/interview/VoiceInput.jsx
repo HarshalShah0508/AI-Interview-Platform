@@ -11,6 +11,7 @@ function VoiceInput({
 
   const [supported, setSupported] = useState(false);
   const [isListening, setIsListening] = useState(false);
+  const [hasStartedOnce, setHasStartedOnce] = useState(false);
 
   useEffect(() => {
     const SpeechRecognition =
@@ -101,6 +102,8 @@ function VoiceInput({
 
     shouldContinueRef.current = true;
 
+    setHasStartedOnce(true);
+
     recognitionRef.current.start();
   };
 
@@ -148,7 +151,7 @@ function VoiceInput({
             isListening
           }
         >
-          Start recording
+          {hasStartedOnce ? "Resume recording" : "Start recording"}
         </button>
 
         <button
