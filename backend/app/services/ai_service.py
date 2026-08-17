@@ -105,6 +105,9 @@ class AIService:
                 f"Explanation:\n{voice_text.strip()}"
             )
 
+        # TODO(backend migration): typed_text is always empty from the
+        # frontend now — see the TODO on AnswerCreate.typed_text in
+        # schemas/answer.py. Drop this parameter once nothing relies on it.
         if typed_text and typed_text.strip():
             sections.append(
                 f"Additional Notes:\n{typed_text.strip()}"

@@ -17,27 +17,13 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload   # http://localhost:8000, docs at /docs
 ```
 
-Requires `backend/.env` (see `backend/.env.example`) — the app raises `ValueError` at import time if `GOOGLE_CLIENT_ID` or `GEMINI_API_KEYS` is missing, so it will not start without them.
-
-Migrations (Alembic):
-```bash
-alembic revision --autogenerate -m "migration_name"
-alembic upgrade head
-alembic downgrade -1
-```
+Requires `backend/.env` (see `backend/.env.example`) — the app raises `ValueError` at import time if `GOOGLE_CLIENT_ID` or `GEMINI_API_KEYS` is missing, so it will not start without them. Migrations use standard Alembic commands.
 
 There is no test suite in this repo yet (no pytest config, no `tests/` directory).
 
 ### Frontend (`frontend/`)
 
-```bash
-npm install
-npm run dev      # Vite dev server, http://localhost:5173
-npm run build
-npm run lint      # ESLint
-```
-
-Requires `frontend/.env` with `VITE_API_BASE_URL` and `VITE_GOOGLE_CLIENT_ID`.
+Standard npm scripts (`install`/`dev`/`build`/`lint`, see `package.json`). Requires `frontend/.env` with `VITE_API_BASE_URL` and `VITE_GOOGLE_CLIENT_ID`.
 
 ### Full stack (Docker)
 
