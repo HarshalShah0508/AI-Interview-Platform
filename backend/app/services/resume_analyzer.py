@@ -65,6 +65,10 @@ PostgreSQL does NOT imply MySQL.
 
 React does NOT imply Next.js.
 
+Salesforce does NOT imply HubSpot.
+
+GAAP knowledge does NOT imply IFRS knowledge.
+
 3. Every important claim must have supporting
 source text from the resume.
 
@@ -126,6 +130,12 @@ responsibilities.
 - Experience
 - Education
 - Certifications
+
+"Technologies" includes not only software languages and
+frameworks but any named professional tool, platform,
+system, or standard relevant to the candidate's field
+(e.g. Salesforce, GAAP, Epic/Cerner clinical systems,
+AutoCAD, Adobe Creative Suite).
 
 13. If a claim is ambiguous, preserve it as ambiguous.
 Do NOT upgrade its confidence.

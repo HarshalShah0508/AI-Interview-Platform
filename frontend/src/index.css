@@ -1806,6 +1806,29 @@ textarea::placeholder {
   color: var(--char-text);
   font-size: 13px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.file-preview__remove {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--char-text-soft);
+  font-size: 14px;
+  border-radius: 4px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.file-preview__remove:hover {
+  color: var(--red);
 }
 
 .resume-list {

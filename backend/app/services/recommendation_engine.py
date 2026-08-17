@@ -21,6 +21,7 @@ from app.schemas.resume_analysis import (
     MissingRequirementRecommendation,
     RecommendationDraft,
     RecommendationReport,
+    RecommendationBatchResponse,
     PartialMatchGuidance,
     PartialMatchGuidanceDraft,
 )
@@ -503,6 +504,7 @@ Do not return explanations outside the JSON object.
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
+                response_schema=RecommendationBatchResponse,
             ),
             purpose="batched_recommendations",
         )
@@ -517,57 +519,23 @@ Do not return explanations outside the JSON object.
         try:
             parsed = json.loads(raw)
 
+            batch = RecommendationBatchResponse.model_validate(
+                parsed
+            )
+
         except Exception as exc:
             print(
                 "[RecommendationEngine] "
-                f"Failed to parse batch response as JSON: "
+                f"Failed to parse batch response: "
                 f"{exc}"
             )
 
             return [], []
 
-        try:
-            drafts = [
-                RecommendationDraft.model_validate(
-                    item
-                )
-                for item in parsed.get(
-                    "recommendations",
-                    [],
-                )
-            ]
-
-        except Exception as exc:
-            print(
-                "[RecommendationEngine] "
-                f"Failed to parse batch recommendations: "
-                f"{exc}"
-            )
-
-            drafts = []
-
-        try:
-
-            guidance_drafts = [
-                PartialMatchGuidanceDraft.model_validate(
-                    item
-                )
-                for item in parsed.get(
-                    "partial_match_guidance",
-                    [],
-                )
-            ]
-
-        except Exception as exc:
-            print(
-                "[RecommendationEngine] "
-                f"Failed to parse partial match guidance: "
-                f"{exc}"
-            )
-
-            guidance_drafts = []
-
-        return drafts, guidance_drafts
+        return (
+            batch.recommendations,
+            batch.partial_match_guidance,
+        )
 
     def _validate_draft(
         self,
@@ -879,7 +847,8 @@ Do not return explanations outside the JSON object.
 
             hint_terms.update(
                 self._requirement_matcher._concept_hint_terms(
-                    component
+                    component,
+                    requirement,
                 )
             )
 

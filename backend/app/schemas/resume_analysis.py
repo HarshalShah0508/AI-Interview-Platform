@@ -39,7 +39,15 @@ class JDRequirement(BaseModel):
     )
 
     aliases: list[str] = Field(
-        default_factory=list
+        default_factory=list,
+        description=(
+            "Alternate names/spellings/abbreviations for this "
+            "requirement that mean the SAME thing (e.g. "
+            "'PostgreSQL' <-> 'Postgres', 'CRM' <-> 'Customer "
+            "Relationship Management'). Do NOT include related-"
+            "but-different terms here — use "
+            "adjacent_alternatives for those."
+        ),
     )
 
     components: list[str] = Field(
@@ -50,6 +58,39 @@ class JDRequirement(BaseModel):
             "['frontend technologies', 'web services']). "
             "Empty when the requirement already names a single "
             "concept."
+        ),
+    )
+
+    adjacent_alternatives: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Tools/platforms/frameworks/standards that are "
+            "RELATED to this requirement but NOT equivalent or "
+            "interchangeable substitutes for it — e.g. for "
+            "'Salesforce': 'hubspot', 'zoho crm'; for 'AWS': "
+            "'azure', 'gcp'; for 'GAAP': 'ifrs'. Used only to "
+            "detect adjacent-but-not-matching resume "
+            "experience, never to award credit for this "
+            "requirement. Leave empty if no well-known adjacent "
+            "alternative exists (e.g. for a general "
+            "experience/years requirement)."
+        ),
+    )
+
+    evidence_hints: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Short literal resume phrases (2-5 words) that "
+            "would count as indirect/supporting evidence for "
+            "this requirement even if the requirement's own "
+            "name/aliases never appear verbatim — e.g. for "
+            "'Client Relationship Management': 'account "
+            "management', 'renewals', 'upsells', 'client "
+            "retention'. These are SEARCH TERMS only; a resume "
+            "must still contain the literal phrase to count as "
+            "a match. Leave empty for requirements that are "
+            "already a concrete named tool (e.g. 'Salesforce', "
+            "'Python') where a direct-name match is sufficient."
         ),
     )
 
@@ -159,6 +200,8 @@ class ResumeSkill(BaseModel):
         "tool",
         "domain",
         "soft_skill",
+        "platform_or_system",
+        "methodology_or_standard",
         "other",
     ]
 
@@ -294,6 +337,7 @@ class RequirementMatch(BaseModel):
         "partial",
         "ambiguous",
         "unsupported",
+        "adjacent",
     ] = "unsupported"
 
     match_strength: float = Field(
@@ -370,6 +414,7 @@ class SemanticVerification(BaseModel):
         "partial",
         "missing",
         "ambiguous",
+        "adjacent",
     ]
 
     confidence: float = Field(
@@ -665,6 +710,25 @@ class PartialMatchGuidanceDraft(BaseModel):
     how_to_strengthen: str
 
     example_wording: list[str] = Field(
+        default_factory=list
+    )
+
+
+class RecommendationBatchResponse(BaseModel):
+    """
+    Response schema for the single combined Gemini call that
+    generates both rewrite recommendations and Partial Match
+    wording guidance for one analysis at once. Passed as
+    response_schema so Gemini's structured-output mode enforces
+    the exact field names/types below, instead of relying on
+    the prompt's prose description alone.
+    """
+
+    recommendations: list[RecommendationDraft] = Field(
+        default_factory=list
+    )
+
+    partial_match_guidance: list[PartialMatchGuidanceDraft] = Field(
         default_factory=list
     )
 
