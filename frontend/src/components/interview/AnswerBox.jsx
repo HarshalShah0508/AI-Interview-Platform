@@ -23,6 +23,7 @@ const AnswerBox = forwardRef(function AnswerBox(
   {
     questionId,
     onAnswerSubmitted,
+    onSubmittingChange,
     disabled = false,
   },
   ref
@@ -125,6 +126,7 @@ const AnswerBox = forwardRef(function AnswerBox(
 
     try {
       setSubmitting(true);
+      onSubmittingChange?.(true);
       setError("");
 
       const response = await submitAnswer(
@@ -156,6 +158,7 @@ const AnswerBox = forwardRef(function AnswerBox(
 
     } finally {
       setSubmitting(false);
+      onSubmittingChange?.(false);
     }
   };
 

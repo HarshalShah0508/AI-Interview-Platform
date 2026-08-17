@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project overview
 
-Hot Seat is an AI interview preparation platform: FastAPI backend + React/Vite frontend + PostgreSQL, using Google Gemini for interview generation, answer evaluation, and resume-vs-job-description analysis. See `README.md` for the full feature list and `Future Features.md` for the roadmap.
+Hot Seat is an AI interview preparation platform: FastAPI backend + React/Vite frontend + PostgreSQL, using Google Gemini for interview generation, answer evaluation, and resume-vs-job-description analysis. See `README.md` for the full feature list, `Future Features.md` for the roadmap, and `CONVENTIONS.md` for commit message conventions.
 
 ## Commands
 
