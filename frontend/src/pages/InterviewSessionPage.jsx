@@ -23,6 +23,7 @@ function InterviewSessionPage() {
   const [answeredQuestions, setAnsweredQuestions] = useState(new Set());
   const [feedbackMap, setFeedbackMap] = useState({});
   const [readyForNext, setReadyForNext] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [nextIsFollowUp, setNextIsFollowUp] =
   useState(false);
 
@@ -253,6 +254,7 @@ return (
         questionId={currentQuestion.id}
         disabled={answeredQuestions.has(currentQuestion.id)}
         onAnswerSubmitted={handleAnswerSubmitted}
+        onSubmittingChange={setIsSubmitting}
       />
 
       {currentFeedback && (
@@ -283,9 +285,9 @@ return (
               <button
                 className="button button--primary"
                 onClick={() => answerBoxRef.current?.submit()}
-                disabled={answeredQuestions.has(currentQuestion.id)}
+                disabled={answeredQuestions.has(currentQuestion.id) || isSubmitting}
               >
-                Submit answer
+                {isSubmitting ? "Submitting..." : "Submit answer"}
               </button>
             </>
           )
@@ -295,9 +297,9 @@ return (
               <button
                 className="button button--secondary"
                 onClick={() => answerBoxRef.current?.submit()}
-                disabled={answeredQuestions.has(currentQuestion.id)}
+                disabled={answeredQuestions.has(currentQuestion.id) || isSubmitting}
               >
-                Submit answer
+                {isSubmitting ? "Submitting..." : "Submit answer"}
               </button>
             )}
             <button className="button button--primary" onClick={handleFinishInterview}>

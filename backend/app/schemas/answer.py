@@ -9,6 +9,10 @@ class AnswerCreate(BaseModel):
     question_id: int
 
     voice_text: Optional[str] = None
+    # TODO(backend migration): the frontend's "Additional Notes" box was
+    # merged into the voice/explanation textarea, so this is always sent
+    # empty now. Drop this field (and the matching Answer.typed_text
+    # column, via Alembic) once nothing relies on it.
     typed_text: Optional[str] = None
     code: Optional[str] = None
 
@@ -36,7 +40,7 @@ class AnswerDetail(BaseModel):
     question_id: int
 
     voice_text: Optional[str]
-    typed_text: Optional[str]
+    typed_text: Optional[str]  # TODO(backend migration): see AnswerCreate.typed_text above.
     code: Optional[str]
 
     combined_answer: str

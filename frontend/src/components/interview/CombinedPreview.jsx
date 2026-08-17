@@ -1,6 +1,5 @@
 function CombinedPreview({
   voiceText,
-  typedText,
   code,
 }) {
   const sections = [];
@@ -8,12 +7,6 @@ function CombinedPreview({
   if (voiceText.trim()) {
     sections.push(
       `Explanation:\n${voiceText.trim()}`
-    );
-  }
-
-  if (typedText.trim()) {
-    sections.push(
-      `Additional Notes:\n${typedText.trim()}`
     );
   }
 
@@ -32,7 +25,7 @@ function CombinedPreview({
       <div className="combined-preview__row">
         <span className="combined-preview__label">Combined answer preview</span>
         <span className="combined-preview__meta">
-          Voice + Notes + Code will be submitted as one response
+          Explanation + Code will be submitted as one response
         </span>
       </div>
 
