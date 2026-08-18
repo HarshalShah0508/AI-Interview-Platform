@@ -80,7 +80,7 @@ Hot Seat behaves like an intelligent interviewer — generating role-specific in
 ## 🚀 Quick Start (Docker)
 
 ```bash
-git clone https://github.com/HarshalShah0508/AI-Interview-Platform.git
+git clone https://github.com/HotSeatAI/AI-Interview-Platform.git
 cd AI-Interview-Platform/backend
 touch .env
 ```
