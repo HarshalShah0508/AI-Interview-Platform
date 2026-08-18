@@ -38,13 +38,17 @@ class SemanticVerifier:
     RequirementMatcher._merge_verification — it does not fail
     the whole analysis.
 
-    Each requirement is given ONLY its own retrieved evidence
-    (a small, ranked list of relevant resume lines chosen by
-    RequirementMatcher._retrieve_relevant_evidence) instead of
-    the entire resume — this keeps the prompt focused, keeps
-    the request cheap, and makes it possible to validate that
-    every "supporting_evidence" item Gemini cites actually came
-    from the evidence it was given.
+    Each requirement is given its own retrieved evidence (a
+    small, ranked list of relevant resume lines chosen by
+    RequirementMatcher._retrieve_relevant_evidence) as a
+    focused hint, PLUS the complete flattened resume evidence
+    as a shared reference for the whole batch — retrieval can
+    miss real evidence phrased in a way no search term
+    anticipated, so the complete evidence lets Gemini still find
+    and cite it. Every "supporting_evidence" item Gemini cites
+    is still validated against what it was actually given
+    (RequirementMatcher._merge_verification), so it can never
+    cite text that doesn't genuinely exist in the resume.
     """
 
     def verify_batch(
@@ -52,6 +56,7 @@ class SemanticVerifier:
         requirements: list[JDRequirement],
         evidence_map: dict[str, list[str]],
         adjacency_hints: dict[str, list[str]] | None = None,
+        full_resume_evidence: list[str] | None = None,
     ) -> dict[str, SemanticVerification]:
         """
         Splits `requirements` into chunks of at most
@@ -63,6 +68,7 @@ class SemanticVerifier:
             return {}
 
         adjacency_hints = adjacency_hints or {}
+        full_resume_evidence = full_resume_evidence or []
 
         chunk_size = GEMINI_SEMANTIC_VERIFICATION_BATCH_SIZE
 
@@ -88,6 +94,7 @@ class SemanticVerifier:
                     chunk,
                     evidence_map,
                     adjacency_hints,
+                    full_resume_evidence,
                     chunk_index,
                     len(chunks),
                 )
@@ -113,6 +120,7 @@ class SemanticVerifier:
         requirements: list[JDRequirement],
         evidence_map: dict[str, list[str]],
         adjacency_hints: dict[str, list[str]],
+        full_resume_evidence: list[str],
         chunk_index: int,
         total_chunks: int,
     ) -> dict[str, SemanticVerification]:
@@ -189,6 +197,23 @@ Allowed resume evidence for THIS requirement:
 {adjacency_line}"""
             )
 
+        if full_resume_evidence:
+
+            full_resume_block = "\n".join(
+                f"{line_index}. {text}"
+                for line_index, text in enumerate(
+                    full_resume_evidence,
+                    start=1,
+                )
+            )
+
+        else:
+
+            full_resume_block = (
+                "(No resume evidence was extracted for this "
+                "candidate.)"
+            )
+
         prompt = f"""
 You are the Semantic Verification Engine
 for HotSeat.
@@ -203,23 +228,39 @@ requirement, using the exact "requirement_name" value given
 for each requirement so results can be matched back up.
 
 Each requirement lists its OWN "Allowed resume evidence"
-block. Use ONLY that requirement's own evidence block when
-evaluating it. Do NOT borrow evidence from a different
-requirement's block, and do NOT use any information about
-the candidate that is not explicitly present in the
-requirement's own evidence block.
+block — a focused, retrieval-ranked subset most likely to be
+relevant to that specific requirement. Below that, a shared
+"COMPLETE RESUME EVIDENCE" section lists every evidence line
+extracted from this candidate's ENTIRE resume. The focused
+block is a starting point, not a limit — if a requirement's
+true supporting evidence exists elsewhere in the complete
+resume evidence but was not included in its focused subset,
+you may still cite it there, as long as it is a real, exact
+excerpt from the complete resume evidence and is genuinely
+relevant to that SPECIFIC requirement. Do NOT use any
+information about the candidate that is not explicitly
+present in either the requirement's own focused block or the
+complete resume evidence section — nothing outside these two
+sources.
 
 JOB DESCRIPTION REQUIREMENTS
 =============================
 
 {"".join(requirement_blocks)}
 
+COMPLETE RESUME EVIDENCE
+=============================
+(Shared reference for every requirement above.)
+
+{full_resume_block}
+
 
 STRICT RULES
 ============
 
 1. You may ONLY use information present in the requirement's
-own "Allowed resume evidence" block above.
+own "Allowed resume evidence" block, or in the shared
+"COMPLETE RESUME EVIDENCE" section — nothing else.
 
 2. NEVER invent experience.
 
@@ -334,12 +375,13 @@ strong
 remain ambiguous or missing.
 
 13. Every "supporting_evidence" item you return MUST be an
-exact or near-exact excerpt from that requirement's own
-"Allowed resume evidence" block. Do not paraphrase, combine,
-or invent evidence. If you cannot quote real evidence from
-the block, do not claim support. This applies to "adjacent"
-decisions too — the cited evidence must be real text from the
-block, not an invented technology mention.
+exact or near-exact excerpt from either that requirement's own
+"Allowed resume evidence" block OR the "COMPLETE RESUME
+EVIDENCE" section. Do not paraphrase, combine, or invent
+evidence. If you cannot quote real evidence from one of these
+two sources, do not claim support. This applies to "adjacent"
+decisions too — the cited evidence must be real text from one
+of these two sources, not an invented technology mention.
 
 14. Do not rewrite or improve the resume.
 
@@ -356,10 +398,12 @@ NOT how impressive the candidate is.
 any assumption that would be required to classify
 the candidate more strongly.
 
-19. Evaluate each requirement independently using only its
-own evidence block. Evidence that supports one requirement
-must not be reused to justify a different, unrelated
-requirement.
+19. Evaluate each requirement independently. Having access to
+the complete resume evidence does NOT mean evidence found
+relevant for one requirement can be reused to justify a
+different, unrelated requirement — every piece of cited
+evidence must be genuinely and specifically relevant to the
+requirement it is cited for.
 
 Return ONLY structured data matching the requested schema,
 with exactly one verification per requirement listed above.
