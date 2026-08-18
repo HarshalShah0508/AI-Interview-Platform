@@ -40,7 +40,7 @@ RESUME_DIR.mkdir(
 
 GEMINI_MODEL = os.getenv(
     "GEMINI_MODEL",
-    "gemini-2.5-flash",
+    "gemini-3.6-flash",
 )
 
 raw_keys = os.getenv("GEMINI_API_KEYS")

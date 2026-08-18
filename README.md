@@ -96,7 +96,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=180
 # Comma-separated — auto-rotates on rate limits (429) and retries on
 # transient unavailability (503) before rotating, useful on free tier.
 GEMINI_API_KEYS=YOUR_GEMINI_KEY_1,YOUR_GEMINI_KEY_2
-GEMINI_MODEL=gemini-2.5-flash
+GEMINI_MODEL=gemini-3.6-flash
 
 GOOGLE_CLIENT_ID=YOUR_GOOGLE_CLIENT_ID
 GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_CLIENT_SECRET
