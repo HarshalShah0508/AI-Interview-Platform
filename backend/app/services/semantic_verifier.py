@@ -1,7 +1,10 @@
 import json
 from google.genai import types
 
-from app.core.config import GEMINI_MODEL
+from app.core.config import (
+    GEMINI_MODEL,
+    GEMINI_SEMANTIC_VERIFICATION_BATCH_SIZE,
+)
 
 from app.services.api_key_manager import (
     api_key_manager,
@@ -17,33 +20,110 @@ class SemanticVerifier:
     """
     Performs contextual verification only when the
     deterministic matcher cannot confidently classify
-    a JD requirement.
+    a JD requirement, plus a second look at "missing"
+    requirements that still have some loosely related
+    retrieved evidence.
 
     IMPORTANT:
     This service is not allowed to create resume evidence.
 
-    All ambiguous requirements for one analysis are verified
-    in a SINGLE Gemini call (see verify_batch) rather than one
-    call per requirement, to keep the overall analysis within
-    the project's Gemini call budget.
+    Requirements for one analysis are verified in chunked
+    batched Gemini calls (see verify_batch), at most
+    GEMINI_SEMANTIC_VERIFICATION_BATCH_SIZE requirements per
+    call, rather than one call per requirement, to keep each
+    call's structured response small and reliable while still
+    keeping the overall analysis within a bounded call budget.
+    If one chunk's call fails, only that chunk's requirements
+    fall back to the conservative "missing" handling in
+    RequirementMatcher._merge_verification — it does not fail
+    the whole analysis.
 
-    Each requirement is given ONLY its own retrieved evidence
-    (a small, ranked list of relevant resume lines chosen by
-    RequirementMatcher._retrieve_relevant_evidence) instead of
-    the entire resume — this keeps the prompt focused, keeps
-    the request cheap, and makes it possible to validate that
-    every "supporting_evidence" item Gemini cites actually came
-    from the evidence it was given.
+    Each requirement is given its own retrieved evidence (a
+    small, ranked list of relevant resume lines chosen by
+    RequirementMatcher._retrieve_relevant_evidence) as a
+    focused hint, PLUS the complete flattened resume evidence
+    as a shared reference for the whole batch — retrieval can
+    miss real evidence phrased in a way no search term
+    anticipated, so the complete evidence lets Gemini still find
+    and cite it. Every "supporting_evidence" item Gemini cites
+    is still validated against what it was actually given
+    (RequirementMatcher._merge_verification), so it can never
+    cite text that doesn't genuinely exist in the resume.
     """
 
     def verify_batch(
         self,
         requirements: list[JDRequirement],
         evidence_map: dict[str, list[str]],
+        adjacency_hints: dict[str, list[str]] | None = None,
+        full_resume_evidence: list[str] | None = None,
     ) -> dict[str, SemanticVerification]:
+        """
+        Splits `requirements` into chunks of at most
+        GEMINI_SEMANTIC_VERIFICATION_BATCH_SIZE and verifies
+        each chunk via its own Gemini call, merging results.
+        """
 
         if not requirements:
             return {}
+
+        adjacency_hints = adjacency_hints or {}
+        full_resume_evidence = full_resume_evidence or []
+
+        chunk_size = GEMINI_SEMANTIC_VERIFICATION_BATCH_SIZE
+
+        chunks = [
+            requirements[start:start + chunk_size]
+            for start in range(
+                0,
+                len(requirements),
+                chunk_size,
+            )
+        ]
+
+        results: dict[str, SemanticVerification] = {}
+
+        for chunk_index, chunk in enumerate(
+            chunks,
+            start=1,
+        ):
+
+            try:
+
+                chunk_results = self._verify_batch_chunk(
+                    chunk,
+                    evidence_map,
+                    adjacency_hints,
+                    full_resume_evidence,
+                    chunk_index,
+                    len(chunks),
+                )
+
+                results.update(chunk_results)
+
+            except Exception:
+
+                # Conservative degrade: this chunk's
+                # requirements simply stay absent from
+                # `results`. _merge_verification already
+                # treats a missing verification as "no result
+                # returned" -> falls back to
+                # match_type="missing", score 0. One
+                # malformed/failed chunk must not fail the
+                # whole analysis.
+                continue
+
+        return results
+
+    def _verify_batch_chunk(
+        self,
+        requirements: list[JDRequirement],
+        evidence_map: dict[str, list[str]],
+        adjacency_hints: dict[str, list[str]],
+        full_resume_evidence: list[str],
+        chunk_index: int,
+        total_chunks: int,
+    ) -> dict[str, SemanticVerification]:
 
         requirement_blocks = []
 
@@ -74,6 +154,25 @@ class SemanticVerifier:
                     "requirement.)"
                 )
 
+            hinted_technologies = adjacency_hints.get(
+                requirement.name,
+                [],
+            )
+
+            if hinted_technologies:
+
+                adjacency_line = (
+                    "\nKnown related-but-NOT-equivalent tools, "
+                    "technologies, or standards detected in "
+                    "this candidate's resume: "
+                    + ", ".join(hinted_technologies)
+                    + "\n"
+                )
+
+            else:
+
+                adjacency_line = ""
+
             requirement_blocks.append(
                 f"""
 REQUIREMENT #{index}
@@ -95,7 +194,24 @@ Possible aliases:
 
 Allowed resume evidence for THIS requirement:
 {evidence_block}
-"""
+{adjacency_line}"""
+            )
+
+        if full_resume_evidence:
+
+            full_resume_block = "\n".join(
+                f"{line_index}. {text}"
+                for line_index, text in enumerate(
+                    full_resume_evidence,
+                    start=1,
+                )
+            )
+
+        else:
+
+            full_resume_block = (
+                "(No resume evidence was extracted for this "
+                "candidate.)"
             )
 
         prompt = f"""
@@ -112,40 +228,96 @@ requirement, using the exact "requirement_name" value given
 for each requirement so results can be matched back up.
 
 Each requirement lists its OWN "Allowed resume evidence"
-block. Use ONLY that requirement's own evidence block when
-evaluating it. Do NOT borrow evidence from a different
-requirement's block, and do NOT use any information about
-the candidate that is not explicitly present in the
-requirement's own evidence block.
+block — a focused, retrieval-ranked subset most likely to be
+relevant to that specific requirement. Below that, a shared
+"COMPLETE RESUME EVIDENCE" section lists every evidence line
+extracted from this candidate's ENTIRE resume. The focused
+block is a starting point, not a limit — if a requirement's
+true supporting evidence exists elsewhere in the complete
+resume evidence but was not included in its focused subset,
+you may still cite it there, as long as it is a real, exact
+excerpt from the complete resume evidence and is genuinely
+relevant to that SPECIFIC requirement. Do NOT use any
+information about the candidate that is not explicitly
+present in either the requirement's own focused block or the
+complete resume evidence section — nothing outside these two
+sources.
 
 JOB DESCRIPTION REQUIREMENTS
 =============================
 
 {"".join(requirement_blocks)}
 
+COMPLETE RESUME EVIDENCE
+=============================
+(Shared reference for every requirement above.)
+
+{full_resume_block}
+
 
 STRICT RULES
 ============
 
 1. You may ONLY use information present in the requirement's
-own "Allowed resume evidence" block above.
+own "Allowed resume evidence" block, or in the shared
+"COMPLETE RESUME EVIDENCE" section — nothing else.
 
 2. NEVER invent experience.
 
-3. NEVER assume that knowledge of one technology
-means knowledge of another.
+3. Knowledge of one tool, technology, or standard does NOT
+automatically prove knowledge of a DIFFERENT, non-
+interchangeable one in the same category, even when they are
+commonly paired or compared.
 
-Examples:
+3a. When the resume shows REAL, groundable evidence of a tool,
+technology, or standard that is related-but-distinct from the
+required one in the SAME category (e.g. a different cloud
+platform, a different container orchestrator, a different
+relational database, a different frontend framework, a
+different CRM platform, a different accounting standard) — and
+especially when a "Known related-but-NOT-equivalent tools,
+technologies, or standards detected" hint is present for that
+requirement — use decision "adjacent", NOT "partial" and NOT
+"missing". "adjacent" means: real, grounded evidence exists,
+but it is evidence of a DIFFERENT tool/technology/standard that
+is transferable to, not proof of, the required one.
 
-Python does NOT imply Django.
+Worked example (technical):
 
-Docker does NOT imply Kubernetes.
+JD:
+"AWS experience required"
 
-AWS does NOT imply Azure.
+Resume evidence:
+"Led migration of microservices to Azure Kubernetes Service"
 
-PostgreSQL does NOT imply MySQL.
+Known related-but-NOT-equivalent tools, technologies, or
+standards detected: azure
 
-React does NOT imply Next.js.
+Result:
+adjacent
+
+NOT partial, NOT strong, NOT missing. Your reasoning must state
+that this is cloud-platform-adjacent experience, not evidence
+of AWS itself.
+
+Worked example (non-technical):
+
+JD:
+"Salesforce experience required"
+
+Resume evidence:
+"Managed the full sales pipeline in HubSpot, from lead capture
+through close"
+
+Known related-but-NOT-equivalent tools, technologies, or
+standards detected: hubspot
+
+Result:
+adjacent
+
+NOT partial, NOT strong, NOT missing. Your reasoning must state
+that this is CRM-platform-adjacent experience, not evidence of
+Salesforce itself.
 
 4. Do not infer a technology merely because it is
 commonly used with another technology.
@@ -165,8 +337,11 @@ generic "cloud" experience.
 "database" experience.
 
 10. A conceptually related statement can be considered
-a PARTIAL match when it genuinely overlaps with the
-requirement but does not prove the exact requirement.
+a PARTIAL match when it genuinely overlaps with the exact
+required skill but does not prove it. "partial" is reserved
+for weaker/incomplete evidence of the SAME required skill —
+it must NOT be used for cross-technology adjacency (that is
+rule 3a's "adjacent" decision instead).
 
 Example:
 
@@ -200,10 +375,13 @@ strong
 remain ambiguous or missing.
 
 13. Every "supporting_evidence" item you return MUST be an
-exact or near-exact excerpt from that requirement's own
-"Allowed resume evidence" block. Do not paraphrase, combine,
-or invent evidence. If you cannot quote real evidence from
-the block, do not claim support.
+exact or near-exact excerpt from either that requirement's own
+"Allowed resume evidence" block OR the "COMPLETE RESUME
+EVIDENCE" section. Do not paraphrase, combine, or invent
+evidence. If you cannot quote real evidence from one of these
+two sources, do not claim support. This applies to "adjacent"
+decisions too — the cited evidence must be real text from one
+of these two sources, not an invented technology mention.
 
 14. Do not rewrite or improve the resume.
 
@@ -211,7 +389,7 @@ the block, do not claim support.
 
 16. If the evidence is insufficient, say so — use decision
 "missing" rather than stretching a weak signal into
-"partial" or "strong".
+"partial", "adjacent", or "strong".
 
 17. Confidence represents confidence in the decision,
 NOT how impressive the candidate is.
@@ -220,10 +398,12 @@ NOT how impressive the candidate is.
 any assumption that would be required to classify
 the candidate more strongly.
 
-19. Evaluate each requirement independently using only its
-own evidence block. Evidence that supports one requirement
-must not be reused to justify a different, unrelated
-requirement.
+19. Evaluate each requirement independently. Having access to
+the complete resume evidence does NOT mean evidence found
+relevant for one requirement can be reused to justify a
+different, unrelated requirement — every piece of cited
+evidence must be genuinely and specifically relevant to the
+requirement it is cited for.
 
 Return ONLY structured data matching the requested schema,
 with exactly one verification per requirement listed above.
@@ -234,8 +414,12 @@ with exactly one verification per requirement listed above.
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=SemanticVerificationBatch,
+                temperature=0.0,
             ),
-            purpose="semantic_verification_batch",
+            purpose=(
+                f"semantic_verification_batch_chunk_"
+                f"{chunk_index}_of_{total_chunks}"
+            ),
         )
 
         raw = (

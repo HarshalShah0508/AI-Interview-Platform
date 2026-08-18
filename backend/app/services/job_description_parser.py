@@ -234,6 +234,8 @@ Valid examples:
 Postgres → PostgreSQL
 RESTful API → REST API
 JS → JavaScript
+CRM → Customer Relationship Management
+GAAP → Generally Accepted Accounting Principles
 
 8. DO NOT treat different technologies as aliases.
 
@@ -244,6 +246,9 @@ AWS != GCP
 Docker != Kubernetes
 React != Angular
 Python != Java
+
+Related-but-different tools like these should instead be
+captured via "adjacent_alternatives" — see rule 14 below.
 
 9. Preserve evidence from the JD supporting
 each important requirement.
@@ -267,6 +272,7 @@ Examples of compound requirement names:
 "Frontend Technologies & Web Services"
 "Code Review and Production Safety"
 "Collaborative Coding Experience"
+"Client Relationship Management & Account Growth"
 
 For each requirement whose name bundles multiple
 distinct concepts together, populate "components"
@@ -286,10 +292,74 @@ components: ["collaborative coding experience"]
 (a single concept — do NOT invent a split that
 is not actually present in the requirement name)
 
+"Client Relationship Management & Account Growth"
+components: ["client relationship management", "account growth"]
+
 If a requirement already names exactly one concept,
 leave "components" empty. Do NOT split a single
 concept into unrelated fragments merely to populate
 this field.
+
+14. ADJACENT (RELATED BUT NOT EQUIVALENT) ALTERNATIVES:
+
+For each requirement, if there is a well-known tool,
+platform, framework, or standard that professionals in
+this field would recognize as RELATED to this requirement
+but NOT a substitute for it, populate
+"adjacent_alternatives" with that alternative's name
+(lowercase, short). Only include alternatives with strong,
+common professional recognition — do not guess obscure
+ones. Leave the list empty if none apply.
+
+Examples:
+
+Requirement: "AWS"
+adjacent_alternatives: ["azure", "gcp"]
+
+Requirement: "Salesforce"
+adjacent_alternatives: ["hubspot", "zoho crm"]
+
+Requirement: "GAAP"
+adjacent_alternatives: ["ifrs"]
+
+Requirement: "Docker"
+adjacent_alternatives: ["kubernetes"]
+
+Requirement: "5+ years of project management experience"
+adjacent_alternatives: []
+(a general experience requirement has no well-known
+"related but different" alternative — do not force this
+field)
+
+15. INDIRECT EVIDENCE HINTS:
+
+For each requirement — especially soft skills,
+responsibilities, and abstract/conceptual requirements
+that are NOT a concrete named tool — populate
+"evidence_hints" with short, literal resume phrases (2-5
+words) that a resume would plausibly contain VERBATIM as
+indirect proof of this requirement, even if the
+requirement's own name or aliases never appear. These are
+search terms only, not proof by themselves — a resume
+must still contain the literal phrase.
+
+Examples:
+
+Requirement: "Client Relationship Management"
+evidence_hints: ["account management", "client retention",
+"renewals", "upsells", "relationship building"]
+
+Requirement: "Production Safety"
+evidence_hints: ["on-call", "incident response", "rollback",
+"post-mortem"]
+
+Requirement: "GAAP Compliance"
+evidence_hints: ["financial statements", "audit",
+"reconciliation", "month-end close"]
+
+Leave "evidence_hints" empty for requirements that are
+already concrete named tools/technologies (e.g. "Python",
+"Salesforce") where a direct name match is sufficient.
 
 Return ONLY structured data matching the schema.
 """

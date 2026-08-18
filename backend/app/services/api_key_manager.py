@@ -411,14 +411,51 @@ class APIKeyManager:
                         > self.MAX_UNAVAILABLE_RETRIES
                     ):
 
-                        self._log_call_result(
-                            analysis_id,
-                            call_number,
-                            purpose,
-                            "failed (503 retries exhausted)",
+                        # Local backoff on this key is exhausted.
+                        # A "503 unavailable" response isn't
+                        # always a genuine model-wide outage —
+                        # some quota-exhaustion errors (e.g. a
+                        # free-tier key that has used its full
+                        # daily request allowance) can surface
+                        # through this SDK in the same 503 shape
+                        # rather than as a standard 429. Rather
+                        # than failing immediately, try rotating
+                        # to another configured key and giving
+                        # the request a fresh attempt there —
+                        # this only costs extra time if the
+                        # outage really is model-wide, but
+                        # recovers the analysis if it was
+                        # actually a per-key quota problem.
+
+                        current_key_number = (
+                            self.current_index + 1
                         )
 
-                        raise
+                        print(
+                            "\n[Gemini API] "
+                            f"API Key #{current_key_number} "
+                            "exhausted its 503 retry budget. "
+                            "Trying next key."
+                        )
+
+                        try:
+                            self._move_to_next_key()
+
+                        except RuntimeError:
+
+                            self._log_call_result(
+                                analysis_id,
+                                call_number,
+                                purpose,
+                                "failed (503 retries exhausted "
+                                "on all keys)",
+                            )
+
+                            raise
+
+                        unavailable_attempts = 0
+
+                        continue
 
                     delay = min(
                         self.BASE_BACKOFF_SECONDS
