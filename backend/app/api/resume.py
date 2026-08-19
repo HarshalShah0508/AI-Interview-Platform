@@ -13,7 +13,10 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.api.auth import get_current_user
 from app.models.resume import Resume
-from app.services.pdf_parser import extract_text_from_pdf
+from app.services.pdf_parser import (
+    extract_text_from_pdf,
+    extract_text_via_gemini_ocr,
+)
 from app.schemas.resume import ResumeResponse
 
 router = APIRouter(
@@ -47,6 +50,14 @@ def upload_resume(
     extracted_text = extract_text_from_pdf(
         str(file_path)
     )
+
+    if not extracted_text.strip():
+        try:
+            extracted_text = extract_text_via_gemini_ocr(
+                file_path.read_bytes()
+            )
+        except Exception:
+            pass
 
     resume = Resume(
         user_id=current_user.id,
