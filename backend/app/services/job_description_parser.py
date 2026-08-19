@@ -41,11 +41,72 @@ class JobDescriptionParser:
         ).strip()
 
         if not extracted_text:
+            extracted_text = self._extract_pdf_text_via_ocr(
+                content
+            )
+
+        return extracted_text
+
+    def _extract_pdf_text_via_ocr(
+        self,
+        pdf_bytes: bytes,
+    ) -> str:
+
+        prompt = """
+You are extracting a Job Description from a PDF that has no usable text layer (it is scanned or image-based).
+
+Read every page carefully.
+
+Extract the COMPLETE visible job description.
+
+Preserve:
+- Job title
+- Responsibilities
+- Required qualifications
+- Preferred qualifications
+- Technical skills
+- Soft skills
+- Experience requirements
+- Education requirements
+- Certifications
+- Years of experience
+- Named technologies
+- Frameworks
+- Programming languages
+- Tools
+- Cloud platforms
+- Important numbers
+
+Do NOT summarize.
+
+Do NOT invent missing information.
+
+Do NOT add information that is not visible.
+
+Return only the extracted job description text.
+"""
+
+        response = api_key_manager.generate_content(
+            contents=[
+                types.Part.from_bytes(
+                    data=pdf_bytes,
+                    mime_type="application/pdf",
+                ),
+                prompt,
+            ],
+            purpose="jd_pdf_ocr",
+        )
+
+        text = (
+            response.text or ""
+        ).strip()
+
+        if not text:
             raise ValueError(
                 "Could not extract text from the PDF."
             )
 
-        return extracted_text
+        return text
 
     async def extract_image_text(
         self,
