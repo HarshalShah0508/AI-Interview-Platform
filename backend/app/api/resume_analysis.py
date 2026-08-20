@@ -1,3 +1,4 @@
+import hashlib
 import json
 
 from fastapi import (
@@ -120,12 +121,18 @@ async def start_resume_analysis(
     # Create analysis record
     # --------------------------------------------------------
 
+    jd_text_hash = hashlib.sha256(
+        extracted_jd.encode("utf-8")
+    ).hexdigest()
+
     analysis = ResumeAnalysis(
         user_id=current_user.id,
 
         resume_id=resume.id,
 
         job_description_text=extracted_jd,
+
+        jd_text_hash=jd_text_hash,
 
         status="processing",
 

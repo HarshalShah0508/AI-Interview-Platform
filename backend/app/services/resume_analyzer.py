@@ -181,6 +181,7 @@ Return ONLY structured data matching the schema.
             config=types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=ResumeProfile,
+            temperature=0.0,
             ),
             purpose="resume_structuring",
         )

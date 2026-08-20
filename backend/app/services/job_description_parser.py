@@ -369,6 +369,7 @@ Return ONLY structured data matching the schema.
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=JDProfile,
+                temperature=0.0,
             ),
             purpose="jd_structuring",
         )

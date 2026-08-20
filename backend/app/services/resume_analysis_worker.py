@@ -10,6 +10,9 @@ from app.models.resume_analysis import ResumeAnalysis
 from app.services.job_description_parser import (
     JobDescriptionParser,
 )
+from app.schemas.resume_analysis import (
+    JDProfile,
+)
 from app.services.resume_analyzer import (
     ResumeAnalyzer,
 )
@@ -124,11 +127,42 @@ class ResumeAnalysisWorker:
                 "Understanding job requirements",
             )
 
-            jd_profile = (
-                parser.structure_job_description(
-                    jd_text
+            cached_jd = (
+                db.query(ResumeAnalysis)
+                .filter(
+                    ResumeAnalysis.user_id
+                    == analysis.user_id,
+                    ResumeAnalysis.jd_text_hash
+                    == analysis.jd_text_hash,
+                    ResumeAnalysis.id
+                    != analysis.id,
+                    ResumeAnalysis.jd_profile_json.isnot(
+                        None
+                    ),
                 )
+                .order_by(
+                    ResumeAnalysis.created_at.desc()
+                )
+                .first()
             )
+
+            if cached_jd:
+
+                jd_profile = (
+                    JDProfile.model_validate(
+                        json.loads(
+                            cached_jd.jd_profile_json
+                        )
+                    )
+                )
+
+            else:
+
+                jd_profile = (
+                    parser.structure_job_description(
+                        jd_text
+                    )
+                )
 
             analysis.job_title = (
                 jd_profile.job_title

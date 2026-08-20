@@ -50,6 +50,12 @@ class ResumeAnalysis(Base):
         nullable=True,
     )
 
+    jd_text_hash = Column(
+        String,
+        nullable=True,
+        index=True,
+    )
+
     analysis_result_json = Column(
         Text,
         nullable=True,
