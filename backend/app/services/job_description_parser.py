@@ -246,9 +246,7 @@ Related-but-different tools like these should instead be
 captured via "adjacent_alternatives" — see rule 14 below.
 
 9. Preserve evidence from the JD supporting
-each important requirement. Quote only the shortest
-verbatim phrase (roughly 5-15 words) that proves the
-requirement — never quote a full sentence.
+each important requirement.
 
 10. Do not infer a requirement merely because
 it is common for the role.
@@ -267,9 +265,7 @@ concepts, usually joined by "and", "&", "/", or a comma.
 Examples of compound requirement names:
 
 "Frontend Technologies & Web Services"
-"Code Review and Production Safety"
 "Collaborative Coding Experience"
-"Client Relationship Management & Account Growth"
 
 For each requirement whose name bundles multiple
 distinct concepts together, populate "components"
@@ -350,7 +346,6 @@ Return ONLY structured data matching the schema.
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=JDProfile,
-                temperature=0.0,
             ),
             purpose="jd_structuring",
         )

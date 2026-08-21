@@ -427,9 +427,7 @@ EVIDENCE REQUIREMENT
 For every recommendation:
 
 1. "evidence_used" MUST contain exact excerpts
-   from the verified resume evidence. Quote only the
-   shortest verbatim phrase (roughly 5-15 words) that
-   proves the point — never a full sentence.
+   from the verified resume evidence.
 
 2. "verified_facts_used" MUST contain only facts
    explicitly supported by the evidence.
@@ -491,7 +489,6 @@ Do not return explanations outside the JSON object.
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=RecommendationBatchResponse,
-                temperature=0.0,
             ),
             purpose="batched_recommendations",
         )

@@ -337,6 +337,7 @@ class ResumeAnalysisWorker:
             matching_report = matcher.match(
                 jd_profile=jd_profile,
                 resume_profile=resume_profile,
+                resume_text=resume.extracted_text,
             )
 
             # =================================================

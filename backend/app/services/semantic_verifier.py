@@ -41,12 +41,13 @@ class SemanticVerifier:
     Each requirement is given its own retrieved evidence (a
     small, ranked list of relevant resume lines chosen by
     RequirementMatcher._retrieve_relevant_evidence) as a
-    focused hint, PLUS the complete flattened resume evidence
-    as a shared reference for the whole batch — retrieval can
-    miss real evidence phrased in a way no search term
-    anticipated, so the complete evidence lets Gemini still find
-    and cite it. Every "supporting_evidence" item Gemini cites
-    is still validated against what it was actually given
+    focused hint, PLUS the candidate's complete raw resume text
+    as a shared reference for the whole batch — retrieval, and
+    even the structured resume extraction itself, can miss real
+    evidence phrased in a way nothing anticipated, so the
+    complete text lets Gemini still find and cite it. Every
+    "supporting_evidence" item Gemini cites is still validated
+    against what it was actually given
     (RequirementMatcher._merge_verification), so it can never
     cite text that doesn't genuinely exist in the resume.
     """
@@ -56,7 +57,7 @@ class SemanticVerifier:
         requirements: list[JDRequirement],
         evidence_map: dict[str, list[str]],
         adjacency_hints: dict[str, list[str]] | None = None,
-        full_resume_evidence: list[str] | None = None,
+        full_resume_text: str | None = None,
     ) -> dict[str, SemanticVerification]:
         """
         Splits `requirements` into chunks of at most
@@ -68,7 +69,7 @@ class SemanticVerifier:
             return {}
 
         adjacency_hints = adjacency_hints or {}
-        full_resume_evidence = full_resume_evidence or []
+        full_resume_text = full_resume_text or ""
 
         chunk_size = GEMINI_SEMANTIC_VERIFICATION_BATCH_SIZE
 
@@ -94,7 +95,7 @@ class SemanticVerifier:
                     chunk,
                     evidence_map,
                     adjacency_hints,
-                    full_resume_evidence,
+                    full_resume_text,
                     chunk_index,
                     len(chunks),
                 )
@@ -120,7 +121,7 @@ class SemanticVerifier:
         requirements: list[JDRequirement],
         evidence_map: dict[str, list[str]],
         adjacency_hints: dict[str, list[str]],
-        full_resume_evidence: list[str],
+        full_resume_text: str,
         chunk_index: int,
         total_chunks: int,
     ) -> dict[str, SemanticVerification]:
@@ -197,20 +198,14 @@ Allowed resume evidence for THIS requirement:
 {adjacency_line}"""
             )
 
-        if full_resume_evidence:
+        if full_resume_text.strip():
 
-            full_resume_block = "\n".join(
-                f"{line_index}. {text}"
-                for line_index, text in enumerate(
-                    full_resume_evidence,
-                    start=1,
-                )
-            )
+            full_resume_block = full_resume_text.strip()
 
         else:
 
             full_resume_block = (
-                "(No resume evidence was extracted for this "
+                "(No resume text was extracted for this "
                 "candidate.)"
             )
 
@@ -230,25 +225,24 @@ for each requirement so results can be matched back up.
 Each requirement lists its OWN "Allowed resume evidence"
 block — a focused, retrieval-ranked subset most likely to be
 relevant to that specific requirement. Below that, a shared
-"COMPLETE RESUME EVIDENCE" section lists every evidence line
-extracted from this candidate's ENTIRE resume. The focused
-block is a starting point, not a limit — if a requirement's
-true supporting evidence exists elsewhere in the complete
-resume evidence but was not included in its focused subset,
-you may still cite it there, as long as it is a real, exact
-excerpt from the complete resume evidence and is genuinely
-relevant to that SPECIFIC requirement. Do NOT use any
-information about the candidate that is not explicitly
-present in either the requirement's own focused block or the
-complete resume evidence section — nothing outside these two
-sources.
+"COMPLETE RESUME TEXT" section contains this candidate's
+ENTIRE resume, verbatim. The focused block is a starting
+point, not a limit — if a requirement's true supporting
+evidence exists elsewhere in the complete resume text but was
+not included in its focused subset, you may still cite it
+there, as long as it is a real, exact excerpt from the complete
+resume text and is genuinely relevant to that SPECIFIC
+requirement. Do NOT use any information about the candidate
+that is not explicitly present in either the requirement's own
+focused block or the complete resume text — nothing outside
+these two sources.
 
 JOB DESCRIPTION REQUIREMENTS
 =============================
 
 {"".join(requirement_blocks)}
 
-COMPLETE RESUME EVIDENCE
+COMPLETE RESUME TEXT
 =============================
 (Shared reference for every requirement above.)
 
@@ -260,7 +254,7 @@ STRICT RULES
 
 1. You may ONLY use information present in the requirement's
 own "Allowed resume evidence" block, or in the shared
-"COMPLETE RESUME EVIDENCE" section — nothing else.
+"COMPLETE RESUME TEXT" section — nothing else.
 
 2. NEVER invent experience.
 
@@ -359,14 +353,12 @@ remain ambiguous or missing.
 
 13. Every "supporting_evidence" item you return MUST be an
 exact or near-exact excerpt from either that requirement's own
-"Allowed resume evidence" block OR the "COMPLETE RESUME
-EVIDENCE" section. Do not paraphrase, combine, or invent
-evidence. Quote only the shortest phrase (roughly 5-20 words)
-that proves the point — never the surrounding sentence. If you
+"Allowed resume evidence" block OR the "COMPLETE RESUME TEXT"
+section. Do not paraphrase, combine, or invent evidence. If you
 cannot quote real evidence from one of these two sources, do
 not claim support. This applies to "adjacent" decisions too —
-the cited evidence must be real text from one of these two
-sources, not an invented technology mention.
+the cited evidence must be real text from one
+of these two sources, not an invented technology mention.
 
 14. Do not rewrite or improve the resume.
 

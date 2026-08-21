@@ -165,6 +165,26 @@ class RequirementMatcher:
         "unclear": 0.50,
     }
 
+    # A "required" match and a "missing" match don't move the
+    # overall score the same amount for every category — a
+    # missing named technical skill/tool should hurt more than a
+    # missing degree requirement, since many roles waive the
+    # latter when the actual skills are present. This multiplies
+    # into effective_weight alongside IMPORTANCE_MULTIPLIERS
+    # (see _calculate_overall_score) rather than changing what
+    # match_type itself means.
+    CATEGORY_MULTIPLIERS = {
+        "technical_skill": 1.00,
+        "tool": 1.00,
+        "responsibility": 0.85,
+        "domain": 0.75,
+        "experience": 0.75,
+        "certification": 0.60,
+        "soft_skill": 0.55,
+        "education": 0.50,
+        "other": 0.50,
+    }
+
     # --------------------------------------------------------
     # Controlled concept -> evidence-keyword mapping.
     #
@@ -349,6 +369,7 @@ class RequirementMatcher:
     self,
     jd_profile: JDProfile,
     resume_profile: ResumeProfile,
+    resume_text: str = "",
 ) -> MatchingReport:
 
         # ----------------------------------------------------
@@ -486,18 +507,15 @@ class RequirementMatcher:
         # ----------------------------------------------------
         # The per-requirement evidence_map above is a narrow,
         # retrieval-ranked subset — useful to focus Gemini's
-        # attention, but retrieval can miss real evidence
-        # phrased in a way none of the search terms anticipated.
-        # The complete flattened resume evidence is also given
-        # as a shared reference for the whole batch, so a
-        # genuinely relevant line that retrieval didn't surface
+        # attention, but retrieval (and even the structured
+        # resume extraction itself) can miss real evidence
+        # phrased in a way nothing anticipated. The complete
+        # RAW resume text is also given as a shared reference
+        # for the whole batch, so a genuinely relevant line
+        # that never made it into the structured profile at all
         # can still be found and cited, instead of silently
         # causing a wrong "missing"/"ambiguous" outcome.
         # ----------------------------------------------------
-
-        full_resume_evidence = self._all_resume_evidence_lines(
-            resume_profile
-        )
 
         verifications = {}
 
@@ -508,7 +526,7 @@ class RequirementMatcher:
                     requirements=candidate_requirements,
                     evidence_map=evidence_map,
                     adjacency_hints=adjacency_hints,
-                    full_resume_evidence=full_resume_evidence,
+                    full_resume_text=resume_text,
                 )
             )
 
@@ -537,8 +555,8 @@ class RequirementMatcher:
                     evidence_map.get(
                         requirement.name,
                         [],
-                    )
-                    + full_resume_evidence,
+                    ),
+                    resume_text,
                 )
 
             else:
@@ -1470,91 +1488,6 @@ class RequirementMatcher:
         )
 
     # --------------------------------------------------------
-    # Complete resume evidence (for semantic verification)
-    # --------------------------------------------------------
-
-    def _all_resume_evidence_lines(
-        self,
-        resume_profile: ResumeProfile,
-    ) -> list[str]:
-        """
-        Returns every distinct evidence line in the structured
-        resume — top-level evidence claims, per-skill evidence,
-        and every experience/project bullet — with no keyword
-        filtering or top-K truncation.
-
-        Unlike _find_evidence (which filters by candidate_terms)
-        or _retrieve_relevant_evidence (which ranks and caps at
-        a small top-K), this is the complete pool, used to give
-        semantic verification a full-resume reference alongside
-        the narrow per-requirement retrieval, so real evidence
-        phrased in a way no search term anticipated can still be
-        found and cited instead of silently missed.
-
-        Deliberately built from the STRUCTURED ResumeProfile —
-        the same evidence-grounded representation every other
-        matching step already trusts — rather than raw PDF text,
-        so this stays consistent with the rest of the pipeline
-        and doesn't reintroduce ungrounded/unvalidated text at a
-        stage that specifically exists to prevent hallucination.
-        """
-
-        all_evidence = list(
-            resume_profile.evidence
-        )
-
-        for skill in resume_profile.skills:
-
-            all_evidence.extend(
-                skill.evidence
-            )
-
-        for experience in resume_profile.experience:
-
-            for bullet in experience.bullets:
-
-                all_evidence.append(
-                    ResumeEvidence(
-                        claim=bullet.text,
-                        category="responsibility",
-                        source_text=bullet.text,
-                        section="experience",
-                        confidence=0.90,
-                    )
-                )
-
-        for project in resume_profile.projects:
-
-            for bullet in project.bullets:
-
-                all_evidence.append(
-                    ResumeEvidence(
-                        claim=bullet.text,
-                        category="project",
-                        source_text=bullet.text,
-                        section="projects",
-                        confidence=0.90,
-                    )
-                )
-
-        seen: set[str] = set()
-        lines: list[str] = []
-
-        for evidence in all_evidence:
-
-            key = self._normalize(
-                evidence.source_text
-            )
-
-            if not key or key in seen:
-                continue
-
-            seen.add(key)
-            lines.append(evidence.source_text)
-
-        return lines
-
-    # --------------------------------------------------------
     # Evidence search
     # --------------------------------------------------------
 
@@ -1752,9 +1685,17 @@ class RequirementMatcher:
                 )
             )
 
+            category_multiplier = (
+                self.CATEGORY_MULTIPLIERS.get(
+                    result.category,
+                    0.50,
+                )
+            )
+
             effective_weight = (
                 result.weight
                 * importance_multiplier
+                * category_multiplier
             )
 
             weighted_score += (
@@ -1908,6 +1849,7 @@ class RequirementMatcher:
         preliminary_result: RequirementMatch,
         verification,
         retrieved_evidence: list[str],
+        resume_text: str = "",
     ) -> RequirementMatch:
         """
         Merges a batched SemanticVerification result (or None,
@@ -1918,10 +1860,13 @@ class RequirementMatcher:
         produced once, up front, for every ambiguous requirement
         in the analysis via SemanticVerifier.verify_batch().
 
-        `retrieved_evidence` is the exact evidence pool that was
-        given to Gemini for this requirement. Any
+        `retrieved_evidence` is the narrow per-requirement hint
+        pool given to Gemini; `resume_text` is the complete raw
+        resume text also given to Gemini for this requirement
+        (see SemanticVerifier.verify_batch). Any
         "supporting_evidence" string Gemini returns that does
-        NOT correspond to something in that pool is treated as
+        NOT correspond to something in `retrieved_evidence` AND
+        is NOT a real substring of `resume_text` is treated as
         hallucinated and dropped before it can influence the
         result (evidence-grounding validation).
         """
@@ -1970,6 +1915,10 @@ class RequirementMatcher:
             for item in retrieved_evidence
         }
 
+        normalized_resume_text = self._normalize(
+            resume_text
+        )
+
         supporting_evidence = [
             item
             for item in verification.supporting_evidence
@@ -1977,6 +1926,10 @@ class RequirementMatcher:
                 self._normalize(item) in pool_item
                 or pool_item in self._normalize(item)
                 for pool_item in normalized_pool
+            )
+            or (
+                self._normalize(item)
+                in normalized_resume_text
             )
         ]
 

@@ -65,9 +65,6 @@ Salesforce does NOT imply HubSpot.
 source text from the resume.
 
 4. Preserve the original wording when possible.
-Quote only the shortest verbatim phrase (roughly
-5-15 words) that proves the claim — never quote
-an entire sentence.
 
 5. Identify the section where each claim appears.
 
@@ -166,7 +163,6 @@ Return ONLY structured data matching the schema.
             config=types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=ResumeProfile,
-            temperature=0.0,
             ),
             purpose="resume_structuring",
         )
