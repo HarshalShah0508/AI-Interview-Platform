@@ -57,22 +57,17 @@ Examples:
 
 Python does NOT imply Django.
 
-Docker does NOT imply Kubernetes.
-
 AWS does NOT imply Azure.
 
-PostgreSQL does NOT imply MySQL.
-
-React does NOT imply Next.js.
-
 Salesforce does NOT imply HubSpot.
-
-GAAP knowledge does NOT imply IFRS knowledge.
 
 3. Every important claim must have supporting
 source text from the resume.
 
 4. Preserve the original wording when possible.
+Quote only the shortest verbatim phrase (roughly
+5-15 words) that proves the claim — never quote
+an entire sentence.
 
 5. Identify the section where each claim appears.
 
@@ -83,10 +78,7 @@ source text from the resume.
 Examples:
 
 "20% improvement"
-"15+ APIs"
 "500 users"
-"3-person team"
-"2 seconds"
 "95% accuracy"
 
 8. NEVER create metrics that are not present.
@@ -107,15 +99,8 @@ must NOT become:
 Examples:
 
 Developed
-Designed
-Implemented
-Built
 Optimized
-Automated
 Led
-Analyzed
-Integrated
-Deployed
 
 11. Identify achievements separately from ordinary
 responsibilities.

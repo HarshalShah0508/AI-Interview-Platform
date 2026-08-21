@@ -298,26 +298,9 @@ adjacent
 
 NOT partial, NOT strong, NOT missing. Your reasoning must state
 that this is cloud-platform-adjacent experience, not evidence
-of AWS itself.
-
-Worked example (non-technical):
-
-JD:
-"Salesforce experience required"
-
-Resume evidence:
-"Managed the full sales pipeline in HubSpot, from lead capture
-through close"
-
-Known related-but-NOT-equivalent tools, technologies, or
-standards detected: hubspot
-
-Result:
-adjacent
-
-NOT partial, NOT strong, NOT missing. Your reasoning must state
-that this is CRM-platform-adjacent experience, not evidence of
-Salesforce itself.
+of AWS itself. The same logic applies across any category —
+CRM platforms, accounting standards, container orchestrators,
+frontend frameworks, etc.
 
 4. Do not infer a technology merely because it is
 commonly used with another technology.
@@ -378,10 +361,12 @@ remain ambiguous or missing.
 exact or near-exact excerpt from either that requirement's own
 "Allowed resume evidence" block OR the "COMPLETE RESUME
 EVIDENCE" section. Do not paraphrase, combine, or invent
-evidence. If you cannot quote real evidence from one of these
-two sources, do not claim support. This applies to "adjacent"
-decisions too — the cited evidence must be real text from one
-of these two sources, not an invented technology mention.
+evidence. Quote only the shortest phrase (roughly 5-20 words)
+that proves the point — never the surrounding sentence. If you
+cannot quote real evidence from one of these two sources, do
+not claim support. This applies to "adjacent" decisions too —
+the cited evidence must be real text from one of these two
+sources, not an invented technology mention.
 
 14. Do not rewrite or improve the resume.
 

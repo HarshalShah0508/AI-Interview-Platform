@@ -391,29 +391,13 @@ ABSOLUTE TRUTH RULES
 The resume evidence above is the ONLY source of
 candidate facts.
 
-NEVER invent:
-
-- technologies
-- frameworks
-- programming languages
-- databases
-- cloud platforms
-- companies
-- job titles
-- responsibilities
-- achievements
-- leadership
-- ownership
-- production experience
-- scale
-- users
-- rankings
-- percentages
-- accuracy values
-- performance improvements
-- dates
-- years of experience
-- metrics of any kind
+NEVER invent any factual claim not already present in the
+verified evidence: technologies, frameworks, languages,
+databases, cloud platforms, companies, job titles,
+responsibilities, achievements, leadership/ownership,
+production experience, scale, users, rankings, or any
+metric (percentages, accuracy, performance, dates, years
+of experience).
 
 A technology may only be mentioned if supported
 by the verified resume evidence.
@@ -443,7 +427,9 @@ EVIDENCE REQUIREMENT
 For every recommendation:
 
 1. "evidence_used" MUST contain exact excerpts
-   from the verified resume evidence.
+   from the verified resume evidence. Quote only the
+   shortest verbatim phrase (roughly 5-15 words) that
+   proves the point — never a full sentence.
 
 2. "verified_facts_used" MUST contain only facts
    explicitly supported by the evidence.

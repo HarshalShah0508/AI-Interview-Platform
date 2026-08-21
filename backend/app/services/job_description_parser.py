@@ -232,26 +232,23 @@ unless they are part of a meaningful requirement.
 Valid examples:
 
 Postgres → PostgreSQL
-RESTful API → REST API
 JS → JavaScript
 CRM → Customer Relationship Management
-GAAP → Generally Accepted Accounting Principles
 
 8. DO NOT treat different technologies as aliases.
 
 For example:
 
 AWS != Azure
-AWS != GCP
 Docker != Kubernetes
-React != Angular
-Python != Java
 
 Related-but-different tools like these should instead be
 captured via "adjacent_alternatives" — see rule 14 below.
 
 9. Preserve evidence from the JD supporting
-each important requirement.
+each important requirement. Quote only the shortest
+verbatim phrase (roughly 5-15 words) that proves the
+requirement — never quote a full sentence.
 
 10. Do not infer a requirement merely because
 it is common for the role.
@@ -284,16 +281,10 @@ Examples:
 "Frontend Technologies & Web Services"
 components: ["frontend technologies", "web services"]
 
-"Code Review and Production Safety"
-components: ["code review", "production safety"]
-
 "Collaborative Coding Experience"
 components: ["collaborative coding experience"]
 (a single concept — do NOT invent a split that
 is not actually present in the requirement name)
-
-"Client Relationship Management & Account Growth"
-components: ["client relationship management", "account growth"]
 
 If a requirement already names exactly one concept,
 leave "components" empty. Do NOT split a single
@@ -318,12 +309,6 @@ adjacent_alternatives: ["azure", "gcp"]
 
 Requirement: "Salesforce"
 adjacent_alternatives: ["hubspot", "zoho crm"]
-
-Requirement: "GAAP"
-adjacent_alternatives: ["ifrs"]
-
-Requirement: "Docker"
-adjacent_alternatives: ["kubernetes"]
 
 Requirement: "5+ years of project management experience"
 adjacent_alternatives: []
@@ -352,10 +337,6 @@ evidence_hints: ["account management", "client retention",
 Requirement: "Production Safety"
 evidence_hints: ["on-call", "incident response", "rollback",
 "post-mortem"]
-
-Requirement: "GAAP Compliance"
-evidence_hints: ["financial statements", "audit",
-"reconciliation", "month-end close"]
 
 Leave "evidence_hints" empty for requirements that are
 already concrete named tools/technologies (e.g. "Python",

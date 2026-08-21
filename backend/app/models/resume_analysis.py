@@ -56,6 +56,11 @@ class ResumeAnalysis(Base):
         index=True,
     )
 
+    resume_profile_json = Column(
+        Text,
+        nullable=True,
+    )
+
     analysis_result_json = Column(
         Text,
         nullable=True,
