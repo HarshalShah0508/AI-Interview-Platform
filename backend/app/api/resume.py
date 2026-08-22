@@ -74,7 +74,7 @@ def upload_resume(
     return {
         "message": "Resume uploaded successfully",
         "resume_id": resume.id,
-        "filename": resume.filename,
+        "filename": resume.original_filename,
         "uploaded_by": current_user.email
     }
 
