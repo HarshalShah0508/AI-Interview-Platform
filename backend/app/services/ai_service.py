@@ -84,7 +84,8 @@ class AIService:
         print(category)
 
         response = self.key_manager.generate_content(
-            prompt
+            prompt,
+            purpose="interview_question_generation",
         )
 
         print("\n===== GEMINI QUESTION RESPONSE =====\n")
@@ -194,7 +195,8 @@ class AIService:
         )
 
         response = self.key_manager.generate_content(
-            prompt
+            prompt,
+            purpose="answer_evaluation",
         )
 
         print("\n===== GEMINI ANSWER EVALUATION RESPONSE =====\n")
@@ -232,7 +234,8 @@ class AIService:
         )
 
         response = self.key_manager.generate_content(
-            prompt
+            prompt,
+            purpose="follow_up_question_generation",
         )
 
         print("\n===== GEMINI FOLLOW-UP QUESTION =====\n")

@@ -489,6 +489,7 @@ Do not return explanations outside the JSON object.
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
                 response_schema=RecommendationBatchResponse,
+                temperature=0.0,
             ),
             purpose="batched_recommendations",
         )

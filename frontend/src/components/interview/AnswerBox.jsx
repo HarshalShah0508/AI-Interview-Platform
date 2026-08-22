@@ -8,7 +8,6 @@ import { submitAnswer } from "../../api/answerApi";
 import useAuth from "../../hooks/useAuth";
 import { runCode } from "../../api/codeApi";
 import VoiceInput from "./VoiceInput";
-import NotesInput from "./NotesInput";
 import CodeEditor from "./CodeEditor";
 import CombinedPreview from "./CombinedPreview";
 import ConsoleOutput from "./ConsoleOutput";
@@ -23,14 +22,14 @@ const AnswerBox = forwardRef(function AnswerBox(
   {
     questionId,
     onAnswerSubmitted,
+    onSubmittingChange,
     disabled = false,
   },
   ref
 ) {
   const { token } = useAuth();
 
-  const [voiceText, setVoiceText] = useState("");
-  const [typedText, setTypedText] = useState("");
+  const [explanationText, setExplanationText] = useState("");
   const [code, setCode] = useState("");
 
   const [customInput, setCustomInput] = useState("");
@@ -48,8 +47,7 @@ const AnswerBox = forwardRef(function AnswerBox(
   const [submitting, setSubmitting] = useState(false);
 
   const hasContent =
-    voiceText.trim() ||
-    typedText.trim() ||
+    explanationText.trim() ||
     code.trim();
 
   const handleRunCode = async () => {
@@ -118,27 +116,27 @@ const AnswerBox = forwardRef(function AnswerBox(
 
     if (!hasContent) {
       setError(
-        "Please provide a voice explanation, notes or code."
+        "Please provide an explanation or code."
       );
       return;
     }
 
     try {
       setSubmitting(true);
+      onSubmittingChange?.(true);
       setError("");
 
       const response = await submitAnswer(
         {
           question_id: questionId,
-          voice_text: voiceText.trim(),
-          typed_text: typedText.trim(),
+          voice_text: explanationText.trim(),
+          typed_text: "",
           code: code.trim(),
         },
         token
       );
 
-      setVoiceText("");
-      setTypedText("");
+      setExplanationText("");
       setCode("");
       setCustomInput("");
       setConsoleOutput("");
@@ -156,6 +154,7 @@ const AnswerBox = forwardRef(function AnswerBox(
 
     } finally {
       setSubmitting(false);
+      onSubmittingChange?.(false);
     }
   };
 
@@ -187,14 +186,8 @@ const AnswerBox = forwardRef(function AnswerBox(
       </div>
 
       <VoiceInput
-        value={voiceText}
-        onChange={setVoiceText}
-        disabled={disabled}
-      />
-
-      <NotesInput
-        value={typedText}
-        onChange={setTypedText}
+        value={explanationText}
+        onChange={setExplanationText}
         disabled={disabled}
       />
 
@@ -220,8 +213,7 @@ const AnswerBox = forwardRef(function AnswerBox(
       />
 
       <CombinedPreview
-        voiceText={voiceText}
-        typedText={typedText}
+        explanationText={explanationText}
         code={code}
       />
 

@@ -185,6 +185,12 @@ class RequirementMatcher:
         "other": 0.50,
     }
 
+    # A missing JDRequirement.is_dealbreaker requirement caps
+    # the overall score at this ceiling, regardless of how well
+    # everything else matches — mirrors a recruiter screening
+    # out on a genuine hard gate rather than averaging it away.
+    DEALBREAKER_SCORE_CEILING = 50.0
+
     # --------------------------------------------------------
     # Controlled concept -> evidence-keyword mapping.
     #
@@ -386,46 +392,37 @@ class RequirementMatcher:
         ]
 
         # ----------------------------------------------------
-        # Pass 2 — semantic verification is used for
-        # requirements the deterministic matcher could not
-        # confidently classify ("ambiguous"), AND for
-        # requirements it found zero evidence for ("missing")
-        # but where a broader retrieval search still turns up
-        # something loosely related worth a second look.
-        # Requirements with genuinely zero retrievable evidence
-        # stay hard-"missing" and never reach Gemini. All
-        # qualifying requirements are verified via one or more
-        # batched Gemini calls (chunked, not one call per
-        # requirement) to stay within a bounded call budget.
+        # Pass 2 — every requirement now goes through a single
+        # holistic Gemini pass (SemanticVerifier), not just the
+        # ones Pass 1 flagged "ambiguous" or a narrower retrieval
+        # search happened to find something loosely related to.
+        # Gating on that narrower search meant a requirement
+        # whose evidence sat in a resume section the structured
+        # extraction step missed entirely (e.g. an Education
+        # section that came back empty) could never earn a
+        # second look, even though the real evidence was sitting
+        # in the raw resume text the whole time. Every
+        # requirement is verified via one or more batched Gemini
+        # calls (chunked, not one call per requirement) to stay
+        # within a bounded call budget. Pass 1's own confident
+        # direct/strong matches still act as a floor in
+        # _merge_verification — this pass can upgrade a
+        # classification but never downgrade a confirmed literal
+        # match.
         # ----------------------------------------------------
 
-        ambiguous_requirements = [
-            requirement
-            for requirement, result in zip(
-                jd_profile.requirements,
-                preliminary_results,
-            )
-            if result.match_type == "ambiguous"
-        ]
-
-        missing_requirements = [
-            requirement
-            for requirement, result in zip(
-                jd_profile.requirements,
-                preliminary_results,
-            )
-            if result.match_type == "missing"
-        ]
+        candidate_requirements = list(
+            jd_profile.requirements
+        )
 
         # ----------------------------------------------------
-        # Retrieval step: for each ambiguous requirement, pull
-        # only the top-K most relevant resume evidence lines
-        # instead of dumping the entire resume into the
-        # prompt. These are RETRIEVAL signals only (broader
-        # than the tier-gated matching above) — their
-        # presence means "worth Gemini's attention", not
-        # proof. Gemini still has to decide strong/partial/
-        # missing based on what's actually here.
+        # Retrieval step: for each requirement, pull the top-K
+        # most relevant resume evidence lines as a focused hint
+        # alongside the complete raw resume text given below.
+        # These are RETRIEVAL signals only — their presence
+        # means "worth Gemini's attention", not proof. Gemini
+        # still has to decide strong/partial/missing based on
+        # what's actually here.
         # ----------------------------------------------------
 
         evidence_map: dict[str, list[str]] = {
@@ -433,37 +430,8 @@ class RequirementMatcher:
                 requirement,
                 resume_profile,
             )
-            for requirement in ambiguous_requirements
+            for requirement in candidate_requirements
         }
-
-        # ----------------------------------------------------
-        # A "missing" requirement only earns a second look if
-        # this same broader retrieval search finds SOMETHING —
-        # otherwise there is nothing for Gemini to reconsider
-        # and the call would be wasted on a genuinely absent
-        # skill.
-        # ----------------------------------------------------
-
-        qualifying_missing_requirements = []
-
-        for requirement in missing_requirements:
-
-            retrieved = self._retrieve_relevant_evidence(
-                requirement,
-                resume_profile,
-            )
-
-            if retrieved:
-
-                evidence_map[requirement.name] = retrieved
-                qualifying_missing_requirements.append(
-                    requirement
-                )
-
-        candidate_requirements = (
-            ambiguous_requirements
-            + qualifying_missing_requirements
-        )
 
         # ----------------------------------------------------
         # Deterministic adjacency hints: for each candidate
@@ -530,44 +498,71 @@ class RequirementMatcher:
                 )
             )
 
-        verified_names = {
-            requirement.name.strip().lower()
-            for requirement in candidate_requirements
-        }
-
         results: list[RequirementMatch] = []
+
+        missing_dealbreakers: list[str] = []
 
         for requirement, preliminary_result in zip(
             jd_profile.requirements,
             preliminary_results,
         ):
 
-            if requirement.name.strip().lower() in verified_names:
+            verification = verifications.get(
+                requirement.name.strip().lower()
+            )
 
-                verification = verifications.get(
-                    requirement.name.strip().lower()
+            result = self._merge_verification(
+                requirement,
+                preliminary_result,
+                verification,
+                evidence_map.get(
+                    requirement.name,
+                    [],
+                ),
+                resume_text,
+            )
+
+            if (
+                requirement.is_dealbreaker
+                and result.match_type == "missing"
+            ):
+
+                missing_dealbreakers.append(
+                    requirement.name
                 )
-
-                result = self._merge_verification(
-                    requirement,
-                    preliminary_result,
-                    verification,
-                    evidence_map.get(
-                        requirement.name,
-                        [],
-                    ),
-                    resume_text,
-                )
-
-            else:
-
-                result = preliminary_result
 
             results.append(result)
 
         overall_score = self._calculate_overall_score(
             results
         )
+
+        # ----------------------------------------------------
+        # Dealbreaker gate: a real recruiter treats a missing
+        # hard requirement (a required license, a hard years-
+        # of-experience floor, work authorization) as an
+        # override, not just one line item in a blended
+        # average. If any JD-tagged dealbreaker requirement is
+        # missing, cap the overall score regardless of how well
+        # everything else matches, and surface why plainly
+        # rather than leaving it as an unexplained low number.
+        # ----------------------------------------------------
+
+        dealbreaker_capped = bool(missing_dealbreakers)
+
+        dealbreaker_reason = None
+
+        if dealbreaker_capped:
+
+            overall_score = min(
+                overall_score,
+                self.DEALBREAKER_SCORE_CEILING,
+            )
+
+            dealbreaker_reason = (
+                "Score capped — missing required: "
+                + "; ".join(missing_dealbreakers)
+            )
 
         summary = self._build_summary(
             results
@@ -580,6 +575,8 @@ class RequirementMatcher:
             ),
             summary=summary,
             matches=results,
+            dealbreaker_capped=dealbreaker_capped,
+            dealbreaker_reason=dealbreaker_reason,
         )
 
     # --------------------------------------------------------
@@ -1685,12 +1682,18 @@ class RequirementMatcher:
                 )
             )
 
-            category_multiplier = (
-                self.CATEGORY_MULTIPLIERS.get(
-                    result.category,
-                    0.50,
+            if (
+                result.category == "other"
+                and result.importance == "required"
+            ):
+                category_multiplier = 1.00
+            else:
+                category_multiplier = (
+                    self.CATEGORY_MULTIPLIERS.get(
+                        result.category,
+                        0.50,
+                    )
                 )
-            )
 
             effective_weight = (
                 result.weight
@@ -1870,6 +1873,28 @@ class RequirementMatcher:
         hallucinated and dropped before it can influence the
         result (evidence-grounding validation).
         """
+
+        # --------------------------------------------------------
+        # Stage 1 floor: every requirement now goes through this
+        # holistic pass, including ones Pass 1 already resolved
+        # with high confidence via an exact literal phrase/alias
+        # hit. That confirmed result can be upgraded by this pass
+        # (a "strong" direct match can't get any stronger, but a
+        # weaker preliminary result can still be improved below),
+        # but it must never be downgraded by an inference — or,
+        # worse, silently dropped to "missing" just because this
+        # requirement's verification happened to go missing from
+        # Gemini's response (a malformed chunk, a name-echo
+        # mismatch). A confirmed literal match is a fact, not a
+        # judgment call, and outranks anything Pass 2 says.
+        # --------------------------------------------------------
+
+        if (
+            preliminary_result.evidence_type == "direct"
+            and preliminary_result.match_type == "strong"
+        ):
+
+            return preliminary_result
 
         # --------------------------------------------------------
         # Conservative fallback: if Gemini did not return a

@@ -18,11 +18,25 @@ from app.schemas.resume_analysis import (
 
 class SemanticVerifier:
     """
-    Performs contextual verification only when the
-    deterministic matcher cannot confidently classify
-    a JD requirement, plus a second look at "missing"
-    requirements that still have some loosely related
-    retrieved evidence.
+    Holistic recruiter-style verification of EVERY JD
+    requirement against the candidate's complete resume —
+    the way an experienced technical recruiter reads a resume
+    against a JD, not a narrow per-line keyword check.
+
+    This is no longer gated to only "ambiguous" or loosely-
+    retrieved "missing" requirements — every requirement in
+    the analysis goes through this pass, given the complete
+    raw resume text (not narrow retrieval snippets), so a real
+    match phrased in a way nothing anticipated — or sitting in
+    a resume section the structured extraction step happened
+    to miss — still gets a genuine look instead of being
+    silently skipped by an upstream retrieval filter.
+
+    RequirementMatcher._merge_verification still floors this
+    against Pass 1's deterministic result: an exact literal
+    phrase/alias hit from Pass 1 can be upgraded by this pass
+    but never downgraded, so a confirmed literal match can't be
+    second-guessed away by an inference.
 
     IMPORTANT:
     This service is not allowed to create resume evidence.
@@ -42,7 +56,7 @@ class SemanticVerifier:
     small, ranked list of relevant resume lines chosen by
     RequirementMatcher._retrieve_relevant_evidence) as a
     focused hint, PLUS the candidate's complete raw resume text
-    as a shared reference for the whole batch — retrieval, and
+    as a shared reference for the whole call — retrieval, and
     even the structured resume extraction itself, can miss real
     evidence phrased in a way nothing anticipated, so the
     complete text lets Gemini still find and cite it. Every
@@ -210,12 +224,28 @@ Allowed resume evidence for THIS requirement:
             )
 
         prompt = f"""
-You are the Semantic Verification Engine
-for HotSeat.
+You are an experienced technical recruiter for HotSeat,
+screening ONE candidate's resume against a job description —
+the way a real recruiter reads a resume, not a keyword
+checklist.
 
-Your ONLY task is to determine, for EACH job-description
-requirement listed below, whether the candidate's EXISTING
-resume evidence satisfies that requirement.
+First, form a holistic read of the candidate from the
+COMPLETE RESUME TEXT below: their overall trajectory, and for
+each skill/qualification they claim, how DEEP and how RECENT
+that evidence is (a skill demonstrated across multiple recent
+bullets/projects is stronger evidence than one passing mention
+from years ago). Then, using that holistic read, determine for
+EACH job-description requirement listed below whether the
+candidate's EXISTING resume evidence satisfies it.
+
+Recognize equivalent qualifications stated under different
+naming conventions the way a recruiter would — e.g. "B.E." or
+"B.Tech" (common outside the US) is the same tier of
+qualification as "Bachelor's degree" or "B.S."; a differently-
+named but equivalent professional certification, title, or
+tool counts the same way. Do not penalize a candidate merely
+for a regional/conventional naming difference that means the
+same thing.
 
 You are verifying {len(requirements)} requirement(s) in
 this single request. Return one verification object per
@@ -381,6 +411,56 @@ relevant for one requirement can be reused to justify a
 different, unrelated requirement — every piece of cited
 evidence must be genuinely and specifically relevant to the
 requirement it is cited for.
+
+20. Naming-convention equivalence is not the same as
+technology adjacency. "B.E." meaning the same thing as
+"Bachelor's degree" is a real equivalence (same qualification,
+different name) — use "strong", not "adjacent". Rule 3a's
+"adjacent" is reserved for genuinely different, non-
+interchangeable tools/technologies/standards (Azure when AWS
+is required) — never apply it to a mere naming difference for
+the SAME qualification.
+
+21. Weigh depth and recency of evidence the way a recruiter
+would: a skill backed by multiple recent, substantive bullets
+is stronger evidence than a single old or passing mention. Two
+candidates who both technically "mention" a skill are not
+automatically equal — say so in your reasoning when it affects
+your decision.
+
+22. Holistic reading is for WEIGHING evidence, not for
+SKIPPING whether the requirement's literal condition is fully
+met. Do not let a generally strong or impressive resume cause
+you to round an incompletely-satisfied requirement up to
+"strong". Before deciding "strong", check the requirement's
+own exact wording for a specific condition (fully completed,
+not in-progress; a specific certification actually held, not
+in pursuit; a specific years-of-experience floor actually met,
+not approaching) — if that specific condition is not yet
+fully met, the correct decision is "partial", regardless of
+how strong the rest of the resume is.
+
+Example — a real case this rule exists to catch:
+
+JD requirement: "Bachelor's Degree in Computer Science"
+
+Resume evidence: "B.E. Computer Science Engineering, BITS
+Pilani, 2023 – 2027" (an in-progress degree, not yet
+conferred — the end date is in the future)
+
+Correct decision: "partial" — the degree TYPE is a genuine
+equivalent (do not use "adjacent" for the naming difference,
+per rule 20), but it is not yet completed. Reasoning should
+say so explicitly: "in-progress, expected 2027, not yet
+conferred." Do NOT decide "strong" here just because the
+candidate's overall academic record looks strong — this is a
+literal completion-status check, not a holistic impression.
+
+"Partial" is not a lesser or discouraged outcome — it is the
+correct, useful signal that tells the candidate specifically
+what would need to change to become a full match. Reserve
+"strong" for when the requirement's own literal condition is
+actually, fully met.
 
 Return ONLY structured data matching the requested schema,
 with exactly one verification per requirement listed above.
