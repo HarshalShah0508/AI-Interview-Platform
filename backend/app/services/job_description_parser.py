@@ -293,6 +293,7 @@ Valid examples:
 Postgres → PostgreSQL
 JS → JavaScript
 CRM → Customer Relationship Management
+GAAP → Generally Accepted Accounting Principles
 
 8. DO NOT treat different technologies as aliases.
 
@@ -325,6 +326,7 @@ Examples of compound requirement names:
 
 "Frontend Technologies & Web Services"
 "Collaborative Coding Experience"
+"Client Relationship Management & Account Growth"
 
 For each requirement whose name bundles multiple
 distinct concepts together, populate "components"
@@ -340,6 +342,9 @@ components: ["frontend technologies", "web services"]
 components: ["collaborative coding experience"]
 (a single concept — do NOT invent a split that
 is not actually present in the requirement name)
+
+"Client Relationship Management & Account Growth"
+components: ["client relationship management", "account growth"]
 
 If a requirement already names exactly one concept,
 leave "components" empty. Do NOT split a single
@@ -364,6 +369,12 @@ adjacent_alternatives: ["azure", "gcp"]
 
 Requirement: "Salesforce"
 adjacent_alternatives: ["hubspot", "zoho crm"]
+
+Requirement: "GAAP"
+adjacent_alternatives: ["ifrs"]
+
+Requirement: "Docker"
+adjacent_alternatives: ["kubernetes"]
 
 Requirement: "5+ years of project management experience"
 adjacent_alternatives: []
@@ -392,6 +403,10 @@ evidence_hints: ["account management", "client retention",
 Requirement: "Production Safety"
 evidence_hints: ["on-call", "incident response", "rollback",
 "post-mortem"]
+
+Requirement: "GAAP Compliance"
+evidence_hints: ["financial statements", "audit",
+"reconciliation", "month-end close"]
 
 Leave "evidence_hints" empty for requirements that are
 already concrete named tools/technologies (e.g. "Python",

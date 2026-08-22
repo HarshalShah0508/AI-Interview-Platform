@@ -61,6 +61,10 @@ AWS does NOT imply Azure.
 
 Salesforce does NOT imply HubSpot.
 
+Salesforce does NOT imply HubSpot.
+
+GAAP knowledge does NOT imply IFRS knowledge.
+
 3. Every important claim must have supporting
 source text from the resume.
 

@@ -1282,6 +1282,15 @@ textarea::placeholder {
   font-weight: 600;
 }
 
+.auth-forgot-link {
+  display: block;
+  margin-top: -8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  text-align: right;
+}
+
 .auth-alert {
   margin-top: 28px;
   padding: 16px;
@@ -2771,6 +2780,11 @@ textarea::placeholder {
 .topic-pill--weak {
   color: var(--accent);
   background: var(--accent-soft);
+}
+
+.topic-pill--skipped {
+  color: var(--amber);
+  background: var(--amber-soft);
 }
 
 .results-questions {

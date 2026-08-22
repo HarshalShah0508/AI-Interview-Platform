@@ -326,6 +326,25 @@ of AWS itself. The same logic applies across any category —
 CRM platforms, accounting standards, container orchestrators,
 frontend frameworks, etc.
 
+Worked example (non-technical):
+
+JD:
+"Salesforce experience required"
+
+Resume evidence:
+"Managed the full sales pipeline in HubSpot, from lead capture
+through close"
+
+Known related-but-NOT-equivalent tools, technologies, or
+standards detected: hubspot
+
+Result:
+adjacent
+
+NOT partial, NOT strong, NOT missing. Your reasoning must state
+that this is CRM-platform-adjacent experience, not evidence of
+Salesforce itself.
+
 4. Do not infer a technology merely because it is
 commonly used with another technology.
 

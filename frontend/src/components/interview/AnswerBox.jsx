@@ -130,6 +130,11 @@ const AnswerBox = forwardRef(function AnswerBox(
         {
           question_id: questionId,
           voice_text: explanationText.trim(),
+          // TODO(backend migration): the "Additional Notes" box was merged
+          // into the voice/explanation textarea above, so typed_text is now
+          // always empty from this client. Once the backend drops typed_text
+          // (see TODOs in schemas/answer.py, models/answer.py and
+          // ai_service.build_combined_answer), this field can be removed too.
           typed_text: "",
           code: code.trim(),
         },
@@ -181,7 +186,7 @@ const AnswerBox = forwardRef(function AnswerBox(
       <div className="answer-card__header">
         <div className="answer-card__label">YOUR ANSWER</div>
         <div className="answer-card__sublabel">
-          Think. Explain. Write. Code. Submit — all three modes are graded together.
+          Think. Explain. Write. Code. Submit — both are graded together.
         </div>
       </div>
 
